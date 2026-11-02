@@ -2,6 +2,8 @@ name = "gameforge-studio"
 compatibility_date = "2026-11-02"
 pages_build_output_dir = "./"
 
-# Static browser editor starter.
-# Cloudflare Pages can deploy this repository directly.
-# Workers API, D1, R2 and Durable Objects will be added as backend features mature.
+[[d1_databases]]
+binding = "DB"
+database_name = "gameforge-auth"
+database_id = "452ee157-aaec-45d7-a974-4c32bf5d7efc"
+migrations_dir = "migrations"
