@@ -13,9 +13,12 @@ function loadState() {
   return { projects: [] };
 }
 function saveState() {
+  const project = currentProject();
+  if (project) project.updated = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   const status = document.getElementById("save-state");
-  if (status) status.textContent = "Saved locally";
+  if (status) status.textContent = authUser ? "Saved locally · cloud sync pending" : "Saved locally";
+  if (authUser) scheduleCloudSync();
 }
 function currentProject() {
   return state.projects.find(p => p.id === currentProjectId);
@@ -59,6 +62,81 @@ function createProject(name, genre) {
   showView("editor");
 }
 
+let cloudSyncTimer = null;
+let cloudSyncBusy = false;
+let cloudSyncReady = false;
+
+function scheduleCloudSync() {
+  if (!authUser || !cloudSyncReady) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(() => syncCloudProjects(), 1200);
+}
+
+async function cloudRequest(path, options = {}) {
+  const response = await fetch(path, { credentials: "same-origin", cache: "no-store", ...options });
+  let data = {};
+  try { data = await response.json(); } catch {}
+  if (!response.ok) throw new Error(data.error || "Cloud sync failed.");
+  return data;
+}
+
+async function syncCloudProjects() {
+  if (!authUser || cloudSyncBusy) return;
+  cloudSyncBusy = true;
+  const status = document.getElementById("save-state");
+  try {
+    if (status) status.textContent = "Syncing cloud projects…";
+    const remote = await cloudRequest("/api/projects");
+    const remoteById = new Map((remote.projects || []).map(project => [project.id, project]));
+    const localById = new Map(state.projects.map(project => [project.id, project]));
+    const merged = [];
+    const toUpload = [];
+    for (const remoteProject of remote.projects || []) {
+      const localProject = localById.get(remoteProject.id);
+      if (!localProject) {
+        merged.push(remoteProject);
+        continue;
+      }
+      const localTime = Date.parse(localProject.updated || 0) || 0;
+      const remoteTime = Date.parse(remoteProject.updated || 0) || 0;
+      if (localTime >= remoteTime) {
+        merged.push(localProject);
+        toUpload.push(localProject);
+      } else {
+        merged.push(remoteProject);
+      }
+      localById.delete(remoteProject.id);
+    }
+    for (const localProject of localById.values()) {
+      merged.push(localProject);
+      toUpload.push(localProject);
+    }
+    state.projects = merged;
+    if (!currentProjectId || !state.projects.some(project => project.id === currentProjectId)) {
+      currentProjectId = state.projects[0]?.id || null;
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    for (const project of toUpload) {
+      await cloudRequest("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project })
+      });
+    }
+    cloudSyncReady = true;
+    if (status) status.textContent = "All projects synced";
+    renderProjects("project-grid");
+    renderProjects("all-project-grid");
+    if (!document.getElementById("editor-view").classList.contains("hidden")) renderEditor();
+  } catch (error) {
+    cloudSyncReady = true;
+    if (status) status.textContent = "Local copy safe · cloud sync failed";
+    console.warn("GameForge cloud sync:", error);
+  } finally {
+    cloudSyncBusy = false;
+  }
+}
+
 let authUser = null;
 let authMode = "login";
 const authDialog = document.getElementById("auth-dialog");
@@ -85,12 +163,14 @@ async function checkAuth() {
     authUser = data.user || null;
   } catch { authUser = null; }
   renderAuth();
+  if (authUser) await syncCloudProjects();
+  else cloudSyncReady = false;
 }
 authButton.addEventListener("click", async () => {
   if (authUser) {
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" } });
-      authUser = null; renderAuth();
+      authUser = null; cloudSyncReady = false; clearTimeout(cloudSyncTimer); renderAuth(); document.getElementById("save-state").textContent = "Signed out · local projects kept";
     } catch { document.getElementById("save-state").textContent = "Could not contact server"; }
     return;
   }
@@ -121,7 +201,8 @@ document.getElementById("auth-form").addEventListener("submit", async event => {
     renderAuth();
     authDialog.close();
     document.getElementById("auth-form").reset();
-    document.getElementById("save-state").textContent = "Signed in · projects saved locally";
+    document.getElementById("save-state").textContent = "Signed in · syncing projects…";
+    await syncCloudProjects();
   } catch (err) {
     error.textContent = err.message || "Could not connect to GameForge. Please try again.";
   } finally {
