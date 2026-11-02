@@ -12,7 +12,7 @@ GameForge Studio is an early browser-based game creation workspace. The long-ter
 - Per-account cloud project sync with local-first fallback, project ownership checks, 1 MB request limit, and 200-project account limit
 - Lightweight multi-level 2D scene editor
 - Add Player, Platform, Coin, Enemy, Hazard, and Decoration objects
-- Select, drag, rename, show/hide, and position scene objects
+- Select, drag, rename, show/hide, position, and resize scene objects with configurable collision dimensions
 - Configure object collision and solid/trigger platform behavior
 - Visual no-code "On Player Touch" actions: add score, lose a life, destroy object, complete the level, or do nothing
 - Browser playtest with keyboard and touch controls, score, lives, restart, and game-over state
@@ -31,7 +31,7 @@ Open `index.html` in a modern browser, or serve this directory with a static web
 
 ## Roadmap
 
-1. Improve the 2D physics engine (moving platforms, slopes, and configurable hitboxes)
+1. Improve the 2D physics engine (moving platforms, slopes, and offset hitboxes)
 2. Expand the visual event system (keyboard, timers, scene transitions, and reusable actions)
 3. Asset library, image/audio import, and sprite animation
 4. Camera, tilemap, and level design tools
