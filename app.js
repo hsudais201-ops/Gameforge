@@ -20,6 +20,26 @@ function saveState() {
 function currentProject() {
   return state.projects.find(p => p.id === currentProjectId);
 }
+function ensureScenes(project) {
+  if (!project) return [];
+  if (!Array.isArray(project.scenes) || !project.scenes.length) {
+    project.scenes = [{ id: "scene-main", name: "Main", objects: Array.isArray(project.objects) ? project.objects : [] }];
+    project.currentSceneId = "scene-main";
+  }
+  if (!project.scenes.some(scene => scene.id === project.currentSceneId)) project.currentSceneId = project.scenes[0].id;
+  return project.scenes;
+}
+function currentScene(project = currentProject()) {
+  const scenes = ensureScenes(project);
+  return scenes.find(scene => scene.id === project?.currentSceneId) || scenes[0];
+}
+function renderScenePicker() {
+  const project = currentProject();
+  const select = document.getElementById("scene-picker");
+  if (!project || !select) return;
+  select.innerHTML = ensureScenes(project).map(scene => '<option value="' + scene.id + '">' + escapeHtml(scene.name) + '</option>').join("");
+  select.value = project.currentSceneId;
+}
 function showView(name) {
   document.querySelectorAll(".page").forEach(el => el.classList.add("hidden"));
   document.getElementById(name + "-view").classList.remove("hidden");
@@ -29,7 +49,8 @@ function showView(name) {
   if (name === "editor") renderEditor();
 }
 function createProject(name, genre) {
-  const project = { id: crypto.randomUUID(), name, genre, updated: new Date().toISOString(), objects: [] };
+  const project = { id: crypto.randomUUID(), name, genre, updated: new Date().toISOString(), scenes: [{ id: crypto.randomUUID(), name: "Main", objects: [] }], currentSceneId: null };
+  project.currentSceneId = project.scenes[0].id;
   state.projects.unshift(project);
   currentProjectId = project.id;
   saveState();
@@ -56,24 +77,26 @@ function addObject(kind) {
   const project = currentProject();
   if (!project) return;
   const object = { id: crypto.randomUUID(), name: kind, kind, x: 35 + Math.round(Math.random()*35), y: kind === "Platform" ? 65 : 45, visible: true };
-  project.objects.push(object); selectedId = object.id; project.updated = new Date().toISOString();
+  currentScene(project).objects.push(object); selectedId = object.id; project.updated = new Date().toISOString();
   saveState(); renderEditor();
 }
 function renderEditor() {
   const project = currentProject();
   if (!project) { document.getElementById("editor-title").textContent = "No project selected"; return; }
   document.getElementById("editor-title").textContent = project.name;
+  const sceneData = currentScene(project);
+  renderScenePicker();
   const list = document.getElementById("object-list");
-  list.innerHTML = project.objects.map(o => '<div class="object-row ' + (o.id === selectedId ? "selected" : "") + '" data-id="' + o.id + '"><span>' + (icons[o.kind] || "◇") + " " + escapeHtml(o.name) + '</span><span>⋮</span></div>').join("") || '<p class="muted">No objects in this scene yet.</p>';
+  list.innerHTML = sceneData.objects.map(o => '<div class="object-row ' + (o.id === selectedId ? "selected" : "") + '" data-id="' + o.id + '"><span>' + (icons[o.kind] || "◇") + " " + escapeHtml(o.name) + '</span><span>⋮</span></div>').join("") || '<p class="muted">No objects in this scene yet.</p>';
   list.querySelectorAll("[data-id]").forEach(row => row.addEventListener("click", () => { selectedId = row.dataset.id; renderEditor(); }));
   const scene = document.getElementById("scene-objects");
-  scene.innerHTML = project.objects.filter(o => o.visible).map(o => '<div class="scene-object ' + (o.id === selectedId ? "selected" : "") + '" data-id="' + o.id + '" data-kind="' + o.kind + '" style="left:' + o.x + '%;top:' + o.y + '%">' + (icons[o.kind] || "◇") + '</div>').join("");
+  scene.innerHTML = sceneData.objects.filter(o => o.visible).map(o => '<div class="scene-object ' + (o.id === selectedId ? "selected" : "") + '" data-id="' + o.id + '" data-kind="' + o.kind + '" style="left:' + o.x + '%;top:' + o.y + '%">' + (icons[o.kind] || "◇") + '</div>').join("");
   scene.querySelectorAll("[data-id]").forEach(el => {
     el.addEventListener("pointerdown", event => {
       if (playing) return;
       event.preventDefault();
       selectedId = el.dataset.id;
-      const object = project.objects.find(item => item.id === selectedId);
+      const object = sceneData.objects.find(item => item.id === selectedId);
       const startX = event.clientX;
       const startY = event.clientY;
       const initialX = object.x;
@@ -109,7 +132,7 @@ function renderEditor() {
 }
 function renderInspector() {
   const project = currentProject();
-  const obj = project?.objects.find(o => o.id === selectedId);
+  const obj = currentScene(project)?.objects.find(o => o.id === selectedId);
   const panel = document.getElementById("inspector-content");
   if (!obj) { panel.innerHTML = '<p class="muted">Select an object to edit its properties.</p>'; return; }
   panel.innerHTML = '<div class="field"><label>OBJECT NAME</label><input id="obj-name" value="' + escapeHtml(obj.name) + '"></div>' +
@@ -126,7 +149,7 @@ function renderInspector() {
     saveState();
   }));
   document.getElementById("obj-visible").addEventListener("change", e => { obj.visible = e.target.checked; saveState(); renderEditor(); });
-  document.getElementById("delete-object").addEventListener("click", () => { project.objects = project.objects.filter(o => o.id !== obj.id); selectedId = null; saveState(); renderEditor(); });
+  document.getElementById("delete-object").addEventListener("click", () => { currentScene(project).objects = currentScene(project).objects.filter(o => o.id !== obj.id); selectedId = null; saveState(); renderEditor(); });
 }
 document.querySelectorAll("[data-view]").forEach(el => el.addEventListener("click", () => showView(el.dataset.view)));
 document.querySelectorAll('[data-action="new-project"]').forEach(el => el.addEventListener("click", () => document.getElementById("project-dialog").showModal()));
@@ -174,7 +197,7 @@ function startPlaytest() {
   const project = currentProject();
   if (!project) return;
   const viewport = document.getElementById("viewport");
-  const player = project.objects.find(object => object.kind === "Player" && object.visible !== false);
+  const player = currentScene(project).objects.find(object => object.kind === "Player" && object.visible !== false);
   if (!player) {
     addObject("Player");
     return startPlaytest();
@@ -183,7 +206,7 @@ function startPlaytest() {
   const width = viewport.clientWidth;
   const height = viewport.clientHeight;
   runtimeScore = 0;
-  runtimeState = project.objects.filter(object => object.visible !== false).map(object => {
+  runtimeState = currentScene(project).objects.filter(object => object.visible !== false).map(object => {
     const element = document.querySelector('.scene-object[data-id="' + object.id + '"]');
     return {
       ...object,
@@ -204,7 +227,7 @@ function startPlaytest() {
   runtimeGameOver = false;
   runtimeLastTime = 0;
   runtimeCameraX = 0;
-  runtimeWorldWidth = Math.max(width * 2.5, ...project.objects.map(object => object.x / 100 * width + width * 0.5));
+  runtimeWorldWidth = Math.max(width * 2.5, ...currentScene(project).objects.map(object => object.x / 100 * width + width * 0.5));
   runtimeKeys = {};
   playing = true;
   document.getElementById("play-btn").textContent = "■ Stop";
@@ -369,6 +392,7 @@ document.getElementById("export-html-btn").addEventListener("click", () => {
   if (!project) return;
   const gameData = {
     name: project.name,
+    scene: currentScene(project).name,
     objects: project.objects.filter(object => object.visible !== false).map(object => ({
       kind: object.kind, name: object.name, x: object.x, y: object.y
     }))
