@@ -54,7 +54,11 @@ function createProject(name, genre) {
   state.projects.unshift(project);
   currentProjectId = project.id;
   saveState();
-  
+  renderProjects("project-grid");
+  renderProjects("all-project-grid");
+  showView("editor");
+}
+
 let authUser = null;
 let authMode = "login";
 const authDialog = document.getElementById("auth-dialog");
@@ -126,10 +130,8 @@ document.getElementById("auth-form").addEventListener("submit", async event => {
   }
 });
 checkAuth();
-\nrenderProjects("project-grid");
-  renderProjects("all-project-grid");
-  showView("editor");
-}
+
+
 function renderProjects(targetId) {
   const target = document.getElementById(targetId);
   if (!target) return;
