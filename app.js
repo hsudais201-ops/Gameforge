@@ -141,11 +141,156 @@ document.getElementById("project-form").addEventListener("submit", e => {
 });
 document.querySelectorAll("[data-object]").forEach(el => el.addEventListener("click", () => addObject(el.dataset.object)));
 document.getElementById("add-object").addEventListener("click", () => addObject("Player"));
+let runtimeFrame = 0;
+let runtimeState = null;
+let runtimeKeys = {};
+let runtimeScore = 0;
+let runtimeLastTime = 0;
+
+function stopPlaytest() {
+  playing = false;
+  if (runtimeFrame) cancelAnimationFrame(runtimeFrame);
+  runtimeFrame = 0;
+  runtimeState = null;
+  runtimeKeys = {};
+  document.getElementById("play-btn").textContent = "▶ Playtest";
+  document.getElementById("viewport-mode").textContent = "EDIT MODE";
+  document.getElementById("viewport").classList.remove("playing");
+  document.getElementById("runtime-hud")?.remove();
+  renderEditor();
+}
+
+function startPlaytest() {
+  const project = currentProject();
+  if (!project) return;
+  const viewport = document.getElementById("viewport");
+  const player = project.objects.find(object => object.kind === "Player" && object.visible !== false);
+  if (!player) {
+    addObject("Player");
+    return startPlaytest();
+  }
+
+  const width = viewport.clientWidth;
+  const height = viewport.clientHeight;
+  runtimeScore = 0;
+  runtimeState = project.objects.filter(object => object.visible !== false).map(object => {
+    const element = document.querySelector('.scene-object[data-id="' + object.id + '"]');
+    return {
+      ...object,
+      px: object.x / 100 * width,
+      py: object.y / 100 * height,
+      w: element?.offsetWidth || 36,
+      h: element?.offsetHeight || 36,
+      vx: 0,
+      vy: 0,
+      grounded: false,
+      alive: true
+    };
+  });
+  runtimeState.playerId = player.id;
+  runtimeLastTime = 0;
+  runtimeKeys = {};
+  playing = true;
+  document.getElementById("play-btn").textContent = "■ Stop";
+  document.getElementById("viewport-mode").textContent = "PLAYTEST MODE";
+  viewport.classList.add("playing");
+
+  const hud = document.createElement("div");
+  hud.id = "runtime-hud";
+  hud.textContent = "SCORE  0     MOVE: A/D or ←/→     JUMP: SPACE";
+  viewport.appendChild(hud);
+
+  runtimeFrame = requestAnimationFrame(runPlaytestFrame);
+}
+
+function runtimeRect(object) {
+  return { left: object.px, right: object.px + object.w, top: object.py, bottom: object.py + object.h };
+}
+function runtimeOverlap(a, b) {
+  const x = runtimeRect(a), y = runtimeRect(b);
+  return x.left < y.right && x.right > y.left && x.top < y.bottom && x.bottom > y.top;
+}
+function runPlaytestFrame(timestamp) {
+  if (!playing || !runtimeState) return;
+  const viewport = document.getElementById("viewport");
+  const width = viewport.clientWidth;
+  const height = viewport.clientHeight;
+  const dt = runtimeLastTime ? Math.min((timestamp - runtimeLastTime) / 1000, 0.032) : 0;
+  runtimeLastTime = timestamp;
+  const player = runtimeState.find(object => object.id === runtimeState.playerId);
+  if (!player) return stopPlaytest();
+
+  const left = runtimeKeys.ArrowLeft || runtimeKeys.a;
+  const right = runtimeKeys.ArrowRight || runtimeKeys.d;
+  const jump = runtimeKeys.Space || runtimeKeys.ArrowUp || runtimeKeys.w;
+  player.vx = (right ? 220 : 0) - (left ? 220 : 0);
+  if (jump && player.grounded) {
+    player.vy = -490;
+    player.grounded = false;
+  }
+  player.vy = Math.min(player.vy + 1250 * dt, 850);
+  player.px = Math.max(0, Math.min(width - player.w, player.px + player.vx * dt));
+  const oldBottom = player.py + player.h;
+  player.py += player.vy * dt;
+  player.grounded = false;
+
+  const floorTop = height * 0.75;
+  if (player.py + player.h >= floorTop && oldBottom <= floorTop + 12 && player.vy >= 0) {
+    player.py = floorTop - player.h;
+    player.vy = 0;
+    player.grounded = true;
+  }
+
+  for (const platform of runtimeState.filter(object => object.kind === "Platform" && object.alive)) {
+    const crossedTop = oldBottom <= platform.py + 8 && player.py + player.h >= platform.py;
+    const horizontal = player.px < platform.px + platform.w && player.px + player.w > platform.px;
+    if (crossedTop && horizontal && player.vy >= 0) {
+      player.py = platform.py - player.h;
+      player.vy = 0;
+      player.grounded = true;
+    }
+  }
+
+  for (const object of runtimeState) {
+    if (!object.alive || object.id === player.id) continue;
+    if (object.kind === "Coin" && runtimeOverlap(player, object)) {
+      object.alive = false;
+      runtimeScore += 1;
+      document.getElementById("runtime-hud").textContent = "SCORE  " + runtimeScore + "     MOVE: A/D or ←/→     JUMP: SPACE";
+    } else if (object.kind === "Enemy" && runtimeOverlap(player, object)) {
+      player.px = Math.max(0, Math.min(width - player.w, player.px - 45));
+      player.vx = 0;
+    }
+  }
+
+  const scene = document.getElementById("scene-objects");
+  for (const object of runtimeState) {
+    let element = scene.querySelector('[data-id="' + object.id + '"]');
+    if (!object.alive) { element?.remove(); continue; }
+    if (element) {
+      element.style.left = object.px + "px";
+      element.style.top = object.py + "px";
+      element.classList.remove("selected");
+    }
+  }
+  runtimeFrame = requestAnimationFrame(runPlaytestFrame);
+}
+
+window.addEventListener("keydown", event => {
+  if (!playing) return;
+  if (["ArrowLeft","ArrowRight","ArrowUp","Space"].includes(event.code)) event.preventDefault();
+  runtimeKeys[event.code] = true;
+  runtimeKeys[event.key.toLowerCase()] = true;
+});
+window.addEventListener("keyup", event => {
+  runtimeKeys[event.code] = false;
+  runtimeKeys[event.key.toLowerCase()] = false;
+});
+window.addEventListener("blur", () => { runtimeKeys = {}; });
+
 document.getElementById("play-btn").addEventListener("click", () => {
-  playing = !playing;
-  document.getElementById("play-btn").textContent = playing ? "■ Stop" : "▶ Playtest";
-  document.getElementById("viewport-mode").textContent = playing ? "PLAYTEST MODE" : "EDIT MODE";
-  document.getElementById("viewport").classList.toggle("playing", playing);
+  if (playing) stopPlaytest();
+  else startPlaytest();
 });
 document.getElementById("export-btn").addEventListener("click", () => {
   const project = currentProject(); if (!project) return;
