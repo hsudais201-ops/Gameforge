@@ -199,7 +199,7 @@ function renderEditor() {
       renderInspector();
     });
   });
-  document.getElementById("empty-scene").classList.toggle("hidden", project.objects.length > 0);
+  document.getElementById("empty-scene").classList.toggle("hidden", sceneData.objects.length > 0);
   renderInspector();
 }
 function renderInspector() {
@@ -264,7 +264,8 @@ let runtimeState = null;
 let runtimeKeys = {};
 let runtimeScore = 0;
 let runtimeLastTime = 0;
-let runtimeCameraX = 0;\nlet runtimeWorldWidth = 0;
+let runtimeCameraX = 0;
+let runtimeWorldWidth = 0;
 let runtimeInitialState = null;
 let runtimeLives = 3;
 let runtimeInvulnerableUntil = 0;
@@ -488,7 +489,7 @@ document.getElementById("export-html-btn").addEventListener("click", () => {
   const gameData = {
     name: project.name,
     scene: currentScene(project).name,
-    objects: project.objects.filter(object => object.visible !== false).map(object => ({
+    objects: currentScene(project).objects.filter(object => object.visible !== false).map(object => ({
       kind: object.kind, name: object.name, x: object.x, y: object.y
     }))
   };
