@@ -14,7 +14,7 @@ GameForge Studio is an early browser-based game creation workspace. The long-ter
 - Add Player, Platform, Coin, Enemy, Hazard, and Decoration objects
 - Select, drag, rename, show/hide, and position scene objects
 - Configure object collision and solid/trigger platform behavior
-- Visual no-code "On Player Touch" actions: add score, lose a life, destroy object, or do nothing
+- Visual no-code "On Player Touch" actions: add score, lose a life, destroy object, complete the level, or do nothing
 - Browser playtest with keyboard and touch controls, score, lives, restart, and game-over state
 - Export the current scene as JSON or a standalone playable HTML file; touch actions and collision settings are included in the HTML export
 
