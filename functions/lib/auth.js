@@ -71,7 +71,7 @@ export async function getSessionUser(request, db) {
   return row;
 }
 
-export async function requestAllowed(request) {
+export function requestAllowed(request) {
   const origin = request.headers.get("Origin");
   if (!origin) return true;
   try { return new URL(origin).origin === new URL(request.url).origin; }
