@@ -296,7 +296,7 @@ function renderInspector() {
     '<div class="field"><label>VERTICAL POSITION <output>' + obj.y + '%</output></label><input id="obj-y" type="range" min="0" max="90" value="' + obj.y + '"></div>' +
     '<div class="field"><label><input id="obj-visible" type="checkbox" ' + (obj.visible !== false ? "checked" : "") + '> Visible in scene</label></div>' +
     '<div class="field"><label><input id="obj-collision" type="checkbox" ' + (obj.collisionEnabled !== false ? "checked" : "") + '> Collision enabled</label></div>' +
-    '<div class="field"><label>COLLISION BEHAVIOR</label><select id="obj-collision-mode"><option value="solid" ' + ((obj.collisionMode || (obj.kind === "Platform" ? "solid" : "trigger")) === "solid" ? "selected" : "") + '>Solid · blocks movement</option><option value="trigger" ' + ((obj.collisionMode || (obj.kind === "Platform" ? "solid" : "trigger")) === "trigger" ? "selected" : "") + '>Trigger · overlap event</option></select></div>' +
+    (obj.kind === "Platform" ? '<div class="field"><label>COLLISION BEHAVIOR</label><select id="obj-collision-mode"><option value="solid" ' + ((obj.collisionMode || "solid") === "solid" ? "selected" : "") + '>Solid · blocks movement</option><option value="trigger" ' + (obj.collisionMode === "trigger" ? "selected" : "") + '>Trigger · overlap event</option></select></div>' : '<div class="field"><label>COLLISION BEHAVIOR</label><p class="muted">Trigger · overlap event</p></div>') +
     '<button class="secondary-btn" id="delete-object">Delete object</button>';
   document.getElementById("obj-name").addEventListener("change", e => { obj.name = e.target.value || obj.kind; saveState(); renderEditor(); });
   ["x","y"].forEach(axis => document.getElementById("obj-" + axis).addEventListener("input", e => {
@@ -508,7 +508,7 @@ function runPlaytestFrame(timestamp) {
   for (const object of runtimeState) {
     if (!object.alive || object.id === player.id) continue;
     if (object.collisionEnabled === false || !runtimeOverlap(player, object)) continue;
-    if (object.kind === "Coin" && object.collisionMode !== "solid") {
+    if (object.kind === "Coin") {
       object.alive = false;
       runtimeScore += 1;
       document.getElementById("runtime-score").textContent = "SCORE  " + runtimeScore;
