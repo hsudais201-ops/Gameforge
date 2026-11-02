@@ -117,6 +117,7 @@ async function syncCloudProjects() {
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     for (const project of toUpload) {
+      ensureScenes(project);
       await cloudRequest("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
