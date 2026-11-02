@@ -297,6 +297,7 @@ function renderInspector() {
     '<div class="field"><label><input id="obj-visible" type="checkbox" ' + (obj.visible !== false ? "checked" : "") + '> Visible in scene</label></div>' +
     '<div class="field"><label><input id="obj-collision" type="checkbox" ' + (obj.collisionEnabled !== false ? "checked" : "") + '> Collision enabled</label></div>' +
     (obj.kind === "Platform" ? '<div class="field"><label>COLLISION BEHAVIOR</label><select id="obj-collision-mode"><option value="solid" ' + ((obj.collisionMode || "solid") === "solid" ? "selected" : "") + '>Solid · blocks movement</option><option value="trigger" ' + (obj.collisionMode === "trigger" ? "selected" : "") + '>Trigger · overlap event</option></select></div>' : '<div class="field"><label>COLLISION BEHAVIOR</label><p class="muted">Trigger · overlap event</p></div>') +
+    '<div class="event-editor"><div class="event-editor-title">ON PLAYER TOUCH</div><div class="field"><label>DO THIS</label><select id="obj-event-action"><option value="none" ' + ((obj.eventAction || (obj.kind === "Coin" ? "add-score" : obj.kind === "Enemy" || obj.kind === "Hazard" ? "lose-life" : "none")) === "none" ? "selected" : "") + '>Nothing</option><option value="add-score" ' + ((obj.eventAction || (obj.kind === "Coin" ? "add-score" : "none")) === "add-score" ? "selected" : "") + '>Add score</option><option value="lose-life" ' + ((obj.eventAction || (obj.kind === "Enemy" || obj.kind === "Hazard" ? "lose-life" : "none")) === "lose-life" ? "selected" : "") + '>Lose a life</option><option value="destroy-object" ' + (obj.eventAction === "destroy-object" ? "selected" : "") + '>Destroy this object</option></select></div><div class="field"><label>SCORE AMOUNT</label><input id="obj-event-value" type="number" min="1" max="999" value="' + Math.max(1, Math.min(999, Number(obj.eventValue) || 1)) + '"></div><p class="muted">This action runs when the player touches this object during playtest.</p></div>' +
     '<button class="secondary-btn" id="delete-object">Delete object</button>';
   document.getElementById("obj-name").addEventListener("change", e => { obj.name = e.target.value || obj.kind; saveState(); renderEditor(); });
   ["x","y"].forEach(axis => document.getElementById("obj-" + axis).addEventListener("input", e => {
@@ -308,7 +309,10 @@ function renderInspector() {
   }));
   document.getElementById("obj-visible").addEventListener("change", e => { obj.visible = e.target.checked; saveState(); renderEditor(); });
   document.getElementById("obj-collision").addEventListener("change", e => { obj.collisionEnabled = e.target.checked; saveState(); });
-  document.getElementById("obj-collision-mode").addEventListener("change", e => { obj.collisionMode = e.target.value; saveState(); });
+  const collisionModeControl = document.getElementById("obj-collision-mode");
+  if (collisionModeControl) collisionModeControl.addEventListener("change", e => { obj.collisionMode = e.target.value; saveState(); });
+  document.getElementById("obj-event-action").addEventListener("change", e => { obj.eventAction = e.target.value; saveState(); });
+  document.getElementById("obj-event-value").addEventListener("change", e => { obj.eventValue = Math.max(1, Math.min(999, Number(e.target.value) || 1)); e.target.value = obj.eventValue; saveState(); });
   document.getElementById("delete-object").addEventListener("click", () => { currentScene(project).objects = currentScene(project).objects.filter(o => o.id !== obj.id); selectedId = null; saveState(); renderEditor(); });
 }
 document.querySelectorAll("[data-view]").forEach(el => el.addEventListener("click", () => showView(el.dataset.view)));
@@ -506,13 +510,17 @@ function runPlaytestFrame(timestamp) {
   }
 
   for (const object of runtimeState) {
-    if (!object.alive || object.id === player.id) continue;
-    if (object.collisionEnabled === false || !runtimeOverlap(player, object)) continue;
-    if (object.kind === "Coin") {
-      object.alive = false;
-      runtimeScore += 1;
+    if (!object.alive || object.id === player.id || object.collisionEnabled === false) continue;
+    if (object.kind === "Platform" && (object.collisionMode || "solid") === "solid") continue;
+    if (!runtimeOverlap(player, object)) continue;
+    const action = object.eventAction || (object.kind === "Coin" ? "add-score" : object.kind === "Enemy" || object.kind === "Hazard" ? "lose-life" : "none");
+    if (action === "add-score") {
+      runtimeScore += Math.max(1, Math.min(999, Number(object.eventValue) || 1));
       document.getElementById("runtime-score").textContent = "SCORE  " + runtimeScore;
-    } else if ((object.kind === "Enemy" || object.kind === "Hazard") && timestamp >= runtimeInvulnerableUntil) {
+      object.alive = false;
+    } else if (action === "destroy-object") {
+      object.alive = false;
+    } else if (action === "lose-life" && timestamp >= runtimeInvulnerableUntil) {
       runtimeLives -= 1;
       runtimeInvulnerableUntil = timestamp + 1100;
       player.px = Math.max(0, Math.min(runtimeWorldWidth - player.w, player.px - 65));
