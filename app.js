@@ -147,12 +147,18 @@ let runtimeKeys = {};
 let runtimeScore = 0;
 let runtimeLastTime = 0;
 let runtimeCameraX = 0;\nlet runtimeWorldWidth = 0;
+let runtimeInitialState = null;
+let runtimeLives = 3;
+let runtimeInvulnerableUntil = 0;
+let runtimeGameOver = false;
 
 function stopPlaytest() {
   playing = false;
   if (runtimeFrame) cancelAnimationFrame(runtimeFrame);
   runtimeFrame = 0;
   runtimeState = null;
+  runtimeInitialState = null;
+  runtimeGameOver = false;
   runtimeKeys = {};
   document.getElementById("play-btn").textContent = "▶ Playtest";
   document.getElementById("viewport-mode").textContent = "EDIT MODE";
@@ -192,6 +198,10 @@ function startPlaytest() {
     };
   });
   runtimeState.playerId = player.id;
+  runtimeInitialState = runtimeState.map(object => ({...object}));
+  runtimeLives = 3;
+  runtimeInvulnerableUntil = 0;
+  runtimeGameOver = false;
   runtimeLastTime = 0;
   runtimeCameraX = 0;
   runtimeWorldWidth = Math.max(width * 2.5, ...project.objects.map(object => object.x / 100 * width + width * 0.5));
@@ -203,7 +213,8 @@ function startPlaytest() {
 
   const hud = document.createElement("div");
   hud.id = "runtime-hud";
-  hud.innerHTML = '<strong id="runtime-score">SCORE&nbsp; 0</strong><span class="runtime-hint">A/D or arrows · Space to jump</span><div class="runtime-touch"><button data-key="ArrowLeft">◀</button><button data-key="ArrowRight">▶</button><button data-key="Space">JUMP</button></div>';
+  hud.innerHTML = '<strong id="runtime-score">SCORE&nbsp; 0</strong><strong id="runtime-lives">LIVES  3</strong><span class="runtime-hint">A/D or arrows · Space to jump</span><div class="runtime-touch"><button data-key="ArrowLeft">◀</button><button data-key="ArrowRight">▶</button><button data-key="Space">JUMP</button><button id="runtime-restart">RESTART</button></div>';
+  hud.querySelector("#runtime-restart").addEventListener("click", restartPlaytest);
   hud.querySelectorAll("[data-key]").forEach(button => {
     const key = button.dataset.key;
     button.addEventListener("pointerdown", event => { event.preventDefault(); runtimeKeys[key] = true; });
@@ -214,6 +225,31 @@ function startPlaytest() {
   runtimeFrame = requestAnimationFrame(runPlaytestFrame);
 }
 
+function restartPlaytest() {
+  if (!runtimeInitialState) return;
+  runtimeState = runtimeInitialState.map(object => ({...object}));
+  runtimeScore = 0;
+  runtimeLives = 3;
+  runtimeInvulnerableUntil = 0;
+  runtimeGameOver = false;
+  runtimeLastTime = 0;
+  document.getElementById("runtime-score").textContent = "SCORE  0";
+  document.getElementById("runtime-lives").textContent = "LIVES  3";
+  document.getElementById("runtime-game-over")?.remove();
+  runtimeFrame = requestAnimationFrame(runPlaytestFrame);
+}
+
+function endPlaytestGame() {
+  if (runtimeGameOver) return;
+  runtimeGameOver = true;
+  runtimeKeys = {};
+  const overlay = document.createElement("div");
+  overlay.id = "runtime-game-over";
+  overlay.innerHTML = '<strong>GAME OVER</strong><span>Try again when you are ready.</span><button id="runtime-try-again">PLAY AGAIN</button>';
+  overlay.querySelector("button").addEventListener("click", restartPlaytest);
+  document.getElementById("viewport").appendChild(overlay);
+}
+
 function runtimeRect(object) {
   return { left: object.px, right: object.px + object.w, top: object.py, bottom: object.py + object.h };
 }
@@ -222,7 +258,7 @@ function runtimeOverlap(a, b) {
   return x.left < y.right && x.right > y.left && x.top < y.bottom && x.bottom > y.top;
 }
 function runPlaytestFrame(timestamp) {
-  if (!playing || !runtimeState) return;
+  if (!playing || !runtimeState || runtimeGameOver) return;
   const viewport = document.getElementById("viewport");
   const width = viewport.clientWidth;
   const height = viewport.clientHeight;
@@ -268,10 +304,24 @@ function runPlaytestFrame(timestamp) {
       object.alive = false;
       runtimeScore += 1;
       document.getElementById("runtime-score").textContent = "SCORE  " + runtimeScore;
-    } else if (object.kind === "Enemy" && runtimeOverlap(player, object)) {
-      player.px = Math.max(0, Math.min(width - player.w, player.px - 45));
-      player.vx = 0;
+    } else if (object.kind === "Enemy" && runtimeOverlap(player, object) && timestamp >= runtimeInvulnerableUntil) {
+      runtimeLives -= 1;
+      runtimeInvulnerableUntil = timestamp + 1100;
+      player.px = Math.max(0, Math.min(runtimeWorldWidth - player.w, player.px - 65));
+      player.vy = -260;
+      document.getElementById("runtime-lives").textContent = "LIVES  " + runtimeLives;
+      if (runtimeLives <= 0) { endPlaytestGame(); return; }
     }
+  }
+  if (player.py > height + 100) {
+    runtimeLives -= 1;
+    document.getElementById("runtime-lives").textContent = "LIVES  " + runtimeLives;
+    if (runtimeLives <= 0) { endPlaytestGame(); return; }
+    player.px = 45;
+    player.py = height * 0.35;
+    player.vx = 0;
+    player.vy = 0;
+    runtimeInvulnerableUntil = timestamp + 1100;
   }
 
   const targetCameraX = Math.max(0, Math.min(runtimeWorldWidth - width, player.px - width * 0.42));
