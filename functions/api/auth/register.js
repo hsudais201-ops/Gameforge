@@ -4,6 +4,7 @@ export async function onRequestPost({ request, env }) {
   if (!requestAllowed(request)) return json({ error: "Request origin not allowed." }, 403);
   let body;
   try { body = await request.json(); } catch { return json({ error: "Please send valid JSON." }, 400); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Please send valid account details." }, 400);
   const email = String(body.email || "").trim().toLowerCase();
   const displayName = String(body.name || "").trim().slice(0, 48);
   const password = typeof body.password === "string" ? body.password : "";
