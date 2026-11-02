@@ -232,7 +232,9 @@ function escapeHtml(value) {
 function addObject(kind) {
   const project = currentProject();
   if (!project) return;
-  const object = { id: crypto.randomUUID(), name: kind, kind, x: 35 + Math.round(Math.random()*35), y: kind === "Platform" ? 65 : 45, visible: true, collisionEnabled: kind !== "Decoration", collisionMode: kind === "Platform" ? "solid" : "trigger" };
+  const sizes = { Player: [36, 44], Platform: [90, 17], Coin: [28, 28], Enemy: [36, 36], Hazard: [36, 36], Decoration: [42, 42] };
+  const [width, height] = sizes[kind] || [36, 36];
+  const object = { id: crypto.randomUUID(), name: kind, kind, x: 35 + Math.round(Math.random()*35), y: kind === "Platform" ? 65 : 45, width, height, visible: true, collisionEnabled: kind !== "Decoration", collisionMode: kind === "Platform" ? "solid" : "trigger" };
   currentScene(project).objects.push(object); selectedId = object.id; project.updated = new Date().toISOString();
   saveState(); renderEditor();
 }
@@ -246,7 +248,7 @@ function renderEditor() {
   list.innerHTML = sceneData.objects.map(o => '<div class="object-row ' + (o.id === selectedId ? "selected" : "") + '" data-id="' + o.id + '"><span>' + (icons[o.kind] || "◇") + " " + escapeHtml(o.name) + '</span><span>⋮</span></div>').join("") || '<p class="muted">No objects in this scene yet.</p>';
   list.querySelectorAll("[data-id]").forEach(row => row.addEventListener("click", () => { selectedId = row.dataset.id; renderEditor(); }));
   const scene = document.getElementById("scene-objects");
-  scene.innerHTML = sceneData.objects.filter(o => o.visible).map(o => '<div class="scene-object ' + (o.id === selectedId ? "selected" : "") + '" data-id="' + o.id + '" data-kind="' + o.kind + '" style="left:' + o.x + '%;top:' + o.y + '%">' + (icons[o.kind] || "◇") + '</div>').join("");
+  scene.innerHTML = sceneData.objects.filter(o => o.visible).map(o => '<div class="scene-object ' + (o.id === selectedId ? "selected" : "") + '" data-id="' + o.id + '" data-kind="' + o.kind + '" style="left:' + o.x + '%;top:' + o.y + '%;width:' + (Number(o.width) || (o.kind === "Platform" ? 90 : 36)) + 'px;height:' + (Number(o.height) || (o.kind === "Platform" ? 17 : 36)) + 'px">' + (icons[o.kind] || "◇") + '</div>').join("");
   scene.querySelectorAll("[data-id]").forEach(el => {
     el.addEventListener("pointerdown", event => {
       if (playing) return;
@@ -294,6 +296,8 @@ function renderInspector() {
   panel.innerHTML = '<div class="field"><label>OBJECT NAME</label><input id="obj-name" value="' + escapeHtml(obj.name) + '"></div>' +
     '<div class="field"><label>HORIZONTAL POSITION <output>' + obj.x + '%</output></label><input id="obj-x" type="range" min="0" max="95" value="' + obj.x + '"></div>' +
     '<div class="field"><label>VERTICAL POSITION <output>' + obj.y + '%</output></label><input id="obj-y" type="range" min="0" max="90" value="' + obj.y + '"></div>' +
+    '<div class="field"><label>OBJECT WIDTH <output>' + (Number(obj.width) || (obj.kind === "Platform" ? 90 : 36)) + ' px</output></label><input id="obj-width" type="range" min="12" max="200" value="' + (Number(obj.width) || (obj.kind === "Platform" ? 90 : 36)) + '"></div>' +
+    '<div class="field"><label>OBJECT HEIGHT <output>' + (Number(obj.height) || (obj.kind === "Platform" ? 17 : 36)) + ' px</output></label><input id="obj-height" type="range" min="8" max="160" value="' + (Number(obj.height) || (obj.kind === "Platform" ? 17 : 36)) + '"></div>' +
     '<div class="field"><label><input id="obj-visible" type="checkbox" ' + (obj.visible !== false ? "checked" : "") + '> Visible in scene</label></div>' +
     '<div class="field"><label><input id="obj-collision" type="checkbox" ' + (obj.collisionEnabled !== false ? "checked" : "") + '> Collision enabled</label></div>' +
     (obj.kind === "Platform" ? '<div class="field"><label>COLLISION BEHAVIOR</label><select id="obj-collision-mode"><option value="solid" ' + ((obj.collisionMode || "solid") === "solid" ? "selected" : "") + '>Solid · blocks movement</option><option value="trigger" ' + (obj.collisionMode === "trigger" ? "selected" : "") + '>Trigger · overlap event</option></select></div>' : '<div class="field"><label>COLLISION BEHAVIOR</label><p class="muted">Trigger · overlap event</p></div>') +
@@ -305,6 +309,13 @@ function renderInspector() {
     e.target.previousElementSibling.querySelector("output").value = obj[axis] + "%";
     const visual = document.querySelector('.scene-object[data-id="' + obj.id + '"]');
     if (visual) visual.style[axis === "x" ? "left" : "top"] = obj[axis] + "%";
+    saveState();
+  }));
+  ["width","height"].forEach(axis => document.getElementById("obj-" + axis).addEventListener("input", e => {
+    obj[axis] = Number(e.target.value);
+    e.target.previousElementSibling.querySelector("output").value = obj[axis] + " px";
+    const visual = document.querySelector('.scene-object[data-id="' + obj.id + '"]');
+    if (visual) visual.style[axis] = obj[axis] + "px";
     saveState();
   }));
   document.getElementById("obj-visible").addEventListener("change", e => { obj.visible = e.target.checked; saveState(); renderEditor(); });
@@ -400,8 +411,8 @@ function startPlaytest() {
       ...object,
       px: object.x / 100 * width,
       py: object.y / 100 * height,
-      w: element?.offsetWidth || 36,
-      h: element?.offsetHeight || 36,
+      w: Number(object.width) || element?.offsetWidth || 36,
+      h: Number(object.height) || element?.offsetHeight || 36,
       vx: 0,
       vy: 0,
       grounded: false,
@@ -591,7 +602,7 @@ document.getElementById("export-html-btn").addEventListener("click", () => {
     name: project.name,
     scene: currentScene(project).name,
     objects: currentScene(project).objects.filter(object => object.visible !== false).map(object => ({
-      kind: object.kind, name: object.name, x: object.x, y: object.y,
+      kind: object.kind, name: object.name, x: object.x, y: object.y, width: Number(object.width) || (object.kind === "Platform" ? 90 : 36), height: Number(object.height) || (object.kind === "Platform" ? 17 : 36),
       collisionEnabled: object.collisionEnabled !== false,
       collisionMode: object.collisionMode || (object.kind === "Platform" ? "solid" : "trigger"),
       eventAction: object.eventAction || (object.kind === "Coin" ? "add-score" : object.kind === "Enemy" || object.kind === "Hazard" ? "lose-life" : "none"),
@@ -607,7 +618,7 @@ document.getElementById("export-html-btn").addEventListener("click", () => {
     'const keys={};let score=0,lives=3,invulnerable=0,player,things,last=0,frame=0;',
     'function reset(){score=0;lives=3;invulnerable=0;document.getElementById("score").textContent="SCORE 0";document.getElementById("lives").textContent="LIVES 3";player={x:70,y:250,w:30,h:42,vx:0,vy:0,ground:false};things=GAME.objects.filter(o=>o.kind!=="Player").map(o=>({...o,x:o.x/100*canvas.width,y:o.y/100*canvas.height,alive:true}));cancelAnimationFrame(frame);last=0;frame=requestAnimationFrame(loop)}',
     'function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}',
-    'function loop(t){let dt=last?Math.min((t-last)/1000,.032):0;last=t;player.vx=(keys.right?220:0)-(keys.left?220:0);if(keys.jump&&player.ground){player.vy=-490;player.ground=false}player.vy=Math.min(player.vy+1250*dt,850);player.x=Math.max(0,Math.min(canvas.width-player.w,player.x+player.vx*dt));let old=player.y+player.h;player.y+=player.vy*dt;player.ground=false;let floor=canvas.height*.75;if(player.y+player.h>=floor&&old<=floor+12&&player.vy>=0){player.y=floor-player.h;player.vy=0;player.ground=true}for(const o of things){if(!o.alive)continue;let b={x:o.x,y:o.y,w:o.kind==="Platform"?110:30,h:o.kind==="Platform"?16:30};if(o.kind==="Platform"&&o.collisionEnabled!==false&&o.collisionMode==="solid"&&old<=b.y+8&&player.y+player.h>=b.y&&player.x<b.x+b.w&&player.x+player.w>b.x&&player.vy>=0){player.y=b.y-player.h;player.vy=0;player.ground=true}if(o.collisionEnabled===false||(o.kind==="Platform"&&o.collisionMode==="solid")||!hit(player,b))continue;if(o.eventAction==="add-score"){o.alive=false;score+=o.eventValue||1;document.getElementById("score").textContent="SCORE "+score}else if(o.eventAction==="destroy-object"){o.alive=false}else if(o.eventAction==="win-game"){o.alive=false;cancelAnimationFrame(frame);ctx.fillStyle="#101510dd";ctx.fillRect(0,0,900,500);ctx.fillStyle="#a5f34d";ctx.font="bold 42px system-ui";ctx.fillText("LEVEL COMPLETE!",285,250);return}else if(o.eventAction==="lose-life"&&t>=invulnerable){lives--;invulnerable=t+1100;player.x=Math.max(0,player.x-45);player.vy=-260;document.getElementById("lives").textContent="LIVES "+lives;if(lives<=0){cancelAnimationFrame(frame);ctx.fillStyle="#101510dd";ctx.fillRect(0,0,900,500);ctx.fillStyle="#fff";ctx.font="bold 42px system-ui";ctx.fillText("GAME OVER",330,250);return}}}ctx.clearRect(0,0,900,500);ctx.fillStyle="#263d2a";ctx.fillRect(0,floor,900,500);for(const o of things){if(!o.alive)continue;ctx.fillStyle=o.kind==="Platform"?"#87c85a":o.kind==="Coin"?"#f5d34c":"#dc6673";ctx.fillRect(o.x,o.y,o.kind==="Platform"?110:30,o.kind==="Platform"?16:30)}ctx.fillStyle="#a5f34d";ctx.fillRect(player.x,player.y,player.w,player.h);frame=requestAnimationFrame(loop)}',
+    'function loop(t){let dt=last?Math.min((t-last)/1000,.032):0;last=t;player.vx=(keys.right?220:0)-(keys.left?220:0);if(keys.jump&&player.ground){player.vy=-490;player.ground=false}player.vy=Math.min(player.vy+1250*dt,850);player.x=Math.max(0,Math.min(canvas.width-player.w,player.x+player.vx*dt));let old=player.y+player.h;player.y+=player.vy*dt;player.ground=false;let floor=canvas.height*.75;if(player.y+player.h>=floor&&old<=floor+12&&player.vy>=0){player.y=floor-player.h;player.vy=0;player.ground=true}for(const o of things){if(!o.alive)continue;let b={x:o.x,y:o.y,w:o.width||(o.kind==="Platform"?90:30),h:o.height||(o.kind==="Platform"?17:30)};if(o.kind==="Platform"&&o.collisionEnabled!==false&&o.collisionMode==="solid"&&old<=b.y+8&&player.y+player.h>=b.y&&player.x<b.x+b.w&&player.x+player.w>b.x&&player.vy>=0){player.y=b.y-player.h;player.vy=0;player.ground=true}if(o.collisionEnabled===false||(o.kind==="Platform"&&o.collisionMode==="solid")||!hit(player,b))continue;if(o.eventAction==="add-score"){o.alive=false;score+=o.eventValue||1;document.getElementById("score").textContent="SCORE "+score}else if(o.eventAction==="destroy-object"){o.alive=false}else if(o.eventAction==="win-game"){o.alive=false;cancelAnimationFrame(frame);ctx.fillStyle="#101510dd";ctx.fillRect(0,0,900,500);ctx.fillStyle="#a5f34d";ctx.font="bold 42px system-ui";ctx.fillText("LEVEL COMPLETE!",285,250);return}else if(o.eventAction==="lose-life"&&t>=invulnerable){lives--;invulnerable=t+1100;player.x=Math.max(0,player.x-45);player.vy=-260;document.getElementById("lives").textContent="LIVES "+lives;if(lives<=0){cancelAnimationFrame(frame);ctx.fillStyle="#101510dd";ctx.fillRect(0,0,900,500);ctx.fillStyle="#fff";ctx.font="bold 42px system-ui";ctx.fillText("GAME OVER",330,250);return}}}ctx.clearRect(0,0,900,500);ctx.fillStyle="#263d2a";ctx.fillRect(0,floor,900,500);for(const o of things){if(!o.alive)continue;ctx.fillStyle=o.kind==="Platform"?"#87c85a":o.kind==="Coin"?"#f5d34c":"#dc6673";ctx.fillRect(o.x,o.y,o.width||(o.kind==="Platform"?90:30),o.height||(o.kind==="Platform"?17:30))}ctx.fillStyle="#a5f34d";ctx.fillRect(player.x,player.y,player.w,player.h);frame=requestAnimationFrame(loop)}',
     'window.addEventListener("keydown",e=>{let k=e.key.toLowerCase();if(["arrowleft","arrowright","arrowup"," "].includes(k))e.preventDefault();if(k==="a"||k==="arrowleft")keys.left=true;if(k==="d"||k==="arrowright")keys.right=true;if(k==="w"||k==="arrowup"||k===" ")keys.jump=true});window.addEventListener("keyup",e=>{let k=e.key.toLowerCase();if(k==="a"||k==="arrowleft")keys.left=false;if(k==="d"||k==="arrowright")keys.right=false;if(k==="w"||k==="arrowup"||k===" ")keys.jump=false});document.getElementById("restart").onclick=reset;reset();',
     '</script></body></html>'
   ].join("\\n");
