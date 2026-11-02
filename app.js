@@ -54,7 +54,79 @@ function createProject(name, genre) {
   state.projects.unshift(project);
   currentProjectId = project.id;
   saveState();
-  renderProjects("project-grid");
+  
+let authUser = null;
+let authMode = "login";
+const authDialog = document.getElementById("auth-dialog");
+const authButton = document.getElementById("account-btn");
+function setAuthMode(mode) {
+  authMode = mode;
+  document.getElementById("auth-title").textContent = mode === "login" ? "Welcome back" : "Create your account";
+  document.getElementById("auth-copy").textContent = mode === "login" ? "Sign in to your GameForge account." : "Create an account to get started with GameForge.";
+  document.getElementById("auth-name-field").hidden = mode !== "register";
+  document.getElementById("auth-password").autocomplete = mode === "login" ? "current-password" : "new-password";
+  document.getElementById("auth-password").minLength = mode === "register" ? 10 : 1;
+  document.getElementById("auth-submit").textContent = mode === "login" ? "Sign in" : "Create account";
+  document.querySelectorAll("[data-auth-mode]").forEach(button => button.classList.toggle("active", button.dataset.authMode === mode));
+  document.getElementById("auth-error").textContent = "";
+}
+function renderAuth() {
+  authButton.textContent = authUser ? (authUser.name || authUser.email) + " · Sign out" : "Sign in";
+  authButton.title = authUser ? authUser.email + " — click to sign out" : "Sign in or create a GameForge account";
+}
+async function checkAuth() {
+  try {
+    const response = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
+    const data = await response.json();
+    authUser = data.user || null;
+  } catch { authUser = null; }
+  renderAuth();
+}
+authButton.addEventListener("click", async () => {
+  if (authUser) {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" } });
+      authUser = null; renderAuth();
+    } catch { document.getElementById("save-state").textContent = "Could not contact server"; }
+    return;
+  }
+  setAuthMode("login");
+  authDialog.showModal();
+});
+document.getElementById("auth-close").addEventListener("click", () => authDialog.close());
+document.querySelectorAll("[data-auth-mode]").forEach(button => button.addEventListener("click", () => setAuthMode(button.dataset.authMode)));
+document.getElementById("auth-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const error = document.getElementById("auth-error");
+  const submit = document.getElementById("auth-submit");
+  error.textContent = "";
+  submit.disabled = true;
+  submit.textContent = authMode === "login" ? "Signing in…" : "Creating account…";
+  const payload = {
+    email: document.getElementById("auth-email").value.trim(),
+    password: document.getElementById("auth-password").value
+  };
+  if (authMode === "register") payload.name = document.getElementById("auth-name").value.trim();
+  try {
+    const response = await fetch("/api/auth/" + (authMode === "login" ? "login" : "register"), {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Authentication failed. Please try again.");
+    authUser = data.user;
+    renderAuth();
+    authDialog.close();
+    document.getElementById("auth-form").reset();
+    document.getElementById("save-state").textContent = "Signed in · projects saved locally";
+  } catch (err) {
+    error.textContent = err.message || "Could not connect to GameForge. Please try again.";
+  } finally {
+    submit.disabled = false;
+    submit.textContent = authMode === "login" ? "Sign in" : "Create account";
+  }
+});
+checkAuth();
+\nrenderProjects("project-grid");
   renderProjects("all-project-grid");
   showView("editor");
 }
