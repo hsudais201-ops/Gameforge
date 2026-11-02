@@ -68,7 +68,42 @@ function renderEditor() {
   list.querySelectorAll("[data-id]").forEach(row => row.addEventListener("click", () => { selectedId = row.dataset.id; renderEditor(); }));
   const scene = document.getElementById("scene-objects");
   scene.innerHTML = project.objects.filter(o => o.visible).map(o => '<div class="scene-object ' + (o.id === selectedId ? "selected" : "") + '" data-id="' + o.id + '" data-kind="' + o.kind + '" style="left:' + o.x + '%;top:' + o.y + '%">' + (icons[o.kind] || "◇") + '</div>').join("");
-  scene.querySelectorAll("[data-id]").forEach(el => el.addEventListener("click", () => { selectedId = el.dataset.id; renderEditor(); }));
+  scene.querySelectorAll("[data-id]").forEach(el => {
+    el.addEventListener("pointerdown", event => {
+      if (playing) return;
+      event.preventDefault();
+      selectedId = el.dataset.id;
+      const object = project.objects.find(item => item.id === selectedId);
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const initialX = object.x;
+      const initialY = object.y;
+      const bounds = document.getElementById("viewport").getBoundingClientRect();
+      el.setPointerCapture(event.pointerId);
+      el.classList.add("selected");
+      const move = moveEvent => {
+        object.x = Math.max(0, Math.min(95, initialX + (moveEvent.clientX - startX) / bounds.width * 100));
+        object.y = Math.max(0, Math.min(90, initialY + (moveEvent.clientY - startY) / bounds.height * 100));
+        el.style.left = object.x + "%";
+        el.style.top = object.y + "%";
+        const xControl = document.getElementById("obj-x");
+        const yControl = document.getElementById("obj-y");
+        if (xControl) { xControl.value = object.x; xControl.previousElementSibling.querySelector("output").value = Math.round(object.x) + "%"; }
+        if (yControl) { yControl.value = object.y; yControl.previousElementSibling.querySelector("output").value = Math.round(object.y) + "%"; }
+      };
+      const finish = () => {
+        el.removeEventListener("pointermove", move);
+        el.removeEventListener("pointerup", finish);
+        el.removeEventListener("pointercancel", finish);
+        saveState();
+        renderEditor();
+      };
+      el.addEventListener("pointermove", move);
+      el.addEventListener("pointerup", finish);
+      el.addEventListener("pointercancel", finish);
+      renderInspector();
+    });
+  });
   document.getElementById("empty-scene").classList.toggle("hidden", project.objects.length > 0);
   renderInspector();
 }
