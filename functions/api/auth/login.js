@@ -2,6 +2,7 @@ import { json, hashPassword, createSession, sessionCookie, requestAllowed, rateL
 export async function onRequestPost({ request, env }) {
   if (!requestAllowed(request)) return json({ error: "Request origin not allowed." }, 403);
   let body; try { body = await request.json(); } catch { return json({ error: "Please send valid JSON." }, 400); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Please send valid account details." }, 400);
   const email = String(body.email || "").trim().toLowerCase();
   const password = typeof body.password === "string" ? body.password : "";
   if (!validEmail(email) || !password || password.length > 128) return json({ error: "Email or password is incorrect." }, 401);
