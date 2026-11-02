@@ -145,7 +145,7 @@ let runtimeFrame = 0;
 let runtimeState = null;
 let runtimeKeys = {};
 let runtimeScore = 0;
-let runtimeLastTime = 0;
+let runtimeLastTime = 0;\nlet runtimeCameraX = 0;\nlet runtimeWorldWidth = 0;
 
 function stopPlaytest() {
   playing = false;
@@ -157,6 +157,9 @@ function stopPlaytest() {
   document.getElementById("viewport-mode").textContent = "EDIT MODE";
   document.getElementById("viewport").classList.remove("playing");
   document.getElementById("runtime-hud")?.remove();
+  const scene = document.getElementById("scene-objects");
+  scene.style.width = "";
+  scene.style.transform = "";
   renderEditor();
 }
 
@@ -189,6 +192,8 @@ function startPlaytest() {
   });
   runtimeState.playerId = player.id;
   runtimeLastTime = 0;
+  runtimeCameraX = 0;
+  runtimeWorldWidth = Math.max(width * 2.5, ...project.objects.map(object => object.x / 100 * width + width * 0.5));
   runtimeKeys = {};
   playing = true;
   document.getElementById("play-btn").textContent = "■ Stop";
@@ -234,7 +239,7 @@ function runPlaytestFrame(timestamp) {
     player.grounded = false;
   }
   player.vy = Math.min(player.vy + 1250 * dt, 850);
-  player.px = Math.max(0, Math.min(width - player.w, player.px + player.vx * dt));
+  player.px = Math.max(0, Math.min(runtimeWorldWidth - player.w, player.px + player.vx * dt));
   const oldBottom = player.py + player.h;
   player.py += player.vy * dt;
   player.grounded = false;
@@ -268,16 +273,21 @@ function runPlaytestFrame(timestamp) {
     }
   }
 
+  const targetCameraX = Math.max(0, Math.min(runtimeWorldWidth - width, player.px - width * 0.42));
+  runtimeCameraX += (targetCameraX - runtimeCameraX) * Math.min(1, dt * 8);
   const scene = document.getElementById("scene-objects");
   for (const object of runtimeState) {
     let element = scene.querySelector('[data-id="' + object.id + '"]');
     if (!object.alive) { element?.remove(); continue; }
     if (element) {
-      element.style.left = object.px + "px";
+      element.style.left = (object.px - runtimeCameraX) + "px";
       element.style.top = object.py + "px";
       element.classList.remove("selected");
     }
   }
+  scene.style.width = runtimeWorldWidth + "px";
+  scene.style.transform = "translateX(" + (-runtimeCameraX) + "px)";
+  document.getElementById("runtime-hud").dataset.world = Math.round(runtimeCameraX) + " / " + Math.round(runtimeWorldWidth);
   runtimeFrame = requestAnimationFrame(runPlaytestFrame);
 }
 
