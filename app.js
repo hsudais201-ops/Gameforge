@@ -197,7 +197,12 @@ function startPlaytest() {
 
   const hud = document.createElement("div");
   hud.id = "runtime-hud";
-  hud.textContent = "SCORE  0     MOVE: A/D or ←/→     JUMP: SPACE";
+  hud.innerHTML = '<strong id="runtime-score">SCORE&nbsp; 0</strong><span class="runtime-hint">A/D or arrows · Space to jump</span><div class="runtime-touch"><button data-key="ArrowLeft">◀</button><button data-key="ArrowRight">▶</button><button data-key="Space">JUMP</button></div>';
+  hud.querySelectorAll("[data-key]").forEach(button => {
+    const key = button.dataset.key;
+    button.addEventListener("pointerdown", event => { event.preventDefault(); runtimeKeys[key] = true; });
+    ["pointerup","pointercancel","pointerleave"].forEach(type => button.addEventListener(type, () => { runtimeKeys[key] = false; }));
+  });
   viewport.appendChild(hud);
 
   runtimeFrame = requestAnimationFrame(runPlaytestFrame);
@@ -256,7 +261,7 @@ function runPlaytestFrame(timestamp) {
     if (object.kind === "Coin" && runtimeOverlap(player, object)) {
       object.alive = false;
       runtimeScore += 1;
-      document.getElementById("runtime-hud").textContent = "SCORE  " + runtimeScore + "     MOVE: A/D or ←/→     JUMP: SPACE";
+      document.getElementById("runtime-score").textContent = "SCORE  " + runtimeScore;
     } else if (object.kind === "Enemy" && runtimeOverlap(player, object)) {
       player.px = Math.max(0, Math.min(width - player.w, player.px - 45));
       player.vx = 0;
