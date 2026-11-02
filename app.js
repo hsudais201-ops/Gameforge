@@ -1,5 +1,5 @@
 const STORAGE_KEY = "gameforge-studio-v1";
-const icons = { Player: "🧙", Platform: "", Coin: "💎", Enemy: "👾" };
+const icons = { Player: "🧙", Platform: "", Coin: "💎", Enemy: "👾", Hazard: "⚠️", Decoration: "🌿" };
 let state = loadState();
 let currentProjectId = state.projects[0]?.id || null;
 let selectedId = null;
@@ -232,7 +232,7 @@ function escapeHtml(value) {
 function addObject(kind) {
   const project = currentProject();
   if (!project) return;
-  const object = { id: crypto.randomUUID(), name: kind, kind, x: 35 + Math.round(Math.random()*35), y: kind === "Platform" ? 65 : 45, visible: true };
+  const object = { id: crypto.randomUUID(), name: kind, kind, x: 35 + Math.round(Math.random()*35), y: kind === "Platform" ? 65 : 45, visible: true, collisionEnabled: kind !== "Decoration", collisionMode: kind === "Platform" ? "solid" : "trigger" };
   currentScene(project).objects.push(object); selectedId = object.id; project.updated = new Date().toISOString();
   saveState(); renderEditor();
 }
@@ -294,7 +294,9 @@ function renderInspector() {
   panel.innerHTML = '<div class="field"><label>OBJECT NAME</label><input id="obj-name" value="' + escapeHtml(obj.name) + '"></div>' +
     '<div class="field"><label>HORIZONTAL POSITION <output>' + obj.x + '%</output></label><input id="obj-x" type="range" min="0" max="95" value="' + obj.x + '"></div>' +
     '<div class="field"><label>VERTICAL POSITION <output>' + obj.y + '%</output></label><input id="obj-y" type="range" min="0" max="90" value="' + obj.y + '"></div>' +
-    '<div class="field"><label><input id="obj-visible" type="checkbox" ' + (obj.visible ? "checked" : "") + '> Visible in scene</label></div>' +
+    '<div class="field"><label><input id="obj-visible" type="checkbox" ' + (obj.visible !== false ? "checked" : "") + '> Visible in scene</label></div>' +
+    '<div class="field"><label><input id="obj-collision" type="checkbox" ' + (obj.collisionEnabled !== false ? "checked" : "") + '> Collision enabled</label></div>' +
+    '<div class="field"><label>COLLISION BEHAVIOR</label><select id="obj-collision-mode"><option value="solid" ' + ((obj.collisionMode || (obj.kind === "Platform" ? "solid" : "trigger")) === "solid" ? "selected" : "") + '>Solid · blocks movement</option><option value="trigger" ' + ((obj.collisionMode || (obj.kind === "Platform" ? "solid" : "trigger")) === "trigger" ? "selected" : "") + '>Trigger · overlap event</option></select></div>' +
     '<button class="secondary-btn" id="delete-object">Delete object</button>';
   document.getElementById("obj-name").addEventListener("change", e => { obj.name = e.target.value || obj.kind; saveState(); renderEditor(); });
   ["x","y"].forEach(axis => document.getElementById("obj-" + axis).addEventListener("input", e => {
@@ -305,6 +307,8 @@ function renderInspector() {
     saveState();
   }));
   document.getElementById("obj-visible").addEventListener("change", e => { obj.visible = e.target.checked; saveState(); renderEditor(); });
+  document.getElementById("obj-collision").addEventListener("change", e => { obj.collisionEnabled = e.target.checked; saveState(); });
+  document.getElementById("obj-collision-mode").addEventListener("change", e => { obj.collisionMode = e.target.value; saveState(); });
   document.getElementById("delete-object").addEventListener("click", () => { currentScene(project).objects = currentScene(project).objects.filter(o => o.id !== obj.id); selectedId = null; saveState(); renderEditor(); });
 }
 document.querySelectorAll("[data-view]").forEach(el => el.addEventListener("click", () => showView(el.dataset.view)));
@@ -491,7 +495,7 @@ function runPlaytestFrame(timestamp) {
     player.grounded = true;
   }
 
-  for (const platform of runtimeState.filter(object => object.kind === "Platform" && object.alive)) {
+  for (const platform of runtimeState.filter(object => object.kind === "Platform" && object.alive && object.collisionEnabled !== false && (object.collisionMode || "solid") === "solid")) {
     const crossedTop = oldBottom <= platform.py + 8 && player.py + player.h >= platform.py;
     const horizontal = player.px < platform.px + platform.w && player.px + player.w > platform.px;
     if (crossedTop && horizontal && player.vy >= 0) {
@@ -503,11 +507,12 @@ function runPlaytestFrame(timestamp) {
 
   for (const object of runtimeState) {
     if (!object.alive || object.id === player.id) continue;
-    if (object.kind === "Coin" && runtimeOverlap(player, object)) {
+    if (object.collisionEnabled === false || !runtimeOverlap(player, object)) continue;
+    if (object.kind === "Coin" && object.collisionMode !== "solid") {
       object.alive = false;
       runtimeScore += 1;
       document.getElementById("runtime-score").textContent = "SCORE  " + runtimeScore;
-    } else if (object.kind === "Enemy" && runtimeOverlap(player, object) && timestamp >= runtimeInvulnerableUntil) {
+    } else if ((object.kind === "Enemy" || object.kind === "Hazard") && timestamp >= runtimeInvulnerableUntil) {
       runtimeLives -= 1;
       runtimeInvulnerableUntil = timestamp + 1100;
       player.px = Math.max(0, Math.min(runtimeWorldWidth - player.w, player.px - 65));
