@@ -8,7 +8,8 @@ GameForge Studio is an early browser-based game creation workspace. The long-ter
 - Create projects and choose a starter genre
 - Local browser persistence for project metadata and scene objects
 - Email/password account registration, login, session lookup, and logout through Cloudflare Pages Functions
-- Cloudflare D1 user/session storage; passwords are PBKDF2-SHA-256 hashed and session tokens are stored as SHA-256 hashes
+- Cloudflare D1 user/session/project storage; passwords are PBKDF2-SHA-256 hashed and session tokens are stored as SHA-256 hashes
+- Per-account cloud project sync with local-first fallback, project ownership checks, 1 MB request limit, and 200-project account limit
 - Lightweight 2D scene editor
 - Add Player, Platform, Coin, and Enemy objects
 - Select objects and edit their names, visibility, and positions
@@ -38,4 +39,4 @@ Open `index.html` in a modern browser, or serve this directory with a static web
 
 ## Status
 
-This repository is an early browser-based editor prototype, not a complete game engine. Account authentication is implemented with Pages Functions and D1, but email ownership verification, password reset, cloud project synchronization, R2 asset uploads, multiplayer, and compiled desktop/mobile exports are not implemented yet. Project content remains in the browser's local storage.
+This repository is an early browser-based editor prototype, not a complete game engine. Account authentication is implemented with Pages Functions and D1, but email ownership verification, password reset, R2 asset uploads, multiplayer, and compiled desktop/mobile exports are not implemented yet. Signed-in projects sync to D1; a local copy remains on the device as a fallback.
