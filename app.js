@@ -145,7 +145,8 @@ let runtimeFrame = 0;
 let runtimeState = null;
 let runtimeKeys = {};
 let runtimeScore = 0;
-let runtimeLastTime = 0;\nlet runtimeCameraX = 0;\nlet runtimeWorldWidth = 0;
+let runtimeLastTime = 0;
+let runtimeCameraX = 0;\nlet runtimeWorldWidth = 0;
 
 function stopPlaytest() {
   playing = false;
@@ -280,7 +281,7 @@ function runPlaytestFrame(timestamp) {
     let element = scene.querySelector('[data-id="' + object.id + '"]');
     if (!object.alive) { element?.remove(); continue; }
     if (element) {
-      element.style.left = (object.px - runtimeCameraX) + "px";
+      element.style.left = object.px + "px";
       element.style.top = object.py + "px";
       element.classList.remove("selected");
     }
