@@ -65,7 +65,7 @@ function renderProjects(targetId) {
     target.innerHTML = '<div class="empty-card">No projects yet. Create your first game to get started.</div>';
     return;
   }
-  target.innerHTML = state.projects.map(p => '<article class="project-card" data-project="' + p.id + '"><div class="project-art">✧</div><div class="project-info"><b>' + escapeHtml(p.name) + '</b><p>' + escapeHtml(p.genre) + ' · ' + p.objects.length + ' scene objects</p></div></article>').join("");
+  target.innerHTML = state.projects.map(p => '<article class="project-card" data-project="' + p.id + '"><div class="project-art">✧</div><div class="project-info"><b>' + escapeHtml(p.name) + '</b><p>' + escapeHtml(p.genre) + ' · ' + ensureScenes(p).reduce((total, scene) => total + scene.objects.length, 0) + ' objects · ' + ensureScenes(p).length + ' levels</p></div></article>').join("");
   target.querySelectorAll("[data-project]").forEach(card => card.addEventListener("click", () => {
     currentProjectId = card.dataset.project; showView("editor");
   }));
@@ -164,6 +164,29 @@ document.getElementById("project-form").addEventListener("submit", e => {
 });
 document.querySelectorAll("[data-object]").forEach(el => el.addEventListener("click", () => addObject(el.dataset.object)));
 document.getElementById("add-object").addEventListener("click", () => addObject("Player"));
+document.getElementById("scene-picker").addEventListener("change", event => {
+  const project = currentProject();
+  if (!project || playing) return;
+  project.currentSceneId = event.target.value;
+  selectedId = null;
+  saveState();
+  renderEditor();
+});
+document.getElementById("add-scene").addEventListener("click", () => {
+  const project = currentProject();
+  if (!project || playing) return;
+  const scenes = ensureScenes(project);
+  const name = prompt("Name this level", "Level " + (scenes.length + 1));
+  if (!name || !name.trim()) return;
+  const scene = { id: crypto.randomUUID(), name: name.trim().slice(0, 32), objects: [] };
+  scenes.push(scene);
+  project.currentSceneId = scene.id;
+  selectedId = null;
+  project.updated = new Date().toISOString();
+  saveState();
+  renderEditor();
+});
+
 let runtimeFrame = 0;
 let runtimeState = null;
 let runtimeKeys = {};
