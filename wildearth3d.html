@@ -210,7 +210,7 @@
 <body>
 <canvas id="c"></canvas>
 <div id="damageFlash" aria-hidden="true"></div>
-<div id="mainMenu"><div class="menuCard"><div class="menuBrand">WILDEARTH</div><div class="menuTag">SURVIVE · EXPLORE · BUILD · DISCOVER</div><div class="menuGrid"><section class="menuPanel"><h2>YOUR WORLD</h2><div class="worldChoice"><label for="worldSelect">Selected world</label><select id="worldSelect" class="menuField" aria-label="Select world"></select></div><button id="playSelected" class="menuButton primary">▶ Play Selected</button><button id="createWorldToggle" class="menuButton">＋ Create New World</button><div id="createWorldForm" hidden><input id="newWorldName" class="menuField" maxlength="28" placeholder="World name (e.g. New Frontier)"><button id="createWorld" class="menuButton primary">Create World & Play</button></div><p>Your worlds are saved separately on this device. Select a world to continue its own progress.</p></section><section class="menuPanel"><h2>CHOOSE YOUR CHARACTER</h2><div class="charChoices" id="charChoices"><button class="charChoice" data-char="0"><span class="charSwatch" style="background:#527b70"></span>Explorer</button><button class="charChoice" data-char="1"><span class="charSwatch" style="background:#8a633e"></span>Ranger</button><button class="charChoice" data-char="2"><span class="charSwatch" style="background:#52658e"></span>Pathfinder</button><button class="charChoice" data-char="3"><span class="charSwatch" style="background:#8b4c4c"></span>Survivor</button></div><p>Choose a preset, then customize your appearance. Your look is saved separately from world progress.</p><div class="customControls"><label>Skin tone<select id="skinTone" class="menuField"><option value="0xc98f68">Warm</option><option value="0x8f5d43">Tan</option><option value="0xe0ad86">Light</option><option value="0x65402f">Deep</option></select></label><label>Eye color<select id="eyeColor" class="menuField"><option value="0x6b8f91">Ocean blue</option><option value="0x527b4b">Forest green</option><option value="0x76513a">Brown</option><option value="0x555b66">Grey</option><option value="0x252525">Dark</option></select></label><label>Facial hair<select id="facialHair" class="menuField"><option value="0">Clean shaven</option><option value="1">Stubble</option><option value="2">Short beard</option></select></label><label>Hair style<select id="hairStyle" class="menuField"><option value="0">Short</option><option value="1">Long</option><option value="2">Explorer hood</option><option value="3">Swept</option><option value="4">Tied back</option></select></label><label>Hair color<select id="hairColor" class="menuField"><option value="0x211c19">Natural black</option><option value="0x493226">Dark brown</option><option value="0x805638">Chestnut</option><option value="0xc19a62">Blond</option><option value="0x9b9b9b">Silver</option><option value="0x7b3d32">Auburn</option></select></label><label>Outfit color<select id="outfitColor" class="menuField"><option value="0x527b70">Forest green</option><option value="0x8a633e">Earth brown</option><option value="0x52658e">Slate blue</option><option value="0x8b4c4c">Rust red</option><option value="0x777777">Stone grey</option><option value="0x9a8b45">Olive</option></select></label><button id="saveLook" class="menuButton">Save Character Appearance</button></div></section></div></div></div>
+<div id="mainMenu"><div class="menuCard"><div class="menuBrand">WILDEARTH</div><div class="menuTag">SURVIVE · EXPLORE · BUILD · DISCOVER</div><div class="menuGrid"><section class="menuPanel"><h2>YOUR WORLD</h2><div class="worldChoice"><label for="worldSelect">Selected world</label><select id="worldSelect" class="menuField" aria-label="Select world"></select></div><button id="playSelected" class="menuButton primary">▶ Play Selected</button><button id="createWorldToggle" class="menuButton">＋ Create New World</button><div id="createWorldForm" hidden><input id="newWorldName" class="menuField" maxlength="28" placeholder="World name (e.g. New Frontier)"><input id="newWorldSeed" class="menuField" maxlength="32" inputmode="numeric" placeholder="World seed (optional)"><button id="createWorld" class="menuButton primary">Create World & Play</button></div><p id="worldSeedInfo" aria-live="polite">World seed is loading…</p><p>Your worlds are saved separately on this device. Select a world to continue its own progress. Use <code>?seed=12345</code> in the address to reproduce a test world.</p></section><section class="menuPanel"><h2>CHOOSE YOUR CHARACTER</h2><div class="charChoices" id="charChoices"><button class="charChoice" data-char="0"><span class="charSwatch" style="background:#527b70"></span>Explorer</button><button class="charChoice" data-char="1"><span class="charSwatch" style="background:#8a633e"></span>Ranger</button><button class="charChoice" data-char="2"><span class="charSwatch" style="background:#52658e"></span>Pathfinder</button><button class="charChoice" data-char="3"><span class="charSwatch" style="background:#8b4c4c"></span>Survivor</button></div><p>Choose a preset, then customize your appearance. Your look is saved separately from world progress.</p><div class="customControls"><label>Skin tone<select id="skinTone" class="menuField"><option value="0xc98f68">Warm</option><option value="0x8f5d43">Tan</option><option value="0xe0ad86">Light</option><option value="0x65402f">Deep</option></select></label><label>Eye color<select id="eyeColor" class="menuField"><option value="0x6b8f91">Ocean blue</option><option value="0x527b4b">Forest green</option><option value="0x76513a">Brown</option><option value="0x555b66">Grey</option><option value="0x252525">Dark</option></select></label><label>Facial hair<select id="facialHair" class="menuField"><option value="0">Clean shaven</option><option value="1">Stubble</option><option value="2">Short beard</option></select></label><label>Hair style<select id="hairStyle" class="menuField"><option value="0">Short</option><option value="1">Long</option><option value="2">Explorer hood</option><option value="3">Swept</option><option value="4">Tied back</option></select></label><label>Hair color<select id="hairColor" class="menuField"><option value="0x211c19">Natural black</option><option value="0x493226">Dark brown</option><option value="0x805638">Chestnut</option><option value="0xc19a62">Blond</option><option value="0x9b9b9b">Silver</option><option value="0x7b3d32">Auburn</option></select></label><label>Outfit color<select id="outfitColor" class="menuField"><option value="0x527b70">Forest green</option><option value="0x8a633e">Earth brown</option><option value="0x52658e">Slate blue</option><option value="0x8b4c4c">Rust red</option><option value="0x777777">Stone grey</option><option value="0x9a8b45">Olive</option></select></label><button id="saveLook" class="menuButton">Save Character Appearance</button></div></section></div></div></div>
 
 <div id="hud">
   <div class="row">
@@ -299,19 +299,26 @@ var isMobile=window.matchMedia('(pointer:coarse)').matches;
 var WORLD=300,HALF=WORLD/2,WATER=-1.2,DAY=240,OLD_KEY='mfwilds3d_v1';
 var WORLD_LIST_KEY='mfwilds3d_world_list_v1',SELECTED_WORLD_KEY='mfwilds3d_selected_world_v1',CHARACTER_KEY='mfwilds3d_character_v1';
 var worldList=[];try{worldList=JSON.parse(localStorage.getItem(WORLD_LIST_KEY)||'[]');if(!Array.isArray(worldList))worldList=[];}catch(e){worldList=[];}
+function seedFromString(value){var h=2166136261,t=String(value||'world');for(var i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0)||1;}
 if(!worldList.length)worldList=[{id:'world-1',name:'My First World',created:Date.now()}];
+worldList.forEach(function(w){if(!isFinite(w.seed)||w.seed<=0)w.seed=seedFromString(w.id+':'+(w.created||0));w.seed=Math.floor(w.seed)>>>0;if(!w.seed)w.seed=1;});
 var selectedWorldId=localStorage.getItem(SELECTED_WORLD_KEY)||worldList[0].id;
 if(!worldList.some(function(w){return w.id===selectedWorldId;}))selectedWorldId=worldList[0].id;
+var selectedWorld=worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0];
+var seedParam=new URLSearchParams(location.search).get('seed');
+var seedOverride=seedParam!==null&&/^\\d+$/.test(seedParam)?(Number(seedParam)>>>0):null;
+var worldSeed=seedOverride!==null&&seedOverride!==0?seedOverride:(selectedWorld.seed>>>0);
 function persistWorldList(){localStorage.setItem(WORLD_LIST_KEY,JSON.stringify(worldList));localStorage.setItem(SELECTED_WORLD_KEY,selectedWorldId);}
 persistWorldList();
 var SAVE_KEY='mfwilds3d_world_'+selectedWorldId;
 var vw=window.innerWidth,vh=window.innerHeight;
 
 function clamp(v,a,b){return v<a?a:v>b?b:v}
-function rand(a,b){return a+Math.random()*(b-a)}
+function rand(a,b){return a+random()*(b-a)}
 function smooth(a,b,x){var t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)}
 function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-var R=rng(20261109);
+var R=rng(worldSeed);
+function random(){return R()}
 function hash(x,y){var h=Math.imul(x|0,374761393)+Math.imul(y|0,668265263)|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296}
 function vnoise(x,y){
   var xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
@@ -419,7 +426,7 @@ function addDiagnostic(type,message,stack){
 window.addEventListener('error',function(e){addDiagnostic('error',e.message,(e.error&&e.error.stack)||e.filename+':'+e.lineno)});
 window.addEventListener('unhandledrejection',function(e){addDiagnostic('unhandledrejection',e.reason&&e.reason.message||e.reason,e.reason&&e.reason.stack)});
 $('exportDiagnostics').addEventListener('click',function(){
-  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},world:{id:selectedWorldId,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:team.length,structures:walls.length+fires.length+beds.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
+  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},world:{id:selectedWorldId,seed:worldSeed,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:team.length,structures:walls.length+fires.length+beds.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
   try{
     var blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
     link.href=url;link.download='wildearth-diagnostics-'+Date.now()+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000);
@@ -435,7 +442,7 @@ for(var fl=0;fl<3;fl++){var pl=new THREE.PointLight(0xffa04d,0,26,2);scene.add(p
 /* stars */
 var starGeo=new THREE.BufferGeometry(),sp=[];
 for(var si=0;si<900;si++){
-  var a1=Math.random()*6.2832,a2=Math.acos(Math.random()*0.95+0.05);
+  var a1=random()*6.2832,a2=Math.acos(random()*0.95+0.05);
   sp.push(Math.cos(a1)*Math.sin(a2)*450,Math.cos(a2)*450,Math.sin(a1)*Math.sin(a2)*450);
 }
 starGeo.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
@@ -968,7 +975,7 @@ var RAR={
 function pickSpecies(){
   var tot=0,i;
   for(i=0;i<SPECIES.length;i++)tot+=RAR[SPECIES[i].r].w;
-  var r=Math.random()*tot;
+  var r=random()*tot;
   for(i=0;i<SPECIES.length;i++){r-=RAR[SPECIES[i].r].w;if(r<=0)return i}
   return 0;
 }
@@ -1278,9 +1285,9 @@ var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAband
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34;
 var rainCount=isMobile?150:280,rainGeo=new THREE.BufferGeometry(),rainPositions=new Float32Array(rainCount*3);
 for(var rpi=0;rpi<rainCount;rpi++){
-  rainPositions[rpi*3]=(Math.random()-0.5)*54;
-  rainPositions[rpi*3+1]=Math.random()*24;
-  rainPositions[rpi*3+2]=(Math.random()-0.5)*54;
+  rainPositions[rpi*3]=(random()-0.5)*54;
+  rainPositions[rpi*3+1]=random()*24;
+  rainPositions[rpi*3+2]=(random()-0.5)*54;
 }
 rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
 var rainMat=new THREE.PointsMaterial({color:0xb9d9ed,size:isMobile?0.105:0.13,transparent:true,opacity:0,depthWrite:false});
@@ -1299,9 +1306,9 @@ function updateWeather(dt){
       rainPositions[k+1]-=dt*(17+rainLevel*5);
       rainPositions[k+2]+=rainWindZ*dt*2.2;
       if(rainPositions[k+1]<-7){
-        rainPositions[k]=(Math.random()-0.5)*54;
-        rainPositions[k+1]=14+Math.random()*12;
-        rainPositions[k+2]=(Math.random()-0.5)*54;
+        rainPositions[k]=(random()-0.5)*54;
+        rainPositions[k+1]=14+random()*12;
+        rainPositions[k+2]=(random()-0.5)*54;
       }
       if(Math.abs(rainPositions[k])>29)rainPositions[k]*=-0.82;
       if(Math.abs(rainPositions[k+2])>29)rainPositions[k+2]*=-0.82;
@@ -1315,7 +1322,7 @@ P.y=heightAt(P.x,P.z);
 
 function landSpot(minFromPlayer){
   for(var t=0;t<40;t++){
-    var x=(Math.random()-0.5)*(WORLD-40),z=(Math.random()-0.5)*(WORLD-40),y=heightAt(x,z);
+    var x=(random()-0.5)*(WORLD-40),z=(random()-0.5)*(WORLD-40),y=heightAt(x,z);
     if(y<WATER+0.8||y>12)continue;
     if(Math.hypot(x-P.x,z-P.z)<minFromPlayer)continue;
     return {x:x,z:z};
@@ -1339,7 +1346,7 @@ function wildEscapeDirection(c,awayX,awayZ){
   var base=Math.atan2(awayX,awayZ),bestX=awayX,bestZ=awayZ,best=-999;
   for(var k=-2;k<=2;k++){
     var a=base+k*0.48,dx=Math.sin(a),dz=Math.cos(a);
-    var score=wildRouteScore(c,dx,dz,awayX,awayZ)+(Math.random()*0.12);
+    var score=wildRouteScore(c,dx,dz,awayX,awayZ)+(random()*0.12);
     if(score>best){best=score;bestX=dx;bestZ=dz}
   }
   var len=Math.hypot(bestX,bestZ)||1;
@@ -1347,7 +1354,7 @@ function wildEscapeDirection(c,awayX,awayZ){
 }
 function spawnWild(fsp,fx,fz,isJuvenile,parent){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,hp:sp===4||sp===7?72:(sp===3?110:90),maxHp:sp===4||sp===7?72:(sp===3?110:90),hitTimer:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,ageSeconds:0,growthScale:isJuvenile?0.72:1,parent:parent||null,young:null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,hp:sp===4||sp===7?72:(sp===3?110:90),maxHp:sp===4||sp===7?72:(sp===3?110:90),hitTimer:0,flee:0,yaw:random()*6.283,walk:random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,ageSeconds:0,growthScale:isJuvenile?0.72:1,parent:parent||null,young:null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
   if(c.isJuvenile)m.g.scale.setScalar(0.72);
   c.hp=c.maxHp*(c.isJuvenile?0.72:1);
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
@@ -1375,7 +1382,7 @@ function save(){
   var snapshot;
   try{
     snapshot=JSON.stringify({
-      version:3,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
+      version:4,worldSeed:worldSeed,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
@@ -1457,7 +1464,7 @@ updateWorldStreaming(true);
 var mainMenu=$('mainMenu'),menuOpen=true;
 var pauseOpen=false,dead=false,respawnTimer=0,deathSpawnChoice="base";
 function togglePause(force){if(dead||mainMenu.hidden===false)return;if(bagOpen){if(force!==false)toggleBag();return;}pauseOpen=typeof force==='boolean'?force:!pauseOpen;$('pausePanel').hidden=!pauseOpen;menuOpen=pauseOpen;if(pauseOpen){save();$('pauseStatus').textContent='Game paused · progress saved';}else{last=performance.now();requestAnimationFrame(frame);}}
-function refreshWorldMenu(){var sel=$('worldSelect');sel.innerHTML='';worldList.forEach(function(w){var op=document.createElement('option');op.value=w.id;op.textContent=w.name;sel.appendChild(op);});sel.value=selectedWorldId;}
+function refreshWorldMenu(){var sel=$('worldSelect');sel.innerHTML='';worldList.forEach(function(w){var op=document.createElement('option');op.value=w.id;op.textContent=w.name;sel.appendChild(op);});sel.value=selectedWorldId;$('worldSeedInfo').textContent='World seed: '+worldSeed+(seedOverride!==null?' · temporary URL override':'');}
 refreshWorldMenu();
 function syncCustomizationControls(){var mats=player.g.userData.customMaterials;if(!mats)return;var skin=$('skinTone'),outfit=$('outfitColor');if(skin&&!skin.dataset.ready){skin.value='0x'+mats.skin.color.getHexString();skin.dataset.ready='1';}if(outfit)outfit.value='0x'+mats.cloth.color.getHexString();}
 syncCustomizationControls();
@@ -1480,7 +1487,7 @@ document.querySelectorAll('.charChoice').forEach(function(b){b.addEventListener(
 $('worldSelect').addEventListener('change',function(){selectedWorldId=this.value;persistWorldList();location.reload();});
 $('playSelected').addEventListener('click',function(){selectedWorldId=$('worldSelect').value;persistWorldList();mainMenu.hidden=true;menuOpen=false;say('Welcome to '+(worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0]).name+'. Your adventure continues.',4);});
 $('createWorldToggle').addEventListener('click',function(){$('createWorldForm').hidden=!$('createWorldForm').hidden;if(!$('createWorldForm').hidden)$('newWorldName').focus();});
-$('createWorld').addEventListener('click',function(){var name=$('newWorldName').value.trim().slice(0,28)||'New World '+(worldList.length+1);var id='world-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);worldList.push({id:id,name:name,created:Date.now()});selectedWorldId=id;persistWorldList();try{localStorage.removeItem('mfwilds3d_v2');}catch(e){}location.reload();});
+$('createWorld').addEventListener('click',function(){var name=$('newWorldName').value.trim().slice(0,28)||'New World '+(worldList.length+1);var seedText=$('newWorldSeed').value.trim(),id='world-'+Date.now().toString(36)+'-'+random().toString(36).slice(2,7);var newSeed=seedText===''?((Date.now()^Math.floor(random()*4294967295))>>>0):(/^\\d+$/.test(seedText)?(Number(seedText)>>>0):seedFromString(seedText));if(!newSeed)newSeed=seedFromString(seedText||id);worldList.push({id:id,name:name,created:Date.now(),seed:newSeed});selectedWorldId=id;persistWorldList();try{localStorage.removeItem('mfwilds3d_v2');}catch(e){}location.reload();});
 
 /* ---------- input ---------- */
 var keys={},held={gather:false,sprint:false},joy={x:0,y:0};
@@ -1665,7 +1672,7 @@ function burst(x,y,z,color,n){
   var mt=sparkMats[color]||(sparkMats[color]=new THREE.MeshBasicMaterial({color:color,fog:false}));
   for(var i=0;i<n;i++){
     var m=new THREE.Mesh(sparkGeo,mt);m.position.set(x,y,z);scene.add(m);
-    var a=Math.random()*6.283,sp=rand(1.5,4);
+    var a=random()*6.283,sp=rand(1.5,4);
     sparks.push({m:m,vx:Math.cos(a)*sp,vy:rand(0.3,1.4)*sp,vz:Math.sin(a)*sp,t:0.7});
   }
 }
@@ -1675,12 +1682,12 @@ function doCatch(){
   var id=ballForCatch();
   if(!id){say('You need a Capture Ball. Open the Bag to craft some.');return}
   if(team.length+shots.length>=12){say('Your team is full (12).');return}
-  var ok=Math.random()<rateNow(c.sp,id);P.lure=false;
+  var ok=random()<rateNow(c.sp,id);P.lure=false;
   takeItem(id,1);renderInv(true);
   P.face=Math.atan2(c.x-P.x,c.z-P.z);P.swing=0.45;
   c.held=true;c.vx=0;c.vz=0;c.speed=0;
   var ball=makeBall(id);ball.position.set(P.x,P.y+1.6,P.z);scene.add(ball);
-  shots.push({m:ball,c:c,id:id,ok:ok,phase:0,t:0,wob:0,wobbles:ok?3:1+Math.floor(Math.random()*2),sx:P.x,sy:P.y+1.6,sz:P.z});
+  shots.push({m:ball,c:c,id:id,ok:ok,phase:0,t:0,wob:0,wobbles:ok?3:1+Math.floor(random()*2),sx:P.x,sy:P.y+1.6,sz:P.z});
 }
 var RECIPES={
   ball:{wood:1,stone:1,fiber:1},great:{stone:3,fiber:2,berry:2},treat:{berry:2,fiber:1},
@@ -1942,7 +1949,7 @@ function update(dt){
         var predatorAlert=9*(1.18-c.boldness*0.28),predatorPanic=6.5*(1.22-c.boldness*0.38);
         if(nearestThreatD<predatorAlert){
           c.state='alert';
-          if(nearestThreatD<predatorPanic)c.flee=Math.max(c.flee,2.4+Math.random()*1.2);
+          if(nearestThreatD<predatorPanic)c.flee=Math.max(c.flee,2.4+random()*1.2);
           c.alertT=Math.max(c.alertT||0,1.1);
         }
       }else{c.threatX=0;c.threatZ=0;}
@@ -1951,9 +1958,9 @@ function update(dt){
     var alertRadius=(c.sp===4?16:(c.sp===6?13:(c.sp===3?8:11)))*(1.28-c.boldness*0.48);
     var panicRadius=(c.sp===5?5.5:7)*(1.35-c.boldness*0.55);
     if(pdist<alertRadius&&c.flee<=0){
-      if(c.state!=='alert'){c.state='alert';c.alertT=0.75+Math.random()*0.55}
+      if(c.state!=='alert'){c.state='alert';c.alertT=0.75+random()*0.55}
       if(pdist<panicRadius||P.speed>1.35){
-        c.state='flee';c.flee=Math.max(c.flee,2.2+Math.random()*1.5);
+        c.state='flee';c.flee=Math.max(c.flee,2.2+random()*1.5);
       }
     }
     // Herd alarms spread locally rather than making every creature react at once.
@@ -1969,7 +1976,7 @@ function update(dt){
         c.herdX=herdN?herdX/herdN:0;c.herdZ=herdN?herdZ/herdN:0;c.herdSepX=herdSepX;c.herdSepZ=herdSepZ;
         c.herdAlarm=alarm?0.8:Math.max(0,(c.herdAlarm||0)-0.35);
         if(alarm&&pdist<alertRadius*1.7&&c.flee<=0){
-          c.state='flee';c.flee=Math.max(c.flee,1.8+Math.random()*0.8);
+          c.state='flee';c.flee=Math.max(c.flee,1.8+random()*0.8);
         }
         c.herdT=rand(0.3,0.55);
       }
@@ -2000,17 +2007,17 @@ function update(dt){
         var rainSensitive=[0,3,5,7].indexOf(c.sp)>=0;
         pauseChance=clamp(pauseChance+(1-activityLevel)*0.22+(rainSensitive?rainLevel*0.2:rainLevel*0.045)+(0.5-c.curiosity)*0.16,0.08,0.92);
         if(c.state==='alert')pauseChance=Math.min(0.75,pauseChance+0.22);
-        if(Math.random()<pauseChance){
+        if(random()<pauseChance){
           c.vx=0;c.vz=0;
           // Calm wildlife cycles through short, species-weighted feeding and resting pauses.
           var grazeChance=[0.58,0.34,0.12,0.08,0.18,0.62,0.2,0.1][c.sp]||0.2;
           var restChance=[0.22,0.3,0.58,0.72,0.16,0.2,0.42,0.5][c.sp]||0.25;
-          var ecologyRoll=Math.random();
+          var ecologyRoll=random();
           if(ecologyRoll<grazeChance){c.state='graze';c.t=rand(2.8,5.2)}
           else if(ecologyRoll<grazeChance+restChance){c.state='rest';c.t=rand(2.4,5.8)}
           else{c.state='idle';c.t=rand(1.5,3.6)}
         }else{
-          var a=Math.random()*6.283,roamSpeed=([1.8,2.1,1.35,1.0,2.4,1.8,2.1,1.7][c.sp]||1.8)*(0.82+c.curiosity*0.36);
+          var a=random()*6.283,roamSpeed=([1.8,2.1,1.35,1.0,2.4,1.8,2.1,1.7][c.sp]||1.8)*(0.82+c.curiosity*0.36);
           c.vx=Math.cos(a)*roamSpeed;c.vz=Math.sin(a)*roamSpeed;c.state='wander';
           c.t=rand(2.2,5.5);
         }
@@ -2050,7 +2057,7 @@ function update(dt){
           var bl=Math.hypot(bestPlant.x-c.x,bestPlant.z-c.z)||1;
           c.envX+=(bestPlant.x-c.x)/bl*bestPlantScore*0.72;
           c.envZ+=(bestPlant.z-c.z)/bl*bestPlantScore*0.72;
-          if(bl<5&&c.state==='idle'&&Math.random()<0.18){c.vx=0;c.vz=0;c.state='graze';c.t=rand(1.8,3.2);}
+          if(bl<5&&c.state==='idle'&&random()<0.18){c.vx=0;c.vz=0;c.state='graze';c.t=rand(1.8,3.2);}
         }
         // Aquo explores the shoreline, but its destination is always checked as dry land.
         if(c.sp===2){
@@ -2145,8 +2152,8 @@ function update(dt){
   if(wild.length<(isMobile?24:34)&&wildT<=0){
     var newAdult=spawnWild();
     // A small share of natural spawns arrive with one juvenile that stays close to its parent.
-    if(wild.length<(isMobile?24:34)&&Math.random()<0.14){
-      var familyAngle=Math.random()*6.283,familyDist=rand(1.8,2.8);
+    if(wild.length<(isMobile?24:34)&&random()<0.14){
+      var familyAngle=random()*6.283,familyDist=rand(1.8,2.8);
       spawnWild(newAdult.sp,newAdult.x+Math.cos(familyAngle)*familyDist,newAdult.z+Math.sin(familyAngle)*familyDist,true,newAdult);
     }
     wildT=6;
@@ -2189,13 +2196,13 @@ function update(dt){
   var wraithCap=Math.min(6,2+Math.floor(nights/2));
   if(nightF>0.55&&wraiths.length<wraithCap&&spawnT<=0){
     spawnT=Math.max(3.5,6-nights*0.12);
-    var wa=Math.random()*6.283,wxp=clamp(P.x+Math.cos(wa)*42,-HALF+8,HALF-8),wzp=clamp(P.z+Math.sin(wa)*42,-HALF+8,HALF-8);
-    var kind='shade',roll=Math.random();
+    var wa=random()*6.283,wxp=clamp(P.x+Math.cos(wa)*42,-HALF+8,HALF-8),wzp=clamp(P.z+Math.sin(wa)*42,-HALF+8,HALF-8);
+    var kind='shade',roll=random();
     if(nights>=5&&roll<0.2)kind='brute';
     else if(nights>=3&&roll<(nights>=5?0.52:0.34))kind='stalker';
     var profile=kind==='brute'?{hp:3.5,speed:3.8,damage:1.28,lunge:3.6,scale:1.22}:(kind==='stalker'?{hp:1.5,speed:7.2,damage:0.82,lunge:5.5,scale:0.86}:{hp:2,speed:5.1,damage:1,lunge:4.5,scale:1});
     var wg=makeWraith(kind);wg.scale.setScalar(profile.scale);wg.position.set(wxp,heightAt(wxp,wzp),wzp);scene.add(wg);
-    wraiths.push({g:wg,kind:kind,moveSpeed:profile.speed,damageScale:profile.damage,lungeSpeed:profile.lunge,baseScale:profile.scale,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:profile.hp,hit:0,ph:Math.random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
+    wraiths.push({g:wg,kind:kind,moveSpeed:profile.speed,damageScale:profile.damage,lungeSpeed:profile.lunge,baseScale:profile.scale,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:profile.hp,hit:0,ph:random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
   }
   var safe=nearFire(P.x,P.z,13);
   for(i=wraiths.length-1;i>=0;i--){
@@ -2232,7 +2239,7 @@ function update(dt){
       if(s.windup===0){
         var struckWild=s.attackTarget;s.attackTarget=null;
         if(struckWild&&wild.indexOf(struckWild)>=0&&Math.hypot(struckWild.x-s.x,struckWild.z-s.z)<2.6){
-          struckWild.hp=Math.max(0,struckWild.hp-14);struckWild.hitTimer=0.22;struckWild.attackAnim=0.38;struckWild.flee=Math.max(struckWild.flee,3.2+Math.random()*1.4);struckWild.state='flee';struckWild.alertT=1.4;struckWild.threatX=s.x;struckWild.threatZ=s.z;
+          struckWild.hp=Math.max(0,struckWild.hp-14);struckWild.hitTimer=0.22;struckWild.attackAnim=0.38;struckWild.flee=Math.max(struckWild.flee,3.2+random()*1.4);struckWild.state='flee';struckWild.alertT=1.4;struckWild.threatX=s.x;struckWild.threatZ=s.z;
           s.attackCd=2.1;pop(struckWild.x,struckWild.y+1.8,struckWild.z,'Wraith -14','#c9a8ff');
           if(struckWild.hp<=0){var preyIndex=wild.indexOf(struckWild);if(struckWild.parent)struckWild.parent.young=null;if(struckWild.young)struckWild.young.parent=null;scene.remove(struckWild.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[struckWild.sp].w,1,struckWild.x,struckWild.y+1,struckWild.z,'#b8a6d8');pop(struckWild.x,struckWild.y+2,struckWild.z,'Wildlife lost','#c9a8ff');}
         }else if(!struckWild){
