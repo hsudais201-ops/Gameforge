@@ -46,9 +46,9 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 32. Stream world content around the player.
 - [x] 33. Provide configurable world loading distance.
 - [x] 34. Use instanced resources for dense environmental objects.
-- [ ] 35. Add distinct named biomes with readable boundaries.
-- [ ] 36. Add biome-specific ground materials and foliage.
-- [ ] 37. Add biome-specific resource distribution.
+- [x] 35. Add distinct named biomes with readable boundaries.
+- [x] 36. Add biome-specific ground materials and foliage.
+- [x] 37. Add biome-specific resource distribution.
 - [ ] 38. Add caves with entrances, interior lighting, and exit paths.
 - [ ] 39. Add rivers, ponds, and connected water flow.
 - [x] 40. Add world seed entry and seed display.
@@ -61,7 +61,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 45. Add juvenile growth and parent-follow behavior.
 - [x] 46. Add creature taming and companion following.
 - [x] 47. Add companion Follow, Hold, and Defend orders.
-- [ ] 48. Add species-specific habitat and biome preference tables.
+- [x] 48. Add species-specific habitat and biome preference tables.
 - [ ] 49. Add breeding, offspring inheritance, and population limits.
 - [ ] 50. Add creature needs, feeding preferences, and trust levels.
 
@@ -82,8 +82,8 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 62. Add day/night progression.
 - [x] 63. Add rain particle effects.
 - [x] 64. Add campfire protection from Wraiths.
-- [ ] 65. Add temperature and exposure.
-- [ ] 66. Add wetness and drying behavior.
+- [x] 65. Add temperature and exposure.
+- [x] 66. Add wetness and drying behavior.
 - [ ] 67. Add storms with wind and lightning.
 - [ ] 68. Add seasonal world-state changes.
 - [ ] 69. Add rare world events and discoverable event rewards.
@@ -169,6 +169,10 @@ This is the execution tracker for the next development stages. A checked item me
 - Exploration: 30×30 fog-of-war map grid, five discoverable named landmarks, discovery alerts, and lore entries saved per world.
 - Progression: four field tutorial objectives and a four-stage main story with sequential completion conditions.
 - Diagnostics and accessibility: local runtime error/unhandled-rejection capture with JSON report export; Normal/Large UI text and high-contrast mode, saved locally.
+
+
+- World ecology: added five deterministic biomes (Sunlit Meadow, Mosswood Forest, Windscar Highlands, Whispering Marsh, Frostfall Ridge), biome-specific terrain palettes, habitat-weighted wildlife selection, and biome-weighted tree/bush/ore placement.
+- Water and exposure: player can enter deep water, swims at reduced speed, floats at the water surface, consumes oxygen and stamina, takes drowning damage at zero oxygen, and recovers oxygen on land. Rain and swimming increase wetness; dry weather dries the player; cold wet exposure causes damage. Wetness and oxygen are included in version-5 saves with safe defaults for older saves.
 
 ## Verification policy
 Source-level syntax and structural checks are not substitutes for playing the game. Browser, mobile, performance, and save-migration tests remain open until actually run on target devices.
