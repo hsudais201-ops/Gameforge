@@ -181,3 +181,11 @@ test('gamepad support maps sticks, camera, combat actions, and hotbar navigation
   assert.match(gameScript, /current\[12\].*hotSel/);
   assert.match(gameScript, /current\[13\].*hotSel/);
 });
+
+
+test('audio has separate persisted music/effects volumes and unlocks only after user input', () => {
+  for (const marker of ['id="musicVolume"', 'id="effectsVolume"', 'mfwilds3d_audio_v1', 'function initAudio()', 'function playSfx(kind)', 'document.addEventListener(\'pointerdown\',initAudio,{once:true})', "playSfx('rain')", "playSfx('creature')", "playSfx('ui')"]) {
+    assert.ok(html.includes(marker) || gameScript.includes(marker), 'missing audio marker: ' + marker);
+  }
+  assert.ok(gameScript.includes('low.start();high.start();'), 'procedural ambient tone should be started');
+});
