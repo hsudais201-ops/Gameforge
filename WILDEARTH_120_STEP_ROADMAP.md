@@ -130,8 +130,8 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 102. Add HUD bars for health, hunger, and stamina.
 - [x] 103. Add target information for nearby wildlife.
 - [x] 104. Add a dedicated quest and objective panel.
-- [ ] 105. Add audio settings and separate music/effects volume.
-- [ ] 106. Add original ambient, weather, creature, and UI sound effects.
+- [x] 105. Add audio settings and separate music/effects volume.
+- [x] 106. Add original ambient, weather, creature, and UI sound effects.
 - [ ] 107. Add subtitle and notification duration settings.
 - [x] 108. Add scalable UI text and high-contrast mode.
 - [x] 109. Add controller/gamepad navigation.
@@ -181,6 +181,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Combat refinement: melee hits now require a forward-facing weapon arc for wildlife and Wraiths, with visible hit bursts and numeric confirmation. Wraith Brutes resist weapon damage while Stalkers are more vulnerable; Shade remains baseline.
 
 - Controller support: added Gamepad API polling with left-stick movement, right-stick camera look, face-button gather/dodge/use/catch actions, and shoulder/D-pad hotbar selection. Controller connection and disconnection are announced.
+
+- Audio: added original synthesized ambient tones, distinct music/effects buses and persisted volume sliders. Browser audio initializes only after a user gesture; procedural effects cover gathering, capture, damage, rain, wildlife interactions, Wraith warnings, and button feedback.
 
 ## Verification policy
 Source-level syntax and structural checks are not substitutes for playing the game. Browser, mobile, performance, and save-migration tests remain open until actually run on target devices.
