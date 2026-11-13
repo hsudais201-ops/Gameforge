@@ -145,11 +145,12 @@
   .menuField{width:100%;box-sizing:border-box;padding:11px;border:1px solid #718d77;border-radius:7px;background:#0c1a13;color:#f3f5eb;font:14px system-ui;margin:5px 0 10px}.worldChoice{display:flex;gap:8px;align-items:center;margin:7px 0;padding:9px;border:1px solid #ffffff22;border-radius:8px;background:#102218}.worldChoice select{flex:1;min-width:0}.charChoices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.charChoice{padding:10px 7px;border:1px solid #ffffff35;border-radius:8px;background:#203629;color:#fff;text-align:center;font-size:12px}.charChoice.active{outline:2px solid #e7c37a;background:#526b3e}.charSwatch{display:block;width:34px;height:34px;border-radius:50%;margin:0 auto 6px;border:2px solid #ffffff88}
   @media(max-width:650px){#mainMenu{align-items:flex-start;padding:9px}.menuGrid{grid-template-columns:1fr;gap:9px}.menuCard{max-height:98dvh;padding:15px}.menuTag{margin-bottom:12px}.menuPanel{padding:11px}}
 
+  .customControls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}.customControls label{font-size:11px;color:#c8d8c5}.customControls .menuField{margin:5px 0 2px;padding:9px}.customControls #saveLook{grid-column:1/-1;text-align:center}.charChoice{cursor:pointer}#settingsPanel{max-height:90dvh;overflow:auto}.settingsActions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.settingsActions button{width:100%;text-align:center}@media(max-width:420px){.customControls{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="mainMenu"><div class="menuCard"><div class="menuBrand">WILDEARTH</div><div class="menuTag">SURVIVE · EXPLORE · BUILD · DISCOVER</div><div class="menuGrid"><section class="menuPanel"><h2>YOUR WORLD</h2><div class="worldChoice"><label for="worldSelect">Selected world</label><select id="worldSelect" class="menuField" aria-label="Select world"></select></div><button id="playSelected" class="menuButton primary">▶ Play Selected</button><button id="createWorldToggle" class="menuButton">＋ Create New World</button><div id="createWorldForm" hidden><input id="newWorldName" class="menuField" maxlength="28" placeholder="World name (e.g. New Frontier)"><button id="createWorld" class="menuButton primary">Create World & Play</button></div><p>Your worlds are saved separately on this device. Select a world to continue its own progress.</p></section><section class="menuPanel"><h2>CHOOSE YOUR CHARACTER</h2><div class="charChoices" id="charChoices"><button class="charChoice" data-char="0"><span class="charSwatch" style="background:#527b70"></span>Explorer</button><button class="charChoice" data-char="1"><span class="charSwatch" style="background:#8a633e"></span>Ranger</button><button class="charChoice" data-char="2"><span class="charSwatch" style="background:#52658e"></span>Pathfinder</button><button class="charChoice" data-char="3"><span class="charSwatch" style="background:#8b4c4c"></span>Survivor</button></div><p>Choose a visual outfit tint. You can change your character here at any time; your world progress stays safe.</p></section></div></div></div>
+<div id="mainMenu"><div class="menuCard"><div class="menuBrand">WILDEARTH</div><div class="menuTag">SURVIVE · EXPLORE · BUILD · DISCOVER</div><div class="menuGrid"><section class="menuPanel"><h2>YOUR WORLD</h2><div class="worldChoice"><label for="worldSelect">Selected world</label><select id="worldSelect" class="menuField" aria-label="Select world"></select></div><button id="playSelected" class="menuButton primary">▶ Play Selected</button><button id="createWorldToggle" class="menuButton">＋ Create New World</button><div id="createWorldForm" hidden><input id="newWorldName" class="menuField" maxlength="28" placeholder="World name (e.g. New Frontier)"><button id="createWorld" class="menuButton primary">Create World & Play</button></div><p>Your worlds are saved separately on this device. Select a world to continue its own progress.</p></section><section class="menuPanel"><h2>CHOOSE YOUR CHARACTER</h2><div class="charChoices" id="charChoices"><button class="charChoice" data-char="0"><span class="charSwatch" style="background:#527b70"></span>Explorer</button><button class="charChoice" data-char="1"><span class="charSwatch" style="background:#8a633e"></span>Ranger</button><button class="charChoice" data-char="2"><span class="charSwatch" style="background:#52658e"></span>Pathfinder</button><button class="charChoice" data-char="3"><span class="charSwatch" style="background:#8b4c4c"></span>Survivor</button></div><p>Choose a preset, then customize your appearance. Your look is saved separately from world progress.</p><div class="customControls"><label>Skin tone<select id="skinTone" class="menuField"><option value="0xc98f68">Warm</option><option value="0x8f5d43">Tan</option><option value="0xe0ad86">Light</option><option value="0x65402f">Deep</option></select></label><label>Hair style<select id="hairStyle" class="menuField"><option value="0">Short</option><option value="1">Long</option><option value="2">Explorer hood</option></select></label><label>Outfit color<select id="outfitColor" class="menuField"><option value="0x527b70">Forest green</option><option value="0x8a633e">Earth brown</option><option value="0x52658e">Slate blue</option><option value="0x8b4c4c">Rust red</option><option value="0x777777">Stone grey</option><option value="0x9a8b45">Olive</option></select></label><button id="saveLook" class="menuButton">Save Character Appearance</button></div></section></div></div></div>
 
 <div id="hud">
   <div class="row">
@@ -161,7 +162,7 @@
 </div>
 <div id="hint"></div>
 <button id="settingsBtn" type="button">⚙ Settings</button>
-<div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div></div>
+<div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
 <div id="bag" hidden>
   <div class="bagTop"><strong>Inventory</strong><span class="invSub">WILDEARTH survival pack</span><button id="bagClose">✕</button></div>
@@ -674,100 +675,33 @@ function limb(len,r,color,endColor){
   return g;
 }
 function makePlayer(){
-  var g=new THREE.Group(),skin=0xc98f68;
-  var cloth=stdMat(0x263f46,0.92),cloth2=stdMat(0x365e60,0.88),leather=stdMat(0x69452d,0.96);
-  var metal=stdMat(0x89979a,0.34,{metalness:0.62}),skinMat=stdMat(skin,0.72),dark=stdMat(0x211c19,0.95);
-  var hips=new THREE.Group();hips.position.y=1.0;g.add(hips);
-  var legL=limb(0.92,0.145,0x26333a,0x3a3029),legR=limb(0.92,0.145,0x26333a,0x3a3029);
-  legL.position.set(-0.18,0,0);legR.position.set(0.18,0,0);hips.add(legL);hips.add(legR);
-  // Rugged field trousers, reinforced knees and expedition boots.
-  [-1,1].forEach(function(side){
-    var leg=side<0?legL:legR;
-    leg.add(mesh(new THREE.SphereGeometry(0.17,12,10),cloth2,0,-0.28,0,0.9,1.2,0.92));
-    leg.add(mesh(new THREE.BoxGeometry(0.22,0.16,0.09),leather,0,-0.62,0.12));
-    leg.add(mesh(new THREE.BoxGeometry(0.31,0.19,0.43),dark,0,-0.91,0.08,1,0.72,1));
-    leg.add(mesh(new THREE.BoxGeometry(0.32,0.08,0.46),leather,0,-0.82,0.09));
-    leg.add(mesh(new THREE.BoxGeometry(0.12,0.08,0.035),metal,0,-0.62,0.17));
-    leg.add(mesh(new THREE.BoxGeometry(0.25,0.19,0.08),leather,0,-0.43,0.13));
-    leg.add(mesh(new THREE.BoxGeometry(0.08,0.035,0.025),metal,0,-0.43,0.18));
-  });
-  // Anatomical torso with layered shirt, chest panel and shoulder silhouette.
-  var torso=mesh(new THREE.CylinderGeometry(0.29,0.33,0.72,14),cloth,0,0.52,0,1,1,0.78);hips.add(torso);
-  hips.add(mesh(new THREE.SphereGeometry(0.29,14,10),cloth,0,0.88,0,1,0.58,0.78));
-  hips.add(mesh(new THREE.SphereGeometry(0.29,14,10),cloth,0,0.17,0,1,0.55,0.78));
-  hips.add(mesh(new THREE.SphereGeometry(0.31,14,12),cloth2,0,0.84,0,1.03,0.58,0.82));
-  hips.add(mesh(new THREE.BoxGeometry(0.43,0.43,0.055),leather,0,0.53,0.255));
-  hips.add(mesh(new THREE.BoxGeometry(0.32,0.31,0.035),cloth2,0,0.56,0.29));
-  // Raised jacket seams, collar and utility stitching add readable depth at game camera distance.
-  hips.add(mesh(new THREE.BoxGeometry(0.36,0.055,0.045),leather,0,0.91,0.285));
-  hips.add(mesh(new THREE.BoxGeometry(0.055,0.43,0.035),leather,-0.205,0.53,0.285));
-  hips.add(mesh(new THREE.BoxGeometry(0.055,0.43,0.035),leather,0.205,0.53,0.285));
-  for(var stitch=0;stitch<3;stitch++)hips.add(mesh(new THREE.BoxGeometry(0.09,0.018,0.018),metal,0.1,0.43-stitch*0.09,0.32));
-  hips.add(mesh(new THREE.BoxGeometry(0.045,0.38,0.04),metal,0,0.54,0.315));
-  // Belt, buckle, pouches and cross-body utility strap.
-  hips.add(mesh(new THREE.CylinderGeometry(0.34,0.34,0.105,14),leather,0,0.12,0,1,1,0.82));
-  hips.add(mesh(new THREE.BoxGeometry(0.13,0.13,0.055),metal,0,0.12,0.29));
-  [-1,1].forEach(function(side){
-    hips.add(mesh(new THREE.BoxGeometry(0.16,0.2,0.15),leather,side*0.31,0.22,0.12));
-    hips.add(mesh(new THREE.BoxGeometry(0.11,0.035,0.16),metal,side*0.31,0.27,0.13));
-  });
-  var strap=mesh(new THREE.BoxGeometry(0.075,0.94,0.055),leather,0.18,0.55,0.29);
-  strap.rotation.z=-0.31;hips.add(strap);
-  var neck=mesh(new THREE.CylinderGeometry(0.085,0.1,0.18,10),skinMat,0,1.02,0);hips.add(neck);
-  var head=new THREE.Group();head.position.set(0,1.2,0);hips.add(head);
-  head.add(mesh(new THREE.SphereGeometry(0.235,20,16),skinMat,0,0.02,0));
-  // Ears, nose, cheek planes, jaw and a readable face.
-  [-1,1].forEach(function(side){
-    head.add(mesh(new THREE.SphereGeometry(0.064,10,8),skinMat,side*0.225,-0.005,0));
-    head.add(mesh(new THREE.SphereGeometry(0.035,10,8),stdMat(0x6d4135),side*0.08,-0.015,0.207));
-    head.add(mesh(new THREE.SphereGeometry(0.024,8,8),dark,side*0.08,0.015,0.235));
-    head.add(mesh(new THREE.SphereGeometry(0.012,6,6),stdMat(0xffffff),side*0.087,0.023,0.255));
-    var brow=mesh(new THREE.BoxGeometry(0.09,0.025,0.035),dark,side*0.08,0.065,0.22);brow.rotation.z=side*-0.12;head.add(brow);
-  });
-  head.add(mesh(new THREE.SphereGeometry(0.045,10,8),skinMat,0,-0.045,0.215,0.72,0.72,0.85));
-  head.add(mesh(new THREE.BoxGeometry(0.07,0.012,0.018),stdMat(0x75453b),0,-0.105,0.22));
-  // Subtle jaw and cheek definition keeps the face readable without a heavy low-poly mask.
-  head.add(mesh(new THREE.SphereGeometry(0.17,14,10),skinMat,0,-0.085,0.075,1,0.48,0.9));
-  head.add(mesh(new THREE.SphereGeometry(0.055,10,8),stdMat(0xb8795b),-0.145,-0.055,0.145,1,0.72,0.65));
-  head.add(mesh(new THREE.SphereGeometry(0.055,10,8),stdMat(0xb8795b),0.145,-0.055,0.145,1,0.72,0.65));
-  // Hair cap, swept fringe and short back hair.
-  head.add(mesh(new THREE.SphereGeometry(0.246,16,10,0,Math.PI*2,0,Math.PI*0.56),dark,0,0.07,-0.005,1,0.9,1));
-  var fringe=mesh(new THREE.SphereGeometry(0.16,12,8,0,Math.PI*2,0,Math.PI*0.55),stdMat(0x30251e),0,-0.005,0.15,1.25,0.55,0.7);fringe.rotation.x=-0.2;head.add(fringe);
-  // Neck scarf with loose tails for secondary motion.
-  var scarf=mesh(new THREE.TorusGeometry(0.13,0.055,8,16),stdMat(0xb56a3c),0,1.04,0);scarf.rotation.x=Math.PI/2;hips.add(scarf);
-  var scarfTail=mesh(new THREE.BoxGeometry(0.11,0.36,0.045),stdMat(0xb56a3c),-0.12,0.79,-0.18);scarfTail.rotation.x=-0.35;hips.add(scarfTail);
-  // Backpack with padded body, rolled bedroll and straps.
-  var pack=new THREE.Group();pack.position.set(0,0.62,-0.29);hips.add(pack);
-  pack.add(mesh(new THREE.BoxGeometry(0.43,0.56,0.22),leather,0,0,0));
-  pack.add(mesh(new THREE.BoxGeometry(0.34,0.16,0.25),stdMat(0x806044),0,0.34,-0.01));
-  pack.add(mesh(new THREE.CylinderGeometry(0.09,0.09,0.48,10),stdMat(0x9b7650),0,0.43,-0.02,1,1,0.8));
-  [-1,1].forEach(function(side){pack.add(mesh(new THREE.BoxGeometry(0.055,0.55,0.06),stdMat(0xc18b4e),side*0.17,0,0.12))});
-  // Shoulder joints, articulated arms, forearm wraps and gloves.
-  var armL=limb(0.69,0.105,0x365e60,skin),armR=limb(0.69,0.105,0x365e60,skin);
-  armL.position.set(-0.43,0.82,0);armR.position.set(0.43,0.82,0);hips.add(armL);hips.add(armR);
-  [-1,1].forEach(function(side){
-    var arm=side<0?armL:armR;
-    arm.add(mesh(new THREE.SphereGeometry(0.145,12,10),cloth,0,0.19,0,1,0.8,1));
-    arm.add(mesh(new THREE.CylinderGeometry(0.105,0.09,0.17,10),leather,0,-0.47,0));
-    arm.add(mesh(new THREE.SphereGeometry(0.105,10,8),dark,0,-0.61,0.02));
-    arm.add(mesh(new THREE.BoxGeometry(0.12,0.08,0.1),metal,0,-0.46,0.08));
-    // Layered forearm guards and glove fingers.
-    arm.add(mesh(new THREE.BoxGeometry(0.19,0.22,0.13),leather,0,-0.39,0.015,1,1,0.72));
-    for(var finger=0;finger<3;finger++)arm.add(mesh(new THREE.SphereGeometry(0.03,8,6),dark,(finger-1)*0.045,-0.65,0.08));
-  });
-  // Axe tool with shaped head and wrapped grip, attached to the right hand.
-  var axe=new THREE.Group();axe.position.set(0,-0.68,0.05);armR.add(axe);
-  axe.add(mesh(new THREE.CylinderGeometry(0.026,0.034,0.92,8),stdMat(0x78502f),0,0.34,0));
-  for(var wr=0;wr<5;wr++)axe.add(mesh(new THREE.TorusGeometry(0.034,0.008,5,8),stdMat(0xc59a62),0,0.08+wr*0.075,0));
-  axe.add(mesh(new THREE.BoxGeometry(0.09,0.25,0.34),metal,0,0.72,0.1));
-  axe.add(mesh(new THREE.BoxGeometry(0.045,0.22,0.12),stdMat(0xb9c2c2,0.25,{metalness:0.75}),0.055,0.72,0.24));
-  axe.rotation.x=1.2;
+  var g=new THREE.Group(),skinMat=stdMat(0xc98f68,0.78),cloth=stdMat(0x263f46,0.92),cloth2=stdMat(0x365e60,0.88),leather=stdMat(0x69452d,0.96),metal=stdMat(0x89979a,0.34,{metalness:0.55}),dark=stdMat(0x211c19,0.95);
+  var hips=new THREE.Group();hips.position.y=0.98;g.add(hips);
+  var torso=mesh(new THREE.CylinderGeometry(0.28,0.33,0.72,14),cloth,0,0.48,0,1,1,0.82);hips.add(torso);
+  hips.add(mesh(new THREE.SphereGeometry(0.29,14,10),cloth2,0,0.79,0,1,0.5,0.82));
+  hips.add(mesh(new THREE.BoxGeometry(0.46,0.12,0.48),leather,0,0.12,0,1,1,0.78));
+  hips.add(mesh(new THREE.BoxGeometry(0.13,0.13,0.05),metal,0,0.12,0.22));
+  function makeLeg(side){var leg=new THREE.Group();leg.position.set(side*0.17,0.12,0);hips.add(leg);leg.add(mesh(new THREE.CylinderGeometry(0.135,0.105,0.78,10),cloth,0,-0.39,0));leg.add(mesh(new THREE.SphereGeometry(0.14,10,8),cloth2,0,-0.36,0,1,0.65,1));leg.add(mesh(new THREE.BoxGeometry(0.23,0.17,0.075),leather,0,-0.59,0.105));leg.add(mesh(new THREE.BoxGeometry(0.29,0.18,0.39),dark,0,-0.82,0.075));leg.add(mesh(new THREE.BoxGeometry(0.30,0.07,0.41),leather,0,-0.73,0.08));leg.add(mesh(new THREE.BoxGeometry(0.09,0.055,0.025),metal,0,-0.59,0.15));return leg;}
+  var legL=makeLeg(-1),legR=makeLeg(1);
+  hips.add(mesh(new THREE.CylinderGeometry(0.085,0.095,0.16,10),skinMat,0,0.91,0));
+  var head=new THREE.Group();head.position.set(0,1.12,0);hips.add(head);
+  head.add(mesh(new THREE.SphereGeometry(0.225,18,14),skinMat,0,0.02,0));
+  head.add(mesh(new THREE.SphereGeometry(0.17,14,9,0,Math.PI*2,0,Math.PI*0.52),dark,0,0.09,-0.005,1,0.82,1));
+  head.add(mesh(new THREE.SphereGeometry(0.11,12,8),stdMat(0x30251e),0,-0.005,0.15,1.35,0.55,0.72));
+  head.add(mesh(new THREE.SphereGeometry(0.038,8,6),skinMat,0,-0.035,0.205,0.8,0.8,0.8));
+  [-1,1].forEach(function(side){head.add(mesh(new THREE.SphereGeometry(0.035,8,6),skinMat,side*0.22,0,0));head.add(mesh(new THREE.SphereGeometry(0.018,8,6),dark,side*0.078,0.035,0.205));head.add(mesh(new THREE.BoxGeometry(0.075,0.018,0.025),dark,side*0.078,0.078,0.205));});
+  function makeArm(side){var arm=new THREE.Group();arm.position.set(side*0.39,0.78,0);hips.add(arm);arm.add(mesh(new THREE.SphereGeometry(0.15,10,8),cloth,0,0,0,1,0.9,1));arm.add(mesh(new THREE.CylinderGeometry(0.105,0.085,0.43,10),cloth2,0,-0.27,0));arm.add(mesh(new THREE.CylinderGeometry(0.088,0.095,0.19,10),leather,0,-0.55,0));arm.add(mesh(new THREE.SphereGeometry(0.09,10,8),dark,0,-0.68,0.02));arm.add(mesh(new THREE.BoxGeometry(0.17,0.17,0.12),leather,0,-0.51,0.015));arm.add(mesh(new THREE.BoxGeometry(0.11,0.06,0.035),metal,0,-0.5,0.09));return arm;}
+  var armL=makeArm(-1),armR=makeArm(1);
+  var pack=new THREE.Group();pack.position.set(0,0.52,-0.29);hips.add(pack);pack.add(mesh(new THREE.BoxGeometry(0.42,0.52,0.2),leather,0,0,0));pack.add(mesh(new THREE.BoxGeometry(0.32,0.14,0.22),stdMat(0x806044),0,0.32,-0.01));pack.add(mesh(new THREE.CylinderGeometry(0.075,0.075,0.4,9),stdMat(0x9b7650),0,0.39,-0.02,1,1,0.8));
+  var scarfTail=mesh(new THREE.BoxGeometry(0.1,0.3,0.035),stdMat(0xb56a3c),-0.12,0.73,-0.2);scarfTail.rotation.x=-0.25;hips.add(scarfTail);
+  var axe=new THREE.Group();axe.position.set(0,-0.67,0.04);armR.add(axe);axe.add(mesh(new THREE.CylinderGeometry(0.022,0.03,0.76,8),stdMat(0x78502f),0,0.31,0));axe.add(mesh(new THREE.BoxGeometry(0.09,0.2,0.29),metal,0,0.62,0.09));axe.rotation.x=1.05;
+  g.userData.customMaterials={skin:skinMat,cloth:cloth,cloth2:cloth2,leather:leather,hair:dark};
   return {g:g,hips:hips,legL:legL,legR:legR,armL:armL,armR:armR,head:head,torso:torso,pack:pack,scarfTail:scarfTail,axe:axe};
 }
 var player=makePlayer();scene.add(player.g);
 var characterStyles=[0x527b70,0x8a633e,0x52658e,0x8b4c4c],selectedCharacter=0;
 try{selectedCharacter=clamp(parseInt(localStorage.getItem(CHARACTER_KEY)||'0',10)||0,0,3);}catch(e){}
-function applyCharacterStyle(index){selectedCharacter=clamp(index|0,0,3);var tint=new THREE.Color(characterStyles[selectedCharacter]);player.g.traverse(function(o){if(!o.isMesh||!o.material||!o.material.color)return;if(o.userData.baseColor===undefined)o.userData.baseColor=o.material.color.getHex();var base=new THREE.Color(o.userData.baseColor);base.lerp(tint,0.18);o.material.color.copy(base);});try{localStorage.setItem(CHARACTER_KEY,String(selectedCharacter));}catch(e){}var buttons=document.querySelectorAll('.charChoice');buttons.forEach(function(b){b.classList.toggle('active',+b.getAttribute('data-char')===selectedCharacter);});}
+function applyCharacterStyle(index){selectedCharacter=clamp(index|0,0,3);var mats=player.g.userData.customMaterials;if(mats){mats.cloth.color.setHex(characterStyles[selectedCharacter]);mats.cloth2.color.setHex(characterStyles[selectedCharacter]);}try{localStorage.setItem(CHARACTER_KEY,String(selectedCharacter));}catch(e){}var buttons=document.querySelectorAll('.charChoice');buttons.forEach(function(b){b.classList.toggle('active',+b.getAttribute('data-char')===selectedCharacter);});syncCustomizationControls();}
 applyCharacterStyle(selectedCharacter);
 
 var SPECIES=[
@@ -1164,6 +1098,16 @@ updateWorldStreaming(true);
 var mainMenu=$('mainMenu'),menuOpen=true;
 function refreshWorldMenu(){var sel=$('worldSelect');sel.innerHTML='';worldList.forEach(function(w){var op=document.createElement('option');op.value=w.id;op.textContent=w.name;sel.appendChild(op);});sel.value=selectedWorldId;}
 refreshWorldMenu();
+function syncCustomizationControls(){var mats=player.g.userData.customMaterials;if(!mats)return;var skin=$('skinTone'),outfit=$('outfitColor');if(skin&&!skin.dataset.ready){skin.value='0x'+mats.skin.color.getHexString();skin.dataset.ready='1';}if(outfit)outfit.value='0x'+mats.cloth.color.getHexString();}
+syncCustomizationControls();
+$('skinTone').addEventListener('change',function(){player.g.userData.customMaterials.skin.color.set(this.value);try{localStorage.setItem('mfwilds3d_skin',this.value)}catch(e){}});
+$('outfitColor').addEventListener('change',function(){var c=+this.value;player.g.userData.customMaterials.cloth.color.setHex(c);player.g.userData.customMaterials.cloth2.color.setHex(c);try{localStorage.setItem('mfwilds3d_outfit',this.value)}catch(e){}});
+$('hairStyle').addEventListener('change',function(){player.g.userData.customMaterials.hair.color.setHex(this.value==='2'?0x35483f:0x211c19);try{localStorage.setItem('mfwilds3d_hair',this.value)}catch(e){}});
+$('saveLook').addEventListener('click',function(){try{localStorage.setItem('mfwilds3d_skin',$('skinTone').value);localStorage.setItem('mfwilds3d_outfit',$('outfitColor').value);localStorage.setItem('mfwilds3d_hair',$('hairStyle').value);}catch(e){}say('Character appearance saved.',3);});
+function restoreCharacterAppearance(){var m=player.g.userData.customMaterials;try{var sk=localStorage.getItem('mfwilds3d_skin'),oc=localStorage.getItem('mfwilds3d_outfit'),hr=localStorage.getItem('mfwilds3d_hair');if(sk)m.skin.color.set(sk);if(oc){m.cloth.color.set(oc);m.cloth2.color.set(oc);}if(hr==='2')m.hair.color.setHex(0x35483f);$('skinTone').value=sk||'0xc98f68';$('outfitColor').value=oc||('0x'+m.cloth.color.getHexString());$('hairStyle').value=hr||'0';}catch(e){}}
+restoreCharacterAppearance();
+$('settingsMenu').addEventListener('click',function(){save();$('settingsPanel').hidden=true;mainMenu.hidden=false;menuOpen=true;});
+$('settingsCharacter').addEventListener('click',function(){$('settingsPanel').hidden=true;mainMenu.hidden=false;menuOpen=true;$('skinTone').focus();});
 document.querySelectorAll('.charChoice').forEach(function(b){b.addEventListener('click',function(){applyCharacterStyle(+b.getAttribute('data-char'));});});
 $('worldSelect').addEventListener('change',function(){selectedWorldId=this.value;persistWorldList();location.reload();});
 $('playSelected').addEventListener('click',function(){selectedWorldId=$('worldSelect').value;persistWorldList();mainMenu.hidden=true;menuOpen=false;say('Welcome to '+(worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0]).name+'. Your adventure continues.',4);});
