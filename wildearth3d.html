@@ -1826,6 +1826,10 @@ function update(dt){
       c.t-=dt;
       if(c.t<=0){
         var pauseChance=[0.34,0.28,0.48,0.58,0.2,0.34,0.3,0.4][c.sp]||0.34;
+        // Each species has a preferred activity window; nighttime specialists stay livelier after dark.
+        var nightPreference=[0.18,0.42,0.58,0.12,0.82,0.28,0.72,0.9][c.sp]||0.3;
+        var activityLevel=dayF*(1-nightPreference)+nightF*nightPreference;
+        pauseChance=clamp(pauseChance+(1-activityLevel)*0.22,0.08,0.92);
         if(c.state==='alert')pauseChance=Math.min(0.75,pauseChance+0.22);
         if(Math.random()<pauseChance){
           c.vx=0;c.vz=0;
