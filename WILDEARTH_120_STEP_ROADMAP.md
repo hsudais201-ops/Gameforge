@@ -129,7 +129,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 101. Add a main menu, pause menu, and settings panel.
 - [x] 102. Add HUD bars for health, hunger, and stamina.
 - [x] 103. Add target information for nearby wildlife.
-- [ ] 104. Add a dedicated quest and objective panel.
+- [x] 104. Add a dedicated quest and objective panel.
 - [ ] 105. Add audio settings and separate music/effects volume.
 - [ ] 106. Add original ambient, weather, creature, and UI sound effects.
 - [ ] 107. Add subtitle and notification duration settings.
@@ -154,6 +154,7 @@ This is the execution tracker for the next development stages. A checked item me
 - Achievement expansion: 12 milestones.
 - Exploration tracking: distance is accumulated from actual player movement and saved per world.
 - Achievement expansion: 15 milestones total, including Wanderer, Pathfinder, and World Roamer.
+- Quest journal: eight automatically progressing objectives, completion alerts, progress bars, and per-world persistence. Step 104 is source-verified; step 95 remains open because active/abandoned quest states are not implemented yet.
 
 ## Verification policy
 Source-level syntax and structural checks are not substitutes for playing the game. Browser, mobile, performance, and save-migration tests remain open until actually run on target devices.
