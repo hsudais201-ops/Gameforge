@@ -114,3 +114,11 @@ test('world seed entry and grid-aligned build placement are available', () => {
   assert.ok(gameScript.includes('Math.round(tx/3)*3'));
   assert.ok(gameScript.includes('Math.round(tz/3)*3'));
 });
+
+test('graphics profiles adapt weather particle budgets with quality changes', () => {
+  assert.ok(gameScript.includes('particleScale:0.4'));
+  assert.ok(gameScript.includes('particleScale:0.7'));
+  assert.ok(gameScript.includes('function applyWeatherBudget()'));
+  assert.ok(gameScript.includes('applyWeatherBudget();'));
+  assert.ok(gameScript.includes('rainCount=target'));
+});
