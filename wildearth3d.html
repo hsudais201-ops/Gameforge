@@ -136,6 +136,16 @@
   .settingRow select,.settingRow button{background:#1d3a2a;color:#fff;border:1px solid #ffffff44;border-radius:8px;padding:8px;font:inherit;max-width:155px}
   #settingsPanel .settingNote{font-size:11px;opacity:.7;line-height:1.4}
 
+  #pausePanel{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(3,10,7,.78);backdrop-filter:blur(7px)}
+  #pausePanel[hidden]{display:none}
+  .pauseCard{width:min(340px,92vw);padding:24px;border:1px solid #a6c09b66;border-radius:18px;background:linear-gradient(145deg,#1a3025,#0c1813);box-shadow:0 24px 80px #000b;text-align:center}
+  .pauseBrand{font-size:30px;font-weight:900;letter-spacing:.16em;color:#e9f2df}
+  .pauseCard p{color:#b8c8b7;font-size:13px;margin:8px 0 18px}
+  .pauseAction{width:100%;padding:12px;margin:5px 0;border:1px solid #9caf8c66;border-radius:9px;background:#203629;color:#fff;font-weight:700;font-size:14px;text-align:center}
+  .pauseAction.primary{background:linear-gradient(#c49a54,#805a2d);border-color:#e7c37a}
+  #pauseStatus{min-height:16px;margin-top:10px;color:#c8d8c5;font-size:11px}
+  #pauseToggle{position:fixed;left:12px;top:max(12px,env(safe-area-inset-top));z-index:12;border:1px solid #ffffff55;border-radius:10px;padding:9px 12px;background:#10251ddd;color:#fff;font:600 12px system-ui;touch-action:manipulation}
+  #pauseToggle:active{filter:brightness(1.2)}
   #mainMenu{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(115deg,#07110deF,#0b1b15d9),radial-gradient(ellipse at 70% 30%,#5e8055 0%,transparent 55%);backdrop-filter:blur(8px);overflow:auto}
   #mainMenu[hidden]{display:none}
   .menuCard{width:min(920px,96vw);max-height:94dvh;overflow:auto;box-sizing:border-box;padding:clamp(16px,3vw,30px);border:1px solid #a6c09b66;border-radius:18px;background:linear-gradient(145deg,#1a3025f5,#0c1813f7);box-shadow:0 24px 90px #000b}
@@ -160,6 +170,8 @@
   </div>
   <div class="row"><span class="pill" id="goal"></span></div>
 </div>
+<div id="pausePanel" hidden><div class="pauseCard"><div class="pauseBrand">PAUSED</div><p>Your adventure is safely paused.</p><button id="pauseResume" class="pauseAction primary">▶ Resume Game</button><button id="pauseSave" class="pauseAction">Save World</button><button id="pauseSettings" class="pauseAction">⚙ Settings</button><button id="pauseMainMenu" class="pauseAction">Return to Main Menu</button><div id="pauseStatus" role="status" aria-live="polite">Autosave is active.</div></div></div>
+<div id="pauseBtn" aria-label="Pause game"><button id="pauseToggle" type="button">Ⅱ Pause</button></div>
 <div id="hint"></div>
 <button id="settingsBtn" type="button">⚙ Settings</button>
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
@@ -322,8 +334,14 @@ function applyAreaLevel(level){
   saveGraphicsSettings();
 }
 $('settingsBtn').addEventListener('click',function(){$('settingsPanel').hidden=false});
+$('pauseToggle').addEventListener('click',function(){togglePause()});
+$('pauseResume').addEventListener('click',function(){togglePause(false)});
+$('pauseSave').addEventListener('click',function(){var ok=save();$('pauseStatus').textContent=ok?'World saved successfully.':'Save failed · check device storage';});
+$('pauseSettings').addEventListener('click',function(){$('pausePanel').hidden=true;$('settingsPanel').hidden=false;});
+$('pauseMainMenu').addEventListener('click',function(){save();pauseOpen=false;$('pausePanel').hidden=true;mainMenu.hidden=false;menuOpen=true;});
+
 $('saveWorldBtn').addEventListener('click',function(){var ok=save();var status=$('saveStatus');status.textContent=ok?'World saved successfully.':'Could not save. Check available device storage.';say(ok?'World saved.':'Save failed — device storage may be full.',3)});
-$('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});
+$('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});if(pauseOpen)$('pausePanel').hidden=false;
 $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this.value);say('Graphics set to '+renderProfiles[renderLevel].name,2)});
 $('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
 applyRenderProfile(renderLevel);
@@ -1272,6 +1290,8 @@ updateWorldStreaming(true);
 
 /* ---------- title menu / world selection ---------- */
 var mainMenu=$('mainMenu'),menuOpen=true;
+var pauseOpen=false;
+function togglePause(force){if(mainMenu.hidden===false)return;if(bagOpen){if(force!==false)toggleBag();return;}pauseOpen=typeof force==='boolean'?force:!pauseOpen;$('pausePanel').hidden=!pauseOpen;menuOpen=pauseOpen;if(pauseOpen){save();$('pauseStatus').textContent='Game paused · progress saved';}else{last=performance.now();requestAnimationFrame(frame);}}
 function refreshWorldMenu(){var sel=$('worldSelect');sel.innerHTML='';worldList.forEach(function(w){var op=document.createElement('option');op.value=w.id;op.textContent=w.name;sel.appendChild(op);});sel.value=selectedWorldId;}
 refreshWorldMenu();
 function syncCustomizationControls(){var mats=player.g.userData.customMaterials;if(!mats)return;var skin=$('skinTone'),outfit=$('outfitColor');if(skin&&!skin.dataset.ready){skin.value='0x'+mats.skin.color.getHexString();skin.dataset.ready='1';}if(outfit)outfit.value='0x'+mats.cloth.color.getHexString();}
@@ -1289,7 +1309,7 @@ $('hairColor').addEventListener('change',function(){applyHairColor(this.value);}
 $('saveLook').addEventListener('click',function(){try{localStorage.setItem('mfwilds3d_skin',$('skinTone').value);localStorage.setItem('mfwilds3d_outfit',$('outfitColor').value);localStorage.setItem('mfwilds3d_hair',$('hairStyle').value);localStorage.setItem('mfwilds3d_hairColor',$('hairColor').value);localStorage.setItem('mfwilds3d_eyeColor',$('eyeColor').value);localStorage.setItem('mfwilds3d_facialHair',$('facialHair').value);}catch(e){}say('Character appearance saved.',3);});
 function restoreCharacterAppearance(){var m=player.g.userData.customMaterials;try{var sk=localStorage.getItem('mfwilds3d_skin'),oc=localStorage.getItem('mfwilds3d_outfit'),hr=localStorage.getItem('mfwilds3d_hair'),hc=localStorage.getItem('mfwilds3d_hairColor'),ec=localStorage.getItem('mfwilds3d_eyeColor'),fh=localStorage.getItem('mfwilds3d_facialHair');if(sk)m.skin.color.set(sk);if(oc){m.cloth.color.set(oc);m.cloth2.color.set(oc);}applyHairStyle(hr||'0');applyHairColor(hc||'0x211c19');$('hairColor').value=hc||'0x211c19';applyEyeColor(ec||'0x6b8f91');applyFacialHair(fh||'0');$('eyeColor').value=ec||'0x6b8f91';$('facialHair').value=fh||'0';$('skinTone').value=sk||'0xc98f68';$('outfitColor').value=oc||('0x'+m.cloth.color.getHexString());$('hairStyle').value=hr||'0';}catch(e){}}
 restoreCharacterAppearance();
-$('settingsMenu').addEventListener('click',function(){save();$('settingsPanel').hidden=true;mainMenu.hidden=false;menuOpen=true;});
+$('settingsMenu').addEventListener('click',function(){save();pauseOpen=false;$('pausePanel').hidden=true;$('settingsPanel').hidden=true;mainMenu.hidden=false;menuOpen=true;});
 $('settingsCharacter').addEventListener('click',function(){$('settingsPanel').hidden=true;mainMenu.hidden=false;menuOpen=true;$('skinTone').focus();});
 document.querySelectorAll('.charChoice').forEach(function(b){b.addEventListener('click',function(){applyCharacterStyle(+b.getAttribute('data-char'));});});
 $('worldSelect').addEventListener('change',function(){selectedWorldId=this.value;persistWorldList();location.reload();});
@@ -1309,7 +1329,7 @@ window.addEventListener('keydown',function(e){
   else if(e.code==='KeyE')doUse();
   else if(e.code==='KeyQ'){hotSel=(hotSel+1)%HOT;renderInv(true)}
   else if(e.code==='KeyI'||e.code==='KeyC'||e.code==='Tab')toggleBag();
-  else if(e.code==='Escape'&&bagOpen)toggleBag();
+  else if(e.code==='Escape'){if(bagOpen)toggleBag();else togglePause();}
   else if(/^Digit[1-9]$/.test(e.code)){hotSel=+e.code.slice(5)-1;renderInv(true)}
 });
 window.addEventListener('keyup',function(e){keys[e.code]=false;if(e.code==='Space')held.gather=false});
