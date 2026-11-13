@@ -62,7 +62,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 46. Add creature taming and companion following.
 - [x] 47. Add companion Follow, Hold, and Defend orders.
 - [x] 48. Add species-specific habitat and biome preference tables.
-- [ ] 49. Add breeding, offspring inheritance, and population limits.
+- [x] 49. Add breeding, offspring inheritance, and population limits.
 - [ ] 50. Add creature needs, feeding preferences, and trust levels.
 
 ## F. Combat and hostile encounters
@@ -173,6 +173,8 @@ This is the execution tracker for the next development stages. A checked item me
 
 - World ecology: added five deterministic biomes (Sunlit Meadow, Mosswood Forest, Windscar Highlands, Whispering Marsh, Frostfall Ridge), biome-specific terrain palettes, habitat-weighted wildlife selection, and biome-weighted tree/bush/ore placement.
 - Water and exposure: player can enter deep water, swims at reduced speed, floats at the water surface, consumes oxygen and stamina, takes drowning damage at zero oxygen, and recovers oxygen on land. Rain and swimming increase wetness; dry weather dries the player; cold wet exposure causes damage. Wetness and oxygen are included in version-5 saves with safe defaults for older saves.
+
+- Wildlife ecology: adults of the same species can breed when calm and nearby; offspring inherit blended personality traits with small variation, and a hard local population cap prevents runaway growth. Parent links are cleaned when offspring are removed.
 
 ## Verification policy
 Source-level syntax and structural checks are not substitutes for playing the game. Browser, mobile, performance, and save-migration tests remain open until actually run on target devices.
