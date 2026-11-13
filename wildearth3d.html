@@ -384,9 +384,9 @@ scene.add(sun);scene.add(sun.target);
 
 /* ---------- manual graphics settings (resolution stays fixed) ---------- */
 var renderProfiles=[
-  {name:'Low',shadows:false,fogFar:175},
-  {name:'Balanced',shadows:true,fogFar:230},
-  {name:'High',shadows:true,fogFar:280}
+  {name:'Low',shadows:false,fogFar:175,particleScale:0.4},
+  {name:'Balanced',shadows:true,fogFar:230,particleScale:0.7},
+  {name:'High',shadows:true,fogFar:280,particleScale:1}
 ];
 var renderLevel=1,areaLevel=1,areaRadii=[55,85,125],SETTINGS_KEY='mfwilds3d_settings_v1';
 try{var savedGraphics=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');if(savedGraphics.quality!==undefined)renderLevel=clamp(savedGraphics.quality|0,0,2);if(savedGraphics.area!==undefined)areaLevel=clamp(savedGraphics.area|0,0,2);}catch(e){}
@@ -405,6 +405,7 @@ function applyRenderProfile(level){
   }else if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
   renderer.shadowMap.needsUpdate=true;
   scene.fog.far=profile.fogFar;
+  applyWeatherBudget();
   $('qualitySelect').value=String(renderLevel);
   saveGraphicsSettings();
 }
@@ -1348,13 +1349,21 @@ var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floa
 var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34;
-var rainCount=isMobile?150:280,rainGeo=new THREE.BufferGeometry(),rainPositions=new Float32Array(rainCount*3);
+var rainCount=Math.max(40,Math.round((isMobile?150:280)*renderProfiles[renderLevel].particleScale)),rainGeo=new THREE.BufferGeometry(),rainPositions=new Float32Array(rainCount*3);
 for(var rpi=0;rpi<rainCount;rpi++){
   rainPositions[rpi*3]=(random()-0.5)*54;
   rainPositions[rpi*3+1]=random()*24;
   rainPositions[rpi*3+2]=(random()-0.5)*54;
 }
 rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
+function applyWeatherBudget(){
+  if(typeof rainGeo==='undefined'||!rainGeo)return;
+  var target=Math.max(40,Math.round((isMobile?150:280)*renderProfiles[renderLevel].particleScale));
+  if(target===rainCount)return;
+  rainCount=target;rainPositions=new Float32Array(rainCount*3);
+  for(var i=0;i<rainCount;i++){rainPositions[i*3]=(random()-0.5)*54;rainPositions[i*3+1]=random()*24;rainPositions[i*3+2]=(random()-0.5)*54;}
+  rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
+}
 var rainMat=new THREE.PointsMaterial({color:0xb9d9ed,size:isMobile?0.105:0.13,transparent:true,opacity:0,depthWrite:false});
 var rainPoints=new THREE.Points(rainGeo,rainMat);rainPoints.frustumCulled=false;rainPoints.visible=false;scene.add(rainPoints);
 function updateWeather(dt){
