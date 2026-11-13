@@ -1233,6 +1233,7 @@ function playSfx(kind){
   var tones={gather:[250,0.13,'triangle'],capture:[620,0.28,'sine'],damage:[92,0.22,'sawtooth'],rain:[175,0.34,'sine'],creature:[420,0.2,'triangle'],warning:[130,0.3,'sawtooth'],ui:[540,0.08,'sine']},tone=tones[kind]||tones.ui;
   try{var now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=tone[2];osc.frequency.setValueAtTime(tone[0],now);osc.frequency.exponentialRampToValueAtTime(Math.max(45,tone[0]*0.72),now+tone[1]);gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(Math.max(0.001,audioPrefs.effects*0.16),now+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+tone[1]);osc.connect(gain);gain.connect(effectsBus);osc.start(now);osc.stop(now+tone[1]+0.02);}catch(e){}
 }
+document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('button'))playSfx('ui');});
 document.addEventListener('pointerdown',initAudio,{once:true});document.addEventListener('keydown',initAudio,{once:true});
 var NSLOTS=36,HOT=9,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
 var activeChest=null,selectedChestSlot=0;
