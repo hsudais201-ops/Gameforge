@@ -89,6 +89,18 @@
 <script>
 (function(){
 'use strict';
+function showGameError(message){
+  var panel=document.getElementById('err');
+  if(!panel)return;
+  panel.style.display='flex';
+  panel.textContent='WILDEARTH stopped because of a runtime error. Reload the game.\\n\\n'+String(message||'Unknown error').slice(0,420);
+}
+window.addEventListener('error',function(e){
+  showGameError((e.message||'JavaScript error')+(e.filename?' · '+e.filename.split('/').pop():'')+(e.lineno?':'+e.lineno:''));
+});
+window.addEventListener('unhandledrejection',function(e){
+  var reason=e.reason;showGameError(reason&&reason.stack?reason.stack:(reason&&reason.message?reason.message:reason));
+});
 var $=function(id){return document.getElementById(id)};
 if(typeof THREE==='undefined'){$('err').style.display='flex';return}
 
@@ -1606,16 +1618,21 @@ function updateFloats(dt){
 var last=performance.now(),pageActive=true;
 function frame(now){
   if(!pageActive)return;
-  var dt=Math.min(0.05,(now-last)/1000);last=now;
-  update(dt);updateCamera();updateFloats(dt);
-  renderer.render(scene,camera);
-  requestAnimationFrame(frame);
+  try{
+    var dt=Math.min(0.05,(now-last)/1000);last=now;
+    update(dt);updateCamera();updateFloats(dt);
+    renderer.render(scene,camera);
+    requestAnimationFrame(frame);
+  }catch(error){
+    pageActive=false;
+    showGameError(error&&error.stack?error.stack:error);
+  }
 }
 document.addEventListener('visibilitychange',function(){
   pageActive=!document.hidden;
   if(pageActive){last=performance.now();requestAnimationFrame(frame);}
 });
-cv.addEventListener('webglcontextlost',function(e){e.preventDefault();pageActive=false;$('hint').textContent='Graphics paused. Reload the game if the display does not recover.';$('hint').style.opacity='1';});
+cv.addEventListener('webglcontextlost',function(e){e.preventDefault();pageActive=false;showGameError('The browser lost the WebGL graphics context. Close other tabs, then reload.');});
 cv.addEventListener('webglcontextrestored',function(){pageActive=true;applyRenderProfile(renderLevel);streamDirty=true;last=performance.now();requestAnimationFrame(frame);});
 window.addEventListener('beforeunload',save);
 updateHud();
