@@ -18,7 +18,7 @@ GameForge Studio is an early browser-based game creation workspace. The long-ter
 - Browser playtest with keyboard and touch controls, score, lives, restart, and game-over state
 - Export the current scene as JSON or a standalone playable HTML file; touch actions and collision settings are included in the HTML export
 
-## Run locally
+## WILDEARTH browser prototype\n\nOpen `wildearth.html` to play the first WILDEARTH survival prototype. It includes a scrolling forest world, keyboard and touch movement, gathering, hunger, thirst, health, stamina, roaming wolves, a day/night cycle, campfire crafting, and automatic local saves. Use WASD or arrow keys to move, E to gather/interact, Q to eat berries, and F to build a campfire. On touch devices, use the on-screen movement pad and action buttons. This is a lightweight 2D gameplay prototype, not the planned final 3D AAA game.\n\n## Run locally
 
 Open `index.html` in a modern browser, or serve this directory with a static web server.
 
