@@ -2103,10 +2103,11 @@ function update(dt){
       s.windup=Math.max(0,s.windup-dt);
       s.x+=s.attackX*2.8*dt;s.z+=s.attackZ*2.8*dt;
       if(s.windup===0){
-        if(targetWild&&wild.indexOf(targetWild)>=0&&Math.hypot(targetWild.x-s.x,targetWild.z-s.z)<2.6){
-          targetWild.flee=Math.max(targetWild.flee,3.2+Math.random()*1.4);targetWild.state='flee';targetWild.alertT=1.4;targetWild.threatX=s.x;targetWild.threatZ=s.z;
-          s.attackCd=2.1;pop(targetWild.x,targetWild.y+1.8,targetWild.z,'Wildlife startled','#c9a8ff');
-        }else if(!targetWild&&Math.hypot(P.x-s.x,P.z-s.z)<2.35&&!safe){
+        var struckWild=s.attackTarget;s.attackTarget=null;
+        if(struckWild&&wild.indexOf(struckWild)>=0&&Math.hypot(struckWild.x-s.x,struckWild.z-s.z)<2.6){
+          struckWild.flee=Math.max(struckWild.flee,3.2+Math.random()*1.4);struckWild.state='flee';struckWild.alertT=1.4;struckWild.threatX=s.x;struckWild.threatZ=s.z;
+          s.attackCd=2.1;pop(struckWild.x,struckWild.y+1.8,struckWild.z,'Wildlife startled','#c9a8ff');
+        }else if(!struckWild&&Math.hypot(P.x-s.x,P.z-s.z)<2.35&&!safe){
           var armor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);
           P.hp-=Math.min(18,9+nights*0.65)*armor;
           s.attackCd=1.15;pop(P.x,P.y+2.1,P.z,'Wraith strike','#c9a8ff');
@@ -2115,8 +2116,8 @@ function update(dt){
     }else if(s.lunge>0){
       s.lunge=Math.max(0,s.lunge-dt);
       s.x+=s.attackX*4.5*dt;s.z+=s.attackZ*4.5*dt;
-    }else if(sl<2.45&&s.attackCd<=0&&!safe){
-      s.windup=0.42;s.attackX=sx/sl;s.attackZ=sz/sl;
+    }else if(sl<2.45&&s.attackCd<=0&&(!safe||targetWild)){
+      s.windup=0.42;s.attackX=sx/sl;s.attackZ=sz/sl;s.attackTarget=targetWild||null;
       s.attackCd=1.7;
     }else{
       var swp=Math.min(8.5,5+nights*0.4);
