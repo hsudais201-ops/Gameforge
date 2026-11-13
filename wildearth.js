@@ -28,8 +28,8 @@
     for(let i=0;i<5;i++)list.push({id:"wolf"+i,type:"wolf",x:rand(100,WORLD.width-100),y:rand(100,WORLD.height-100),r:17,alive:true,dir:rand(0,6.28),cool:0});
     return list;
   }
-  let state=load(),last=0,toastTimer=0,paused=false,ended=false;
-  const player=state.player;
+  let state=load(),last=0,toastTimer=0,paused=false,ended=false,hudTimer=0,autosave=0;
+  let player=state.player;
   let camera={x:0,y:0};
   function load(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.player&&s.objects)return s;}catch{}return defaults();}
   function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));}catch{}}
@@ -103,7 +103,7 @@
     }
     if(player.hp<=0)endJourney();
     if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$("toast").classList.remove("show");}
-    updateHud();
+    hudTimer+=dt;autosave+=dt;if(hudTimer>=.15){updateHud();hudTimer=0;}if(autosave>=8){save();autosave=0;}
   }
   function rounded(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
   function drawTree(x,y,r){ctx.fillStyle="#102a1a";ctx.beginPath();ctx.ellipse(x+3,y+10,r*1.15,r*.62,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#315e37";ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.fillStyle="#4c8048";ctx.beginPath();ctx.arc(x-7,y-8,r*.62,0,Math.PI*2);ctx.fill();ctx.fillStyle="#78a85b";ctx.beginPath();ctx.arc(x-10,y-12,r*.23,0,Math.PI*2);ctx.fill();}
