@@ -93,3 +93,9 @@ test('survival difficulty presets persist and scale incoming damage and hunger',
     assert.ok(gameScript.includes(marker), 'missing difficulty marker: ' + marker);
   }
 });
+
+test('notification duration is user-configurable and persisted', () => {
+  assert.match(html, /id="notificationDuration"/);
+  assert.ok(gameScript.includes('mfwilds3d_notify_v1'));
+  assert.ok(gameScript.includes('hintT=secs||notificationSeconds'));
+});
