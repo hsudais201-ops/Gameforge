@@ -166,6 +166,7 @@
   <div class="row">
     <span class="pill">Health<span class="bar"><i id="hp" style="background:#e8574f"></i></span></span>
     <span class="pill">Food<span class="bar"><i id="food" style="background:#e9b44c"></i></span></span>
+    <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
     <span class="pill" id="time"></span>
   </div>
   <div class="row"><span class="pill" id="goal"></span></div>
@@ -210,6 +211,7 @@
   <button class="act" id="bCatch">Catch</button>
   <button class="act" id="bPlace">Use</button>
   <button class="act" id="bBag">Bag</button>
+  <button class="act" id="bSprint" aria-pressed="false">Sprint</button>
 </div>
 <div id="err">The 3D engine could not load. Check your internet connection and reload the page.</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1034,7 +1036,7 @@ function makeBed(){
 }
 
 /* ---------- state ---------- */
-var P={x:0,y:0,z:4,hp:100,food:100,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0};
+var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0};
 var NSLOTS=36,HOT=9,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
 var ITEMS={
   wood:{n:'Wood',max:50},stone:{n:'Stone',max:50},fiber:{n:'Fiber',max:50},berry:{n:'Berry',max:20},
@@ -1210,7 +1212,7 @@ function save(){
   var snapshot;
   try{
     snapshot=JSON.stringify({
-      version:3,P:{x:P.x,z:P.z,hp:P.hp,food:P.food},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
+      version:3,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
@@ -1251,7 +1253,7 @@ function load(){
     }
     if(!d)d=validSave(localStorage.getItem(OLD_KEY));
     if(!d)return false;
-    P.x=d.P.x;P.z=d.P.z;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.y=heightAt(P.x,P.z);
+    P.x=d.P.x;P.z=d.P.z;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
       var oldLayout=d.slots.length===30;
       for(var q=0;q<NSLOTS;q++){var oldIndex=oldLayout&&q>=HOT?q-3:q;var it=d.slots[oldIndex];if(it&&it.id==='cage')it={id:'ball',n:it.n};slots[q]=(it&&ITEMS[it.id]&&typeof it.n==='number'&&it.n>0)?{id:it.id,n:Math.min(it.n,ITEMS[it.id].max)}:null}
@@ -1318,7 +1320,7 @@ $('createWorldToggle').addEventListener('click',function(){$('createWorldForm').
 $('createWorld').addEventListener('click',function(){var name=$('newWorldName').value.trim().slice(0,28)||'New World '+(worldList.length+1);var id='world-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);worldList.push({id:id,name:name,created:Date.now()});selectedWorldId=id;persistWorldList();try{localStorage.removeItem('mfwilds3d_v2');}catch(e){}location.reload();});
 
 /* ---------- input ---------- */
-var keys={},held={gather:false},joy={x:0,y:0};
+var keys={},held={gather:false,sprint:false},joy={x:0,y:0};
 var cam={yaw:0,pitch:0.45,dist:9};
 window.addEventListener('keydown',function(e){
   if(['Space','Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code)>=0)e.preventDefault();
@@ -1368,6 +1370,7 @@ bindBtn('bGather',function(){held.gather=true},function(){held.gather=false});
 bindBtn('bCatch',function(){doCatch()});
 bindBtn('bPlace',function(){doUse()});
 bindBtn('bBag',function(){toggleBag()});
+bindBtn('bSprint',function(){held.sprint=true;$('bSprint').setAttribute('aria-pressed','true')},function(){held.sprint=false;$('bSprint').setAttribute('aria-pressed','false')});
 $('hotbar').addEventListener('click',function(e){var b=e.target.closest('[data-slot]');if(b)slotClick(+b.getAttribute('data-slot'))});
 $('craftAmount').addEventListener('input',updateRecipePanel);
 $('bag').addEventListener('dragstart',function(e){var el=e.target.closest('[data-slot]');if(!el||!slots[+el.getAttribute('data-slot')]){e.preventDefault();return;}e.dataTransfer.setData('text/plain',el.getAttribute('data-slot'));});
@@ -1669,7 +1672,7 @@ function updateAmbient(dt){
 }
 
 /* ---------- update ---------- */
-var hudT=0,saveT=0,flick=0;
+var hudT=0,saveT=0,flick=0,sprintEmptyNotified=false,hungerWarned=false;
 function update(dt){
   clock+=dt;flick+=dt;
   streamTimer+=dt;if(streamDirty||streamTimer>0.65){streamTimer=0;updateWorldStreaming(false);}
@@ -1684,7 +1687,12 @@ function update(dt){
   var sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);
   var fdx=-sy,fdz=-cy,rdx=cy,rdz=-sy;
   var wx=rdx*mx+fdx*(-my),wz=rdz*mx+fdz*(-my);
-  var spd=6*(keys.ShiftLeft||keys.ShiftRight?1.6:1);
+  var wantsSprint=!!(keys.ShiftLeft||keys.ShiftRight||held.sprint);
+  P.sprinting=wantsSprint&&ml>0.08&&P.stamina>0.5;
+  if(P.sprinting){P.stamina=Math.max(0,P.stamina-24*dt);if(P.stamina===0&&!sprintEmptyNotified){say('You are exhausted. Rest to recover stamina.',3);sprintEmptyNotified=true;}}
+  else{P.stamina=Math.min(100,P.stamina+17*dt);if(P.stamina>25)sprintEmptyNotified=false;}
+  $('bSprint').style.opacity=P.sprinting?'1':(P.stamina<5?'0.55':'0.85');
+  var spd=6*(P.sprinting?1.6:1);
   P.speed=0;
   if(ml>0.08){
     var nx=P.x+wx*spd*dt,nz=P.z+wz*spd*dt,step=Math.hypot(wx,wz)*spd*dt||0.001;
@@ -1704,6 +1712,8 @@ function update(dt){
   if(held.gather)doGather();
 
   P.food=Math.max(0,P.food-0.3*dt);
+  if(P.food<20&&!hungerWarned){say('You are hungry. Eat berries or crafted food soon.',4);hungerWarned=true;}
+  if(P.food>28)hungerWarned=false;
   eatCool-=dt;
   if(P.food<55&&countOf('berry')>0&&eatCool<=0){takeItem('berry',1);P.food=Math.min(100,P.food+25);eatCool=0.6;pop(P.x,P.y+2.6,P.z,'Ate a berry','#f19ab0')}
   if(P.food<=0)P.hp-=2*dt;else if(P.food>40&&P.hp<100)P.hp=Math.min(100,P.hp+2*dt);
@@ -1846,6 +1856,7 @@ function update(dt){
   }
 
   if(P.hp<=0){
+    P.hp=0;P.stamina=100;P.sprinting=false;held.sprint=false;$('bSprint').setAttribute('aria-pressed','false');
     var bd=beds.length?beds[beds.length-1]:null;
     P.hp=100;P.food=60;P.x=bd?bd.x+1.6:0;P.z=bd?bd.z:4;P.y=heightAt(P.x,P.z);
     ['wood','stone','fiber'].forEach(function(id){takeItem(id,countOf(id)>>1)});
@@ -1936,6 +1947,8 @@ function animFires(){
 function updateHud(){
   $('hp').style.width=clamp(P.hp,0,100)+'%';
   $('food').style.width=clamp(P.food,0,100)+'%';
+  $('stamina').style.width=clamp(P.stamina,0,100)+'%';
+  $('stamina').style.background=P.stamina<25?'#e6a34e':'#61d6a0';
   var t=(clock/DAY)%1,e=Math.sin(t*Math.PI*2+0.65);
   var phase=nightF>0.6?'Night':(nightF>0.15?(Math.cos(t*Math.PI*2+0.65)>0?'Dusk':'Dawn'):'Day');
   $('time').textContent='Day '+(Math.floor(clock/DAY)+1)+' · '+phase;
