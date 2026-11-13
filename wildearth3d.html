@@ -659,6 +659,8 @@ function makePlayer(){
     leg.add(mesh(new THREE.BoxGeometry(0.31,0.19,0.43),dark,0,-0.91,0.08,1,0.72,1));
     leg.add(mesh(new THREE.BoxGeometry(0.32,0.08,0.46),leather,0,-0.82,0.09));
     leg.add(mesh(new THREE.BoxGeometry(0.12,0.08,0.035),metal,0,-0.62,0.17));
+    leg.add(mesh(new THREE.BoxGeometry(0.25,0.19,0.08),leather,0,-0.43,0.13));
+    leg.add(mesh(new THREE.BoxGeometry(0.08,0.035,0.025),metal,0,-0.43,0.18));
   });
   // Anatomical torso with layered shirt, chest panel and shoulder silhouette.
   var torso=mesh(new THREE.CylinderGeometry(0.29,0.33,0.72,14),cloth,0,0.52,0,1,1,0.78);hips.add(torso);
@@ -667,6 +669,11 @@ function makePlayer(){
   hips.add(mesh(new THREE.SphereGeometry(0.31,14,12),cloth2,0,0.84,0,1.03,0.58,0.82));
   hips.add(mesh(new THREE.BoxGeometry(0.43,0.43,0.055),leather,0,0.53,0.255));
   hips.add(mesh(new THREE.BoxGeometry(0.32,0.31,0.035),cloth2,0,0.56,0.29));
+  // Raised jacket seams, collar and utility stitching add readable depth at game camera distance.
+  hips.add(mesh(new THREE.BoxGeometry(0.36,0.055,0.045),leather,0,0.91,0.285));
+  hips.add(mesh(new THREE.BoxGeometry(0.055,0.43,0.035),leather,-0.205,0.53,0.285));
+  hips.add(mesh(new THREE.BoxGeometry(0.055,0.43,0.035),leather,0.205,0.53,0.285));
+  for(var stitch=0;stitch<3;stitch++)hips.add(mesh(new THREE.BoxGeometry(0.09,0.018,0.018),metal,0.1,0.43-stitch*0.09,0.32));
   hips.add(mesh(new THREE.BoxGeometry(0.045,0.38,0.04),metal,0,0.54,0.315));
   // Belt, buckle, pouches and cross-body utility strap.
   hips.add(mesh(new THREE.CylinderGeometry(0.34,0.34,0.105,14),leather,0,0.12,0,1,1,0.82));
@@ -690,6 +697,10 @@ function makePlayer(){
   });
   head.add(mesh(new THREE.SphereGeometry(0.045,10,8),skinMat,0,-0.045,0.215,0.72,0.72,0.85));
   head.add(mesh(new THREE.BoxGeometry(0.07,0.012,0.018),stdMat(0x75453b),0,-0.105,0.22));
+  // Subtle jaw and cheek definition keeps the face readable without a heavy low-poly mask.
+  head.add(mesh(new THREE.SphereGeometry(0.17,14,10),skinMat,0,-0.085,0.075,1,0.48,0.9));
+  head.add(mesh(new THREE.SphereGeometry(0.055,10,8),stdMat(0xb8795b),-0.145,-0.055,0.145,1,0.72,0.65));
+  head.add(mesh(new THREE.SphereGeometry(0.055,10,8),stdMat(0xb8795b),0.145,-0.055,0.145,1,0.72,0.65));
   // Hair cap, swept fringe and short back hair.
   head.add(mesh(new THREE.SphereGeometry(0.246,16,10,0,Math.PI*2,0,Math.PI*0.56),dark,0,0.07,-0.005,1,0.9,1));
   var fringe=mesh(new THREE.SphereGeometry(0.16,12,8,0,Math.PI*2,0,Math.PI*0.55),stdMat(0x30251e),0,-0.005,0.15,1.25,0.55,0.7);fringe.rotation.x=-0.2;head.add(fringe);
@@ -711,6 +722,9 @@ function makePlayer(){
     arm.add(mesh(new THREE.CylinderGeometry(0.105,0.09,0.17,10),leather,0,-0.47,0));
     arm.add(mesh(new THREE.SphereGeometry(0.105,10,8),dark,0,-0.61,0.02));
     arm.add(mesh(new THREE.BoxGeometry(0.12,0.08,0.1),metal,0,-0.46,0.08));
+    // Layered forearm guards and glove fingers.
+    arm.add(mesh(new THREE.BoxGeometry(0.19,0.22,0.13),leather,0,-0.39,0.015,1,1,0.72));
+    for(var finger=0;finger<3;finger++)arm.add(mesh(new THREE.CapsuleGeometry(0.025,0.055,3,5),dark,(finger-1)*0.045,-0.65,0.08));
   });
   // Axe tool with shaped head and wrapped grip, attached to the right hand.
   var axe=new THREE.Group();axe.position.set(0,-0.68,0.05);armR.add(axe);
