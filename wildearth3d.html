@@ -1801,15 +1801,29 @@ function update(dt){
   if(wild.length<(isMobile?24:34)&&wildT<=0){spawnWild();wildT=6}
 
   for(i=0;i<team.length;i++){
-    var t=team[i];
+    var t=team[i],guard=null,guardDist=999;
+    t.guardCd=Math.max(0,(t.guardCd||0)-dt);
+    for(j=0;j<wraiths.length;j++){
+      var candidate=wraiths[j],wd=Math.hypot(candidate.x-t.x,candidate.z-t.z);
+      if(wd<guardDist&&wd<13&&Math.hypot(candidate.x-P.x,candidate.z-P.z)<19){guard=candidate;guardDist=wd}
+    }
     var tang=i/Math.max(1,team.length)*6.283+clock*0.25,rr=3.2+(i%3)*0.9;
     var tx=P.x+Math.cos(tang)*rr,tz=P.z+Math.sin(tang)*rr;
+    if(guard&&guardDist>2.25){tx=guard.x+(t.x-guard.x)/Math.max(0.01,guardDist)*1.7;tz=guard.z+(t.z-guard.z)/Math.max(0.01,guardDist)*1.7}
     var ddx=tx-t.x,ddz=tz-t.z,dl=Math.hypot(ddx,ddz);
-    t.speed=0;
+    t.speed=0;t.defending=!!guard;
     if(dl>0.6){
-      var sp2=Math.min(9,dl*2.2);
+      var sp2=Math.min(guard?7.5:9,dl*(guard?2.5:2.2));
       t.x+=ddx/dl*sp2*dt;t.z+=ddz/dl*sp2*dt;t.speed=Math.min(1,sp2/6);
       var ty2=Math.atan2(ddx,ddz),dy2=ty2-t.yaw;dy2=Math.atan2(Math.sin(dy2),Math.cos(dy2));t.yaw+=dy2*Math.min(1,dt*8);
+    }else if(guard){
+      var faceX=guard.x-t.x,faceZ=guard.z-t.z,faceY=Math.atan2(faceX,faceZ),faceD=faceY-t.yaw;
+      faceD=Math.atan2(Math.sin(faceD),Math.cos(faceD));t.yaw+=faceD*Math.min(1,dt*10);
+    }
+    if(guard&&guardDist<3.1&&t.guardCd<=0){
+      var companionDamage=t.sp===4?1.6:(t.sp===1||t.sp===7?1.35:1);
+      guard.hp-=companionDamage;guard.hit=0.18;t.guardCd=1.15;
+      burst(guard.x,guard.y+1.5,guard.z,0xc9a8ff,4);
     }
     t.y+=(heightAt(t.x,t.z)-t.y)*Math.min(1,dt*10);
     animCreature(t,dt);
@@ -1854,7 +1868,6 @@ function update(dt){
     pushOutBoxes(s,0.7);
     s.y+=(heightAt(s.x,s.z)-s.y)*Math.min(1,dt*8);
     if(nearFire(s.x,s.z,9))s.hp-=2*dt;
-    for(j=0;j<team.length;j++){if(Math.hypot(team[j].x-s.x,team[j].z-s.z)<4)s.hp-=1.5*dt}
     s.g.position.set(s.x,s.y+0.5+Math.sin(clock*3+s.ph)*0.25,s.z);
     s.g.rotation.y=Math.atan2(sx,sz);
     var pulse=s.windup>0?1+Math.sin((0.42-s.windup)*24)*0.1:1;
