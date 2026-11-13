@@ -1255,7 +1255,7 @@ function wildEscapeDirection(c,awayX,awayZ){
 }
 function spawnWild(fsp,fx,fz){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:rand(0.15,0.95),personalityPhase:rand(0,6.283),herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
 }
 function addStructure(kind,x,z){
@@ -1833,16 +1833,17 @@ function update(dt){
       }
       if(nearestThreat&&nearestThreatD<13){
         c.threatX=nearestThreat.x;c.threatZ=nearestThreat.z;
-        if(nearestThreatD<9){
+        var predatorAlert=9*(1.18-c.boldness*0.28),predatorPanic=6.5*(1.22-c.boldness*0.38);
+        if(nearestThreatD<predatorAlert){
           c.state='alert';
-          if(nearestThreatD<6.5)c.flee=Math.max(c.flee,2.4+Math.random()*1.2);
+          if(nearestThreatD<predatorPanic)c.flee=Math.max(c.flee,2.4+Math.random()*1.2);
           c.alertT=Math.max(c.alertT||0,1.1);
         }
       }else{c.threatX=0;c.threatZ=0;}
       c.threatT=rand(0.38,0.62);
     }
-    var alertRadius=c.sp===4?16:(c.sp===6?13:(c.sp===3?8:11));
-    var panicRadius=c.sp===5?5.5:7;
+    var alertRadius=(c.sp===4?16:(c.sp===6?13:(c.sp===3?8:11)))*(1.28-c.boldness*0.48);
+    var panicRadius=(c.sp===5?5.5:7)*(1.35-c.boldness*0.55);
     if(pdist<alertRadius&&c.flee<=0){
       if(c.state!=='alert'){c.state='alert';c.alertT=0.75+Math.random()*0.55}
       if(pdist<panicRadius||P.speed>1.35){
@@ -1891,7 +1892,7 @@ function update(dt){
         var nightPreference=[0.18,0.42,0.58,0.12,0.82,0.28,0.72,0.9][c.sp]||0.3;
         var activityLevel=dayF*(1-nightPreference)+nightF*nightPreference;
         var rainSensitive=[0,3,5,7].indexOf(c.sp)>=0;
-        pauseChance=clamp(pauseChance+(1-activityLevel)*0.22+(rainSensitive?rainLevel*0.2:rainLevel*0.045),0.08,0.92);
+        pauseChance=clamp(pauseChance+(1-activityLevel)*0.22+(rainSensitive?rainLevel*0.2:rainLevel*0.045)+(0.5-c.curiosity)*0.16,0.08,0.92);
         if(c.state==='alert')pauseChance=Math.min(0.75,pauseChance+0.22);
         if(Math.random()<pauseChance){
           c.vx=0;c.vz=0;
@@ -1903,7 +1904,7 @@ function update(dt){
           else if(ecologyRoll<grazeChance+restChance){c.state='rest';c.t=rand(2.4,5.8)}
           else{c.state='idle';c.t=rand(1.5,3.6)}
         }else{
-          var a=Math.random()*6.283,roamSpeed=[1.8,2.1,1.35,1.0,2.4,1.8,2.1,1.7][c.sp]||1.8;
+          var a=Math.random()*6.283,roamSpeed=([1.8,2.1,1.35,1.0,2.4,1.8,2.1,1.7][c.sp]||1.8)*(0.82+c.curiosity*0.36);
           c.vx=Math.cos(a)*roamSpeed;c.vz=Math.sin(a)*roamSpeed;c.state='wander';
           c.t=rand(2.2,5.5);
         }
@@ -1914,8 +1915,8 @@ function update(dt){
       if(c.sp===0||c.sp===2||c.sp===6){
         var cohLen=Math.hypot(c.herdX||0,c.herdZ||0)||1;
         if(cohLen>0.01){
-          targetX+=(c.herdX/cohLen)*0.65+(c.herdSepX||0)*1.2;
-          targetZ+=(c.herdZ/cohLen)*0.65+(c.herdSepZ||0)*1.2;
+          targetX+=(c.herdX/cohLen)*(0.38+c.sociability*0.42)+(c.herdSepX||0)*1.2;
+          targetZ+=(c.herdZ/cohLen)*(0.38+c.sociability*0.42)+(c.herdSepZ||0)*1.2;
         }
       }
     }
@@ -2214,6 +2215,9 @@ function animCreature(c,dt){
   var headLook=c.state==='graze'?0.48:(c.state==='rest'?0.12:0);
   var lookSpeed=c.state==='rest'?0.65:1.7;
   m.head.rotation.x=Math.sin(clock*lookSpeed+c.x)*0.06+headLook+(c.state==='alert'?-0.18:0)+attack*0.22;
+  // Curious individuals make small, irregular head turns while calm; shy animals keep a tighter gaze.
+  var curiosity=(c.curiosity||0.5),lookWave=Math.sin(clock*(0.72+curiosity*0.65)+(c.personalityPhase||0));
+  m.head.rotation.y=lookWave*(0.025+curiosity*0.075)*(c.state==='alert'?0.25:1);
 }
 function animPlayer(dt){
   player.g.position.set(P.x,P.y,P.z);
