@@ -1040,6 +1040,7 @@ var SPECIES=[
   {n:'Mistral',c:0xdfe8f2,w:'berry',rough:0.7,r:'rare'},
   {n:'Glimmer',c:0x9b6bd6,w:'stone',rough:0.35,r:'rare'}
 ];
+var CREATURE_DIET=['berry','berry','fiber','berry','berry','fiber','berry','crystal'];
 var RAR={
   common:{n:'Common',rate:0.65,w:5,c:'#b9d6b0'},
   uncommon:{n:'Uncommon',rate:0.45,w:3,c:'#7ec8ff'},
@@ -1451,7 +1452,7 @@ function wildEscapeDirection(c,awayX,awayZ){
 }
 function spawnWild(fsp,fx,fz,isJuvenile,parent){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies(s.x,s.z):fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,hp:sp===4||sp===7?72:(sp===3?110:90),maxHp:sp===4||sp===7?72:(sp===3?110:90),hitTimer:0,flee:0,yaw:random()*6.283,walk:random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,ageSeconds:0,growthScale:isJuvenile?0.72:1,parent:parent||null,young:null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0,breedT:rand(100,220),secondParent:null};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,hp:sp===4||sp===7?72:(sp===3?110:90),maxHp:sp===4||sp===7?72:(sp===3?110:90),hitTimer:0,flee:0,yaw:random()*6.283,walk:random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,ageSeconds:0,growthScale:isJuvenile?0.72:1,parent:parent||null,young:null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0,breedT:rand(100,220),secondParent:null,trust:0,hunger:rand(25,75)};
   if(c.isJuvenile)m.g.scale.setScalar(0.72);
   c.hp=c.maxHp*(c.isJuvenile?0.72:1);
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
@@ -1823,7 +1824,7 @@ function doCatch(){
   var id=ballForCatch();
   if(!id){say('You need a Capture Ball. Open the Bag to craft some.');return}
   if(team.length+shots.length>=12){say('Your team is full (12).');return}
-  var ok=random()<rateNow(c.sp,id);P.lure=false;
+  var ok=random()<rateNow(c.sp,id,c);P.lure=false;
   takeItem(id,1);renderInv(true);
   P.face=Math.atan2(c.x-P.x,c.z-P.z);P.swing=0.45;
   c.held=true;c.vx=0;c.vz=0;c.speed=0;
@@ -1866,7 +1867,15 @@ function applyRecipeFilters(){
 }
 $('craftSearch').addEventListener('input',applyRecipeFilters);
 $('craftCategoryFilter').addEventListener('change',applyRecipeFilters);
-function rateNow(sp,id){var r0=catchRate(sp,id);return r0>=1?1:Math.min(0.95,r0+(P.lure?0.2:0))}
+function rateNow(sp,id,creature){var r0=catchRate(sp,id),trustBonus=creature?clamp(creature.trust||0,0,1)*0.18:0;return r0>=1?1:Math.min(0.95,r0+(P.lure?0.2:0)+trustBonus)}
+function feedCreature(c,item){
+  if(!c||c.held)return false;
+  var preferred=CREATURE_DIET[c.sp]||'berry';
+  if(item!=='treat'&&item!==preferred){say(SPECIES[c.sp].n+' prefers '+ITEMS[preferred].n.toLowerCase()+'.');return true;}
+  if(c.hunger<8&&c.trust>0.9){say(SPECIES[c.sp].n+' is full and already trusts you.');return true;}
+  takeItem(item,1);c.hunger=Math.max(0,(c.hunger||0)-48);c.trust=clamp((c.trust||0)+(item==='treat'?0.28:0.2),0,1);c.flee=Math.max(0,(c.flee||0)-1.5);c.alertT=0;
+  pop(c.x,c.y+2,c.z,'Trust '+Math.round(c.trust*100)+'%','#b9e6a7');say(SPECIES[c.sp].n+' enjoyed the food. Trust is '+Math.round(c.trust*100)+'%.');renderInv(true);return true;
+}
 function craft(k,amount){
   var qty=Math.max(1,Math.min(99,parseInt(amount,10)||1)),output=(OUT[k]||1)*qty;
   if(['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(k)>=0&&qty>1){say('Equipment can only be crafted one at a time.');return}
@@ -1894,6 +1903,8 @@ function doUse(){
   var id=s.id;
   if(PLACEABLE[id])doPlace(id);
   else if(id==='berry'){
+    var hungryWild=nearestOf(wild,P.x,P.z,4,function(o){return !o.held&&o.hunger>8;});
+    if(hungryWild&&feedCreature(hungryWild,'berry'))return;
     if(P.food>=95){say('You are not hungry.');return}
     takeItem('berry',1);P.food=Math.min(100,P.food+25);pop(P.x,P.y+2.6,P.z,'Ate a berry','#f19ab0');renderInv(true);
   }
@@ -2139,6 +2150,7 @@ function update(dt){
     var c=wild[i],moving=false,nxw,nzw;
     if(c.held)continue;
     if(c.hp<c.maxHp&&c.hitTimer<=0){var recovery=c.state==='rest'?2.4:(c.state==='graze'?1.2:0.45);c.hp=Math.min(c.maxHp,c.hp+recovery*dt);}
+    c.hunger=clamp((c.hunger||0)+dt*0.16,0,100);
     if(c.isJuvenile){c.ageSeconds=(c.ageSeconds||0)+dt;c.growthScale=0.72+0.28*clamp(c.ageSeconds/720,0,1);if(c.growthScale>=1){if(c.parent&&c.parent.young===c)c.parent.young=null;if(c.secondParent&&c.secondParent.young===c)c.secondParent.young=null;c.isJuvenile=false;c.parent=null;c.secondParent=null;c.boldness=Math.max(c.boldness||0,0.28);c.sociability=Math.min(c.sociability||0.7,0.82);}}
     if(c.young&&wild.indexOf(c.young)<0)c.young=null;
     tryBreed(c,dt);
@@ -2840,7 +2852,7 @@ function updateHud(){
     var TS=SPECIES[tc.sp],TR=RAR[TS.r],bid=ballForCatch();
     te.hidden=false;te.style.color=TR.c;
     var healthPct=Math.ceil(clamp(tc.hp/tc.maxHp,0,1)*100);
-    te.textContent=TS.n+' · '+TR.n+' · Health '+healthPct+'%'+(healthPct<35?' · Wounded':'')+(bid?' · '+Math.round(rateNow(tc.sp,bid)*100)+'% with '+ITEMS[bid].n:' · you have no balls');
+    te.textContent=TS.n+' · '+TR.n+' · Health '+healthPct+'% · Trust '+Math.round((tc.trust||0)*100)+'%'+(healthPct<35?' · Wounded':'')+(bid?' · '+Math.round(rateNow(tc.sp,bid,tc)*100)+'% with '+ITEMS[bid].n:' · you have no balls');
   }else te.hidden=true;
 }
 
