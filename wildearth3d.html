@@ -1827,12 +1827,20 @@ function update(dt){
       if(c.t<=0){
         var pauseChance=[0.34,0.28,0.48,0.58,0.2,0.34,0.3,0.4][c.sp]||0.34;
         if(c.state==='alert')pauseChance=Math.min(0.75,pauseChance+0.22);
-        if(Math.random()<pauseChance){c.vx=0;c.vz=0;c.state='idle'}
-        else{
+        if(Math.random()<pauseChance){
+          c.vx=0;c.vz=0;
+          // Calm wildlife cycles through short, species-weighted feeding and resting pauses.
+          var grazeChance=[0.58,0.34,0.12,0.08,0.18,0.62,0.2,0.1][c.sp]||0.2;
+          var restChance=[0.22,0.3,0.58,0.72,0.16,0.2,0.42,0.5][c.sp]||0.25;
+          var ecologyRoll=Math.random();
+          if(ecologyRoll<grazeChance){c.state='graze';c.t=rand(2.8,5.2)}
+          else if(ecologyRoll<grazeChance+restChance){c.state='rest';c.t=rand(2.4,5.8)}
+          else{c.state='idle';c.t=rand(1.5,3.6)}
+        }else{
           var a=Math.random()*6.283,roamSpeed=[1.8,2.1,1.35,1.0,2.4,1.8,2.1,1.7][c.sp]||1.8;
           c.vx=Math.cos(a)*roamSpeed;c.vz=Math.sin(a)*roamSpeed;c.state='wander';
+          c.t=rand(2.2,5.5);
         }
-        c.t=rand(2.2,5.5);
       }
       if(c.alertT>0){c.alertT=Math.max(0,c.alertT-dt);if(c.alertT===0&&c.state==='alert')c.state='idle'}
       targetX=c.vx;targetZ=c.vz;
@@ -2061,8 +2069,11 @@ function animCreature(c,dt){
   for(var i=0;i<4;i++)m.legs[i].rotation.x=Math.sin(c.walk*1.6+(i===0||i===3?0:Math.PI))*amp+(attack>0.4&&i%2===0?-attack*0.32:0);
   m.g.position.y+=Math.abs(Math.sin(c.walk*1.6))*0.06*c.speed+attack*0.08;
   m.g.rotation.x=(c.defending?0.035:0)+attack*0.08;
-  m.tail.rotation.y=Math.sin(clock*3+c.walk)*0.35+(c.state==='alert'?0.22:0)+attack*0.45;
-  m.head.rotation.x=Math.sin(clock*1.7+c.x)*0.06+(c.state==='alert'?-0.18:0)+attack*0.22;
+  m.tail.rotation.y=Math.sin(clock*3+c.walk)*0.35+(c.state==='alert'?0.22:0)+(c.state==='rest'?-0.12:0)+attack*0.45;
+  // A lowered head sells grazing; resting creatures make slower, softer idle motions.
+  var headLook=c.state==='graze'?0.48:(c.state==='rest'?0.12:0);
+  var lookSpeed=c.state==='rest'?0.65:1.7;
+  m.head.rotation.x=Math.sin(clock*lookSpeed+c.x)*0.06+headLook+(c.state==='alert'?-0.18:0)+attack*0.22;
 }
 function animPlayer(dt){
   player.g.position.set(P.x,P.y,P.z);
