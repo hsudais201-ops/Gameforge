@@ -434,7 +434,7 @@ function addDiagnostic(type,message,stack){
 window.addEventListener('error',function(e){addDiagnostic('error',e.message,(e.error&&e.error.stack)||e.filename+':'+e.lineno)});
 window.addEventListener('unhandledrejection',function(e){addDiagnostic('unhandledrejection',e.reason&&e.reason.message||e.reason,e.reason&&e.reason.stack)});
 $('exportDiagnostics').addEventListener('click',function(){
-  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},world:{id:selectedWorldId,seed:worldSeed,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:team.length,structures:walls.length+fires.length+beds.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
+  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},world:{id:selectedWorldId,seed:worldSeed,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:team.length,structures:walls.length+fires.length+beds.length+chests.length,storageChests:chests.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
   try{
     var blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
     link.href=url;link.download='wildearth-diagnostics-'+Date.now()+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000);
@@ -1154,7 +1154,7 @@ var ITEMS={
 };
 var PLACEABLE={wall:1,stonewall:1,floor:1,fire:1,torch:1,bed:1,chest:1};
 var GRID={wall:1,stonewall:1,floor:1};
-var GOFF={wall:1.0,stonewall:1.0,floor:0.1,fire:0.25,torch:0.85,bed:0.15};
+var GOFF={wall:1.0,stonewall:1.0,floor:0.1,fire:0.25,torch:0.85,bed:0.15,chest:0.05};
 var ICON={
   wood:'<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="9" rx="4" fill="#a9784a"/><ellipse cx="18" cy="12.5" rx="3" ry="4.5" fill="#d9b07a"/><ellipse cx="18" cy="12.5" rx="1.3" ry="2.2" fill="#a9784a"/></svg>',
   stone:'<svg viewBox="0 0 24 24"><polygon points="4,17 7,8 14,5 20,10 20,17 12,20" fill="#9aa0a6"/><polygon points="7,8 14,5 12,12" fill="#c3c8cc"/></svg>',
@@ -1514,7 +1514,7 @@ window.addEventListener('keydown',function(e){
   else if(e.code==='KeyE')doUse();
   else if(e.code==='KeyQ'){hotSel=(hotSel+1)%HOT;renderInv(true)}
   else if(e.code==='KeyI'||e.code==='KeyC'||e.code==='Tab')toggleBag();
-  else if(e.code==='Escape'){if(bagOpen)toggleBag();else togglePause();}
+  else if(e.code==='Escape'){if(!$('chestPanel').hidden)closeChest();else if(bagOpen)toggleBag();else togglePause();}
   else if(/^Digit[1-9]$/.test(e.code)){hotSel=+e.code.slice(5)-1;renderInv(true)}
 });
 window.addEventListener('keyup',function(e){keys[e.code]=false;if(e.code==='Space')held.gather=false});
@@ -1781,6 +1781,41 @@ function doUse(){
   else if(['axe','pick','copperpick','ironpick','coppersword','ironsword'].indexOf(id)>=0)say(ITEMS[id].n+' works automatically while it is in your bag.');
   else say(ITEMS[id].n+' is a material. Open the Bag to craft with it.');
 }
+function renderChestPanel(){
+  if(!activeChest)return;
+  $('chestTitle').textContent='STORAGE CHEST · '+Math.round(Math.hypot(activeChest.x-P.x,activeChest.z-P.z))+' m';
+  var html='';
+  for(var i=0;i<activeChest.slots.length;i++){
+    var item=activeChest.slots[i],label=item?ITEMS[item.id].n:'Empty';
+    html+='<button type="button" class="chestSlot'+(i===selectedChestSlot?' selected':'')+'" data-chest-slot="'+i+'" aria-label="Slot '+(i+1)+': '+label+'">'+(item?(ICON[item.id]||ICON.stone)+'<small>'+label+' ×'+item.n+'</small>':'<small>Empty</small>')+'</button>';
+  }
+  $('chestGrid').innerHTML=html;
+  var inv=slots[hotSel],stored=activeChest.slots[selectedChestSlot];
+  var storeRoom=inv?(!stored||stored.id===inv.id?ITEMS[inv.id].max-(stored?stored.n:0):0):0;
+  $('chestStore').disabled=!inv||storeRoom<=0;
+  $('chestTake').disabled=!stored||!canAdd(stored.id,stored.n);
+}
+function openChest(chest){activeChest=chest;selectedChestSlot=0;for(var i=0;i<chest.slots.length;i++)if(chest.slots[i]){selectedChestSlot=i;break;}$('chestStatus').textContent='';$('chestPanel').hidden=false;renderChestPanel();}
+function closeChest(){activeChest=null;$('chestPanel').hidden=true;}
+$('chestClose').addEventListener('click',closeChest);
+$('chestPanel').addEventListener('click',function(e){if(e.target===$('chestPanel'))closeChest();});
+$('chestGrid').addEventListener('click',function(e){var b=e.target.closest('[data-chest-slot]');if(!b||!activeChest)return;selectedChestSlot=clamp(parseInt(b.getAttribute('data-chest-slot'),10)||0,0,17);renderChestPanel();});
+$('chestStore').addEventListener('click',function(){
+  if(!activeChest)return;var inv=slots[hotSel];if(!inv)return;
+  var stored=activeChest.slots[selectedChestSlot];if(stored&&stored.id!==inv.id){$('chestStatus').textContent='Choose an empty slot or a matching item stack.';return;}
+  var room=ITEMS[inv.id].max-(stored?stored.n:0),moved=Math.min(inv.n,room);if(moved<=0)return;
+  if(stored)stored.n+=moved;else activeChest.slots[selectedChestSlot]={id:inv.id,n:moved};
+  inv.n-=moved;if(inv.n<=0)slots[hotSel]=null;
+  $('chestStatus').textContent='Stored '+moved+' '+ITEMS[activeChest.slots[selectedChestSlot].id].n+'.';
+  renderInv(true);renderChestPanel();save();
+});
+$('chestTake').addEventListener('click',function(){
+  if(!activeChest)return;var stored=activeChest.slots[selectedChestSlot];if(!stored)return;
+  var left=addItem(stored.id,stored.n),moved=stored.n-left;if(moved<=0){$('chestStatus').textContent='Your inventory is full.';return;}
+  stored.n=left;if(left<=0)activeChest.slots[selectedChestSlot]=null;
+  $('chestStatus').textContent='Moved '+moved+' items to your backpack.';
+  renderInv(true);renderChestPanel();save();
+});
 function safeRespawnPoint(ax,az){
   var radii=[2.6,3.4,4.2],steps=12;
   for(var ri=0;ri<radii.length;ri++){
