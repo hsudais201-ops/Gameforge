@@ -695,6 +695,71 @@ function makePlayer(){
   var pack=new THREE.Group();pack.position.set(0,0.52,-0.29);hips.add(pack);pack.add(mesh(new THREE.BoxGeometry(0.42,0.52,0.2),leather,0,0,0));pack.add(mesh(new THREE.BoxGeometry(0.32,0.14,0.22),stdMat(0x806044),0,0.32,-0.01));pack.add(mesh(new THREE.CylinderGeometry(0.075,0.075,0.4,9),stdMat(0x9b7650),0,0.39,-0.02,1,1,0.8));
   var scarfTail=mesh(new THREE.BoxGeometry(0.1,0.3,0.035),stdMat(0xb56a3c),-0.12,0.73,-0.2);scarfTail.rotation.x=-0.25;hips.add(scarfTail);
   var axe=new THREE.Group();axe.position.set(0,-0.67,0.04);armR.add(axe);axe.add(mesh(new THREE.CylinderGeometry(0.022,0.03,0.76,8),stdMat(0x78502f),0,0.31,0));axe.add(mesh(new THREE.BoxGeometry(0.09,0.2,0.29),metal,0,0.62,0.09));axe.rotation.x=1.05;
+  // Character detail pass: layered field gear, facial features and readable low-poly materials.
+  var trim=stdMat(0xc19a65,0.72),stitch=stdMat(0x9b8060,0.9),eyeWhite=stdMat(0xe5dfcf,0.48),iris=stdMat(0x49372b,0.42),sole=stdMat(0x171817,0.98),wrap=stdMat(0x9b8060,0.92);
+  // Layered tunic, collar, shoulder guards and front seam panels.
+  hips.add(mesh(new THREE.BoxGeometry(0.34,0.46,0.035),cloth2,0,0.52,0.178,1,1,0.8));
+  hips.add(mesh(new THREE.BoxGeometry(0.16,0.12,0.055),leather,0,0.82,0.17));
+  hips.add(mesh(new THREE.BoxGeometry(0.12,0.18,0.045),trim,0,0.53,0.205,0.45,1,0.55));
+  hips.add(mesh(new THREE.BoxGeometry(0.035,0.43,0.025),stitch,0.19,0.49,0.166));
+  hips.add(mesh(new THREE.BoxGeometry(0.035,0.43,0.025),stitch,-0.19,0.49,0.166));
+  [-1,1].forEach(function(side){
+    hips.add(mesh(new THREE.SphereGeometry(0.16,10,7),cloth2,side*0.34,0.77,0,1,0.58,1));
+    hips.add(mesh(new THREE.BoxGeometry(0.12,0.34,0.07),leather,side*0.245,0.47,0.16,1,1,0.7));
+    hips.add(mesh(new THREE.BoxGeometry(0.045,0.31,0.035),trim,side*0.245,0.47,0.205));
+    // Small rivets on shoulder and belt hardware.
+    hips.add(mesh(new THREE.SphereGeometry(0.025,7,5),metal,side*0.34,0.79,0.12));
+    hips.add(mesh(new THREE.BoxGeometry(0.11,0.12,0.07),leather,side*0.25,0.14,0.22));
+    hips.add(mesh(new THREE.BoxGeometry(0.08,0.025,0.02),trim,side*0.25,0.19,0.26));
+  });
+  hips.add(mesh(new THREE.BoxGeometry(0.13,0.105,0.035),trim,0,0.12,0.252));
+  hips.add(mesh(new THREE.BoxGeometry(0.055,0.055,0.02),dark,0,0.12,0.275));
+  // Front-facing backpack straps and stitching.
+  [-1,1].forEach(function(side){
+    var strap=mesh(new THREE.BoxGeometry(0.075,0.56,0.045),leather,side*0.22,0.54,0.22);
+    strap.rotation.z=side*-0.13;hips.add(strap);
+    hips.add(mesh(new THREE.BoxGeometry(0.085,0.055,0.025),trim,side*0.22,0.38,0.25));
+    hips.add(mesh(new THREE.BoxGeometry(0.025,0.34,0.025),stitch,side*0.22,0.52,0.247));
+  });
+  // Face: eyes, brows, nose and mouth, positioned on the front (+Z).
+  [-1,1].forEach(function(side){
+    head.add(mesh(new THREE.SphereGeometry(0.027,8,6),eyeWhite,side*0.078,0.035,0.207));
+    head.add(mesh(new THREE.SphereGeometry(0.014,7,5),iris,side*0.078,0.034,0.23));
+    head.add(mesh(new THREE.BoxGeometry(0.078,0.018,0.025),dark,side*0.078,0.081,0.205));
+  });
+  head.add(mesh(new THREE.BoxGeometry(0.045,0.07,0.055),skinMat,0,-0.005,0.225,0.8,1,0.8));
+  head.add(mesh(new THREE.BoxGeometry(0.09,0.018,0.018),stdMat(0x684638),0,-0.09,0.202));
+  // Forearm bracers, wrist wraps and articulated glove fingers.
+  [armL,armR].forEach(function(arm,idx){
+    var side=idx===0?-1:1;
+    arm.add(mesh(new THREE.CylinderGeometry(0.105,0.09,0.16,9),leather,0,-0.39,0,1,1,1));
+    arm.add(mesh(new THREE.BoxGeometry(0.19,0.045,0.13),trim,0,-0.47,0.035));
+    arm.add(mesh(new THREE.BoxGeometry(0.12,0.055,0.035),wrap,0,-0.59,0.09));
+    for(var f=0;f<3;f++)arm.add(mesh(new THREE.BoxGeometry(0.027,0.075,0.035),dark,(f-1)*0.04,-0.72,0.09));
+    arm.add(mesh(new THREE.BoxGeometry(0.045,0.08,0.04),dark,side*0.085,-0.68,0.07));
+  });
+  // Trouser panel seams, reinforced knees, boot soles and toe caps.
+  [legL,legR].forEach(function(leg,idx){
+    var side=idx===0?-1:1;
+    leg.add(mesh(new THREE.BoxGeometry(0.17,0.22,0.035),cloth2,0,-0.43,0.09));
+    leg.add(mesh(new THREE.BoxGeometry(0.19,0.12,0.045),leather,0,-0.55,0.12));
+    leg.add(mesh(new THREE.BoxGeometry(0.2,0.025,0.025),trim,0,-0.5,0.15));
+    leg.add(mesh(new THREE.BoxGeometry(0.31,0.055,0.42),sole,0,-0.85,0.08));
+    leg.add(mesh(new THREE.BoxGeometry(0.19,0.11,0.06),trim,0,-0.72,0.265));
+    leg.add(mesh(new THREE.BoxGeometry(0.045,0.22,0.025),stitch,side*0.075,-0.37,0.11));
+  });
+  // Backpack pockets, flap, buckles and rolled bedroll.
+  pack.add(mesh(new THREE.BoxGeometry(0.22,0.2,0.08),stdMat(0x795437),0,-0.12,0.13));
+  pack.add(mesh(new THREE.BoxGeometry(0.25,0.055,0.035),trim,0,-0.015,0.18));
+  pack.add(mesh(new THREE.BoxGeometry(0.12,0.1,0.025),leather,0.17,-0.12,0.11));
+  pack.add(mesh(new THREE.BoxGeometry(0.08,0.06,0.025),metal,0.17,-0.12,0.13));
+  pack.add(mesh(new THREE.CylinderGeometry(0.075,0.075,0.36,8),stdMat(0x9b7650),-0.25,0.12,-0.02,1,1,1));
+  // Axe grip bands and a shaped cutting edge.
+  axe.add(mesh(new THREE.CylinderGeometry(0.034,0.034,0.055,8),trim,0,0.12,0));
+  axe.add(mesh(new THREE.BoxGeometry(0.045,0.22,0.035),dark,0,0.31,0.018));
+  axe.add(mesh(new THREE.BoxGeometry(0.12,0.12,0.035),trim,0,0.62,0.245));
+  axe.add(mesh(new THREE.BoxGeometry(0.12,0.035,0.035),metal,0,0.69,0.245));
+
   g.userData.customMaterials={skin:skinMat,cloth:cloth,cloth2:cloth2,leather:leather,hair:dark};g.userData.hairStyles={short:hairCap,longL:hairLongL,longR:hairLongR,hood:hood};
   return {g:g,hips:hips,legL:legL,legR:legR,armL:armL,armR:armR,head:head,torso:torso,pack:pack,scarfTail:scarfTail,axe:axe};
 }
