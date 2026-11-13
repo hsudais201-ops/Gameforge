@@ -238,6 +238,7 @@
 <button id="settingsBtn" type="button">⚙ Settings</button>
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label>
 <label class="settingRow">Survival difficulty<select id="difficultySelect"><option value="easy">Explorer · Easy</option><option value="normal" selected>Survivor · Normal</option><option value="hard">Wilderness · Hard</option></select></label>
+<label class="settingRow">Notification duration <input id="notificationDuration" type="range" min="1" max="8" step="0.5" value="3.5"></label>
 <label class="settingRow">Joystick dead zone <input id="joyDeadzone" type="range" min="0" max="40" step="5" value="10"></label>
 <label class="settingRow">Camera sensitivity <input id="cameraSensitivity" type="range" min="50" max="200" step="10" value="100"></label>
 <label class="settingRow">Invert camera vertical <input id="invertCamera" type="checkbox"></label><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
@@ -422,6 +423,8 @@ $('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value)
 var ACCESS_KEY='mfwilds3d_accessibility_v1',accessPrefs={size:'normal',contrast:false};
 var CONTROL_KEY='mfwilds3d_controls_v1',controlPrefs={deadzone:0.10,sensitivity:1,invertY:false};
 var DIFFICULTY_KEY='mfwilds3d_difficulty_v1',survivalDifficulty='normal';
+var NOTIFY_KEY='mfwilds3d_notify_v1',notificationSeconds=3.5;
+try{var ns=+localStorage.getItem(NOTIFY_KEY);if(isFinite(ns)&&ns>=1&&ns<=8)notificationSeconds=ns}catch(e){}
 try{var dp=localStorage.getItem(DIFFICULTY_KEY);if(dp==='easy'||dp==='hard')survivalDifficulty=dp}catch(e){}
 function difficultyScale(){return survivalDifficulty==='easy'?0.72:(survivalDifficulty==='hard'?1.35:1)}
 function hungerScale(){return survivalDifficulty==='easy'?0.8:(survivalDifficulty==='hard'?1.25:1)}
@@ -445,6 +448,8 @@ $('joyDeadzone').addEventListener('input',function(){controlPrefs.deadzone=clamp
 $('cameraSensitivity').addEventListener('input',function(){controlPrefs.sensitivity=clamp(+this.value/100,0.5,2);saveControlPrefs()});
 $('invertCamera').addEventListener('change',function(){controlPrefs.invertY=!!this.checked;saveControlPrefs()});
 $('difficultySelect').value=survivalDifficulty;
+$('notificationDuration').value=notificationSeconds;
+$('notificationDuration').addEventListener('input',function(){notificationSeconds=clamp(+this.value,1,8);try{localStorage.setItem(NOTIFY_KEY,String(notificationSeconds))}catch(e){}});
 $('difficultySelect').addEventListener('change',function(){survivalDifficulty=['easy','normal','hard'].indexOf(this.value)>=0?this.value:'normal';try{localStorage.setItem(DIFFICULTY_KEY,survivalDifficulty)}catch(e){}say('Survival difficulty: '+this.options[this.selectedIndex].text,3);});
 applyControlPrefs();
 applyAccessibility();
@@ -1631,7 +1636,7 @@ $('bag').addEventListener('click',function(e){
 
 /* ---------- helpers ---------- */
 var hintEl=$('hint'),hintT=0;
-function say(t,secs){hintEl.textContent=t;hintEl.style.opacity=1;hintT=secs||3.5}
+function say(t,secs){hintEl.textContent=t;hintEl.style.opacity=1;hintT=secs||notificationSeconds}
 function pop(x,y,z,text,color){
   var el=document.createElement('div');el.className='float';el.textContent=text;el.style.color=color||'#fff';
   document.body.appendChild(el);
