@@ -264,7 +264,7 @@
   <div class="invLabel">Hotbar · 9 slots</div>
   <div id="bagHotbar"></div>
   <div id="bagTeam"></div>
-  <div class="bagCraft"><strong>2×2 Crafting grid</strong><div class="craftBench"><div id="benchGrid" class="craftGrid"><button data-benchcell="0">+</button><button data-benchcell="1">+</button><button data-benchcell="2">+</button><button data-benchcell="3">+</button></div><span class="craftArrow">→</span><button id="benchOutput" class="craftOutput" type="button" disabled>◇</button></div><div id="benchHint" class="craftCaption">Select an item, then tap a grid cell to add one unit. Tap a filled cell to return it.</div><strong>Crafting recipes</strong><div id="craftList"></div><div id="recipeDetails"><b id="recipeSelected">Select a recipe</b><div id="recipeIngredients"></div><label for="craftAmount">Amount to craft</label><input id="craftAmount" type="number" min="1" max="99" value="1" inputmode="numeric"><div id="craftTotal"></div><button id="craftSelected" type="button" disabled>Craft selected recipe</button></div></div>
+  <div class="bagCraft"><strong>2×2 Crafting grid</strong><div class="craftBench"><div id="benchGrid" class="craftGrid"><button data-benchcell="0">+</button><button data-benchcell="1">+</button><button data-benchcell="2">+</button><button data-benchcell="3">+</button></div><span class="craftArrow">→</span><button id="benchOutput" class="craftOutput" type="button" disabled>◇</button></div><div id="benchHint" class="craftCaption">Select an item, then tap a grid cell to add one unit. Tap a filled cell to return it.</div><strong>Crafting recipes</strong><input id="craftSearch" type="search" placeholder="Search recipes or ingredients" aria-label="Search crafting recipes"><select id="craftCategoryFilter" aria-label="Filter recipe category"><option value="all">All categories</option><option value="Capture">Capture</option><option value="Tools">Tools</option><option value="Armor">Armor</option><option value="Metallurgy">Metallurgy</option><option value="Survival">Survival</option><option value="Building">Building</option></select><div id="craftList"></div><div id="recipeDetails"><b id="recipeSelected">Select a recipe</b><div id="recipeIngredients"></div><label for="craftAmount">Amount to craft</label><input id="craftAmount" type="number" min="1" max="99" value="1" inputmode="numeric"><div id="craftTotal"></div><button id="craftSelected" type="button" disabled>Craft selected recipe</button></div></div>
 </div>
 <div id="joy"><div id="stick"></div></div>
 <div id="btns">
@@ -1734,15 +1734,24 @@ function updateRecipePanel(){var k=selectedRecipe,a=Math.max(1,Math.min(99,parse
 function buildCraftUI(){
   var h='';
   CATS.forEach(function(c){
-    h+='<div class="cat">'+c[0]+'</div>';
+    h+='<div class="cat" data-craft-heading="'+c[0]+'">'+c[0]+'</div>';
     c[1].forEach(function(k){
       var r=RECIPES[k],cost=Object.keys(r).map(function(i){return r[i]+' '+(ITEMS[i]?ITEMS[i].n:i).toLowerCase()}).join(', ');
-      h+='<button data-craft="'+k+'">'+NAMES[k]+(OUT[k]>1?' ×'+OUT[k]:'')+'<small>'+cost+'</small></button>';
+      h+='<button data-craft="'+k+'" data-craft-category="'+c[0]+'">'+NAMES[k]+(OUT[k]>1?' ×'+OUT[k]:'')+'<small>'+cost+'</small></button>';
     });
   });
   $('craftList').innerHTML=h;if(!selectedRecipe)selectedRecipe=Object.keys(RECIPES)[0];updateRecipePanel();
 }
 buildCraftUI();
+function applyRecipeFilters(){
+  var query=$('craftSearch').value.trim().toLowerCase(),category=$('craftCategoryFilter').value;
+  var buttons=$('craftList').querySelectorAll('[data-craft]');
+  for(var i=0;i<buttons.length;i++){var b=buttons[i],matchText=b.textContent.toLowerCase().indexOf(query)>=0,matchCategory=category==='all'||b.getAttribute('data-craft-category')===category;b.style.display=matchText&&matchCategory?'':'none';}
+  var headings=$('craftList').querySelectorAll('[data-craft-heading]');
+  for(var h=0;h<headings.length;h++){var name=headings[h].getAttribute('data-craft-heading'),visible=false;for(var j=0;j<buttons.length;j++)if(buttons[j].getAttribute('data-craft-category')===name&&buttons[j].style.display!=='none')visible=true;headings[h].style.display=visible?'':'none';}
+}
+$('craftSearch').addEventListener('input',applyRecipeFilters);
+$('craftCategoryFilter').addEventListener('change',applyRecipeFilters);
 function rateNow(sp,id){var r0=catchRate(sp,id);return r0>=1?1:Math.min(0.95,r0+(P.lure?0.2:0))}
 function craft(k,amount){
   var qty=Math.max(1,Math.min(99,parseInt(amount,10)||1)),output=(OUT[k]||1)*qty;
