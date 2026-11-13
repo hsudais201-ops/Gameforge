@@ -23,8 +23,8 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 13. Add sprint stamina drain and regeneration.
 - [x] 14. Add camera-relative movement.
 - [ ] 15. Add remappable keyboard controls.
-- [ ] 16. Add configurable joystick dead-zone and sensitivity.
-- [ ] 17. Add camera sensitivity and inversion settings.
+- [x] 16. Add configurable joystick dead-zone and sensitivity.
+- [x] 17. Add camera sensitivity and inversion settings.
 - [ ] 18. Add optional aim assist for touch combat.
 - [ ] 19. Add swimming movement and underwater camera handling.
 - [ ] 20. Add player status effects with clear HUD indicators.
@@ -73,7 +73,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 55. Add player damage feedback and centralized damage handling.
 - [x] 56. Add companion interception and guardian attacks.
 - [ ] 57. Add weapon hit validation and clearer hit confirmation.
-- [ ] 58. Add dodge or evade with stamina cost.
+- [x] 58. Add dodge or evade with stamina cost.
 - [ ] 59. Add enemy resistance and vulnerability profiles.
 - [ ] 60. Add a boss encounter with multi-stage behavior.
 
@@ -150,6 +150,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
 ## Current verified implementation batch
+- Controls and combat: persisted joystick dead-zone, camera sensitivity and vertical inversion settings; added keyboard/touch dodge with stamina cost, movement burst, and brief damage immunity.
 - Crafting UX: added recipe text search across names and ingredients, plus category filtering with empty-category headings hidden.
 - Inventory convenience: added storage-only sorting that preserves the hotbar, plus quick chest deposit/withdraw controls with stack limits and partial-transfer handling.
 - Storage system foundation: added a craftable 18-slot storage chest, nearby interaction UI, stack deposit/withdraw with capacity checks, and per-world chest-content save/load.
