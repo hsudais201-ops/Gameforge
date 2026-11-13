@@ -146,6 +146,11 @@
   #pauseStatus{min-height:16px;margin-top:10px;color:#c8d8c5;font-size:11px}
   #pauseToggle{position:fixed;left:12px;top:max(12px,env(safe-area-inset-top));z-index:12;border:1px solid #ffffff55;border-radius:10px;padding:9px 12px;background:#10251ddd;color:#fff;font:600 12px system-ui;touch-action:manipulation}
   #pauseToggle:active{filter:brightness(1.2)}
+  #deathPanel{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:18px;background:radial-gradient(ellipse at 50% 35%,rgba(95,30,24,.58),rgba(3,8,6,.94));backdrop-filter:blur(8px)}
+  #deathPanel[hidden]{display:none}.deathCard{width:min(390px,94vw);box-sizing:border-box;padding:25px;border:1px solid #d88a6b88;border-radius:18px;background:linear-gradient(150deg,#38231f,#171714);box-shadow:0 24px 90px #000d;text-align:center}
+  .deathIcon{font-size:38px}.deathTitle{font-size:30px;font-weight:950;letter-spacing:.13em;color:#f2d7c8}.deathCard p{font-size:13px;line-height:1.5;color:#d5bdb1}.deathCard label{display:block;text-align:left;margin:18px 0 8px;font-size:12px;color:#e6d4c8}
+  #deathSpawn{display:block;width:100%;box-sizing:border-box;padding:12px;border:1px solid #b68b76;border-radius:8px;background:#241d19;color:#fff;font:14px system-ui}#deathCountdown{font-size:12px;color:#e6b99f;margin:14px 0}
+  #respawnNow{width:100%;padding:13px;border:1px solid #e8c17e;border-radius:9px;background:linear-gradient(#c49a54,#805a2d);color:#fff;font-weight:800;font-size:14px}
   #mainMenu{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(115deg,#07110deF,#0b1b15d9),radial-gradient(ellipse at 70% 30%,#5e8055 0%,transparent 55%);backdrop-filter:blur(8px);overflow:auto}
   #mainMenu[hidden]{display:none}
   .menuCard{width:min(920px,96vw);max-height:94dvh;overflow:auto;box-sizing:border-box;padding:clamp(16px,3vw,30px);border:1px solid #a6c09b66;border-radius:18px;background:linear-gradient(145deg,#1a3025f5,#0c1813f7);box-shadow:0 24px 90px #000b}
@@ -173,6 +178,7 @@
 </div>
 <div id="pausePanel" hidden><div class="pauseCard"><div class="pauseBrand">PAUSED</div><p>Your adventure is safely paused.</p><button id="pauseResume" class="pauseAction primary">▶ Resume Game</button><button id="pauseSave" class="pauseAction">Save World</button><button id="pauseSettings" class="pauseAction">⚙ Settings</button><button id="pauseMainMenu" class="pauseAction">Return to Main Menu</button><div id="pauseStatus" role="status" aria-live="polite">Autosave is active.</div></div></div>
 <div id="pauseBtn" aria-label="Pause game"><button id="pauseToggle" type="button">Ⅱ Pause</button></div>
+<div id="deathPanel" hidden role="dialog" aria-modal="true" aria-labelledby="deathTitle"><div class="deathCard"><div class="deathIcon">✦</div><div class="deathTitle" id="deathTitle">YOU FELL</div><p>Your journey is not over. Choose where to recover and return to the wild.</p><label for="deathSpawn">Respawn location</label><select id="deathSpawn"></select><div id="deathCountdown" aria-live="polite">Respawning in 5 seconds…</div><button id="respawnNow" type="button">Respawn Now</button><p>Penalty: lose half of your carried wood, stone and fiber.</p></div></div>
 <div id="hint"></div>
 <button id="settingsBtn" type="button">⚙ Settings</button>
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
@@ -1209,6 +1215,7 @@ function addStructure(kind,x,z){
 
 /* ---------- save / load ---------- */
 function save(){
+  if(dead)return true;
   var snapshot;
   try{
     snapshot=JSON.stringify({
@@ -1292,8 +1299,8 @@ updateWorldStreaming(true);
 
 /* ---------- title menu / world selection ---------- */
 var mainMenu=$('mainMenu'),menuOpen=true;
-var pauseOpen=false;
-function togglePause(force){if(mainMenu.hidden===false)return;if(bagOpen){if(force!==false)toggleBag();return;}pauseOpen=typeof force==='boolean'?force:!pauseOpen;$('pausePanel').hidden=!pauseOpen;menuOpen=pauseOpen;if(pauseOpen){save();$('pauseStatus').textContent='Game paused · progress saved';}else{last=performance.now();requestAnimationFrame(frame);}}
+var pauseOpen=false,dead=false,respawnTimer=0,deathSpawnChoice="base";
+function togglePause(force){if(dead||mainMenu.hidden===false)return;if(bagOpen){if(force!==false)toggleBag();return;}pauseOpen=typeof force==='boolean'?force:!pauseOpen;$('pausePanel').hidden=!pauseOpen;menuOpen=pauseOpen;if(pauseOpen){save();$('pauseStatus').textContent='Game paused · progress saved';}else{last=performance.now();requestAnimationFrame(frame);}}
 function refreshWorldMenu(){var sel=$('worldSelect');sel.innerHTML='';worldList.forEach(function(w){var op=document.createElement('option');op.value=w.id;op.textContent=w.name;sel.appendChild(op);});sel.value=selectedWorldId;}
 refreshWorldMenu();
 function syncCustomizationControls(){var mats=player.g.userData.customMaterials;if(!mats)return;var skin=$('skinTone'),outfit=$('outfitColor');if(skin&&!skin.dataset.ready){skin.value='0x'+mats.skin.color.getHexString();skin.dataset.ready='1';}if(outfit)outfit.value='0x'+mats.cloth.color.getHexString();}
@@ -1674,6 +1681,7 @@ function updateAmbient(dt){
 /* ---------- update ---------- */
 var hudT=0,saveT=0,flick=0,sprintEmptyNotified=false,hungerWarned=false;
 function update(dt){
+  if(dead){respawnTimer=Math.max(0,respawnTimer-dt);var secs=Math.ceil(respawnTimer);$("deathCountdown").textContent=respawnTimer>0?"Respawning in "+secs+" second"+(secs===1?"":"s")+"…":"Ready to return";if(respawnTimer<=0)finishRespawn();return;}
   clock+=dt;flick+=dt;
   streamTimer+=dt;if(streamDirty||streamTimer>0.65){streamTimer=0;updateWorldStreaming(false);}
   envUpdate();
@@ -1855,14 +1863,7 @@ function update(dt){
     }
   }
 
-  if(P.hp<=0){
-    P.hp=0;P.stamina=100;P.sprinting=false;held.sprint=false;$('bSprint').setAttribute('aria-pressed','false');
-    var bd=beds.length?beds[beds.length-1]:null;
-    P.hp=100;P.food=60;P.x=bd?bd.x+1.6:0;P.z=bd?bd.z:4;P.y=heightAt(P.x,P.z);
-    ['wood','stone','fiber'].forEach(function(id){takeItem(id,countOf(id)>>1)});
-    wraiths.forEach(function(w){scene.remove(w.g)});wraiths.length=0;
-    say('You passed out and woke at the base. Half your materials are gone.',5);
-  }
+  if(P.hp<=0)beginDeath();
 
   animPlayer(dt);
   animFires();
@@ -1872,6 +1873,32 @@ function update(dt){
   saveT+=dt;if(saveT>10){saveT=0;save()}
 }
 
+function beginDeath(){
+  if(dead)return;
+  dead=true;respawnTimer=5;deathSpawnChoice=beds.length?'bed':'base';
+  P.hp=0;P.stamina=100;P.sprinting=false;held.sprint=false;$('bSprint').setAttribute('aria-pressed','false');
+  Object.keys(keys).forEach(function(k){keys[k]=false});joy.x=0;joy.y=0;held.gather=false;
+  if(bagOpen){bagOpen=false;$('bag').hidden=true;}
+  $('settingsPanel').hidden=true;$('pausePanel').hidden=true;pauseOpen=false;
+  ['wood','stone','fiber'].forEach(function(id){takeItem(id,Math.floor(countOf(id)/2))});
+  wraiths.forEach(function(w){scene.remove(w.g)});wraiths.length=0;
+  var sel=$('deathSpawn');sel.innerHTML='';
+  if(beds.length){var opt=document.createElement('option');opt.value='bed';opt.textContent='Last placed bedroll';sel.appendChild(opt);}
+  var base=document.createElement('option');base.value='base';base.textContent='Base camp';sel.appendChild(base);
+  sel.value=deathSpawnChoice;$('deathPanel').hidden=false;$('deathCountdown').textContent='Respawning in 5 seconds…';updateHud();saveT=0;
+}
+function finishRespawn(){
+  if(!dead)return;
+  var choice=$('deathSpawn').value,bd=beds.length?beds[beds.length-1]:null;
+  if(choice==='bed'&&bd){P.x=bd.x+1.6;P.z=bd.z;}else{P.x=0;P.z=4;}
+  P.y=heightAt(P.x,P.z);P.hp=100;P.food=60;P.stamina=100;P.sprinting=false;P.speed=0;P.swing=0;P.cool=0;
+  held.sprint=false;held.gather=false;joy.x=0;joy.y=0;Object.keys(keys).forEach(function(k){keys[k]=false});
+  wraiths.forEach(function(w){scene.remove(w.g)});wraiths.length=0;
+  dead=false;respawnTimer=0;$('deathPanel').hidden=true;last=performance.now();save();updateHud();
+  say(choice==='bed'&&bd?'You woke beside your last bedroll. Stay alert.':'You returned to the base camp. Stay alert.',5);
+}
+$('deathSpawn').addEventListener('change',function(){deathSpawnChoice=this.value;});
+$('respawnNow').addEventListener('click',function(){if(dead)finishRespawn();});
 function animCreature(c,dt){
   c.walk+=dt*(4+c.speed*8);
   var amp=c.speed*0.7,m=c.m;
