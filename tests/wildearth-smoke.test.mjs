@@ -151,3 +151,11 @@ test('wildlife breeding is population-limited and offspring inherit parent trait
     assert.ok(gameScript.includes(marker), 'missing breeding marker: ' + marker);
   }
 });
+
+
+test('creatures have food preferences, hunger needs, and trust-based catch bonuses', () => {
+  for (const marker of ['var CREATURE_DIET=', 'trust:0,hunger:rand(25,75)', 'function feedCreature(c,item)', 'creature.trust||0', 'c.hunger=clamp((c.hunger||0)+dt*0.16', 'rateNow(c.sp,id,c)']) {
+    assert.ok(gameScript.includes(marker), 'missing creature care marker: ' + marker);
+  }
+  assert.match(gameScript, /Trust '\+Math\.round\(c\.trust\*100\)/);
+});
