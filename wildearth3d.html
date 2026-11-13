@@ -1165,7 +1165,7 @@ var mainMenu=$('mainMenu'),menuOpen=true;
 function refreshWorldMenu(){var sel=$('worldSelect');sel.innerHTML='';worldList.forEach(function(w){var op=document.createElement('option');op.value=w.id;op.textContent=w.name;sel.appendChild(op);});sel.value=selectedWorldId;}
 refreshWorldMenu();
 document.querySelectorAll('.charChoice').forEach(function(b){b.addEventListener('click',function(){applyCharacterStyle(+b.getAttribute('data-char'));});});
-$('worldSelect').addEventListener('change',function(){selectedWorldId=this.value;persistWorldList();});
+$('worldSelect').addEventListener('change',function(){selectedWorldId=this.value;persistWorldList();location.reload();});
 $('playSelected').addEventListener('click',function(){selectedWorldId=$('worldSelect').value;persistWorldList();mainMenu.hidden=true;menuOpen=false;say('Welcome to '+(worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0]).name+'. Your adventure continues.',4);});
 $('createWorldToggle').addEventListener('click',function(){$('createWorldForm').hidden=!$('createWorldForm').hidden;if(!$('createWorldForm').hidden)$('newWorldName').focus();});
 $('createWorld').addEventListener('click',function(){var name=$('newWorldName').value.trim().slice(0,28)||'New World '+(worldList.length+1);var id='world-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);worldList.push({id:id,name:name,created:Date.now()});selectedWorldId=id;persistWorldList();try{localStorage.removeItem('mfwilds3d_v2');}catch(e){}location.reload();});
