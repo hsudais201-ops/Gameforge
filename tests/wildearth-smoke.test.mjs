@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../wildearth3d.html', import.meta.url), 'utf8');
-const scriptMatch = html.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
-const gameScript = scriptMatch?.[1] ?? '';
+const scriptStart = html.indexOf('<script>');
+const scriptEnd = html.indexOf('</script>', scriptStart);
+const gameScript = scriptStart >= 0 && scriptEnd > scriptStart ? html.slice(scriptStart + 8, scriptEnd) : '';
 
 test('game script parses without syntax errors', () => {
   assert.ok(gameScript.trim(), 'expected the game entry script');
