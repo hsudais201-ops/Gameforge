@@ -7,6 +7,9 @@
 <style>
   html,body{margin:0;height:100%;background:#0b1410;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#eef5ee;touch-action:none;user-select:none;-webkit-user-select:none}
   canvas{display:block;width:100%;height:100%}
+  #damageFlash{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 35%,rgba(180,22,30,.58) 100%);mix-blend-mode:multiply}
+  #damageFlash.hit{animation:damagePulse .42s ease-out}
+  @keyframes damagePulse{0%{opacity:.95}100%{opacity:0}}
   #hud{position:fixed;left:0;right:0;top:0;padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) 0 max(10px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:6px;pointer-events:none;font-size:12px}
   .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .pill{background:rgba(8,16,12,.62);padding:4px 9px;border-radius:999px;white-space:nowrap}
@@ -165,6 +168,7 @@
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="damageFlash" aria-hidden="true"></div>
 <div id="mainMenu"><div class="menuCard"><div class="menuBrand">WILDEARTH</div><div class="menuTag">SURVIVE · EXPLORE · BUILD · DISCOVER</div><div class="menuGrid"><section class="menuPanel"><h2>YOUR WORLD</h2><div class="worldChoice"><label for="worldSelect">Selected world</label><select id="worldSelect" class="menuField" aria-label="Select world"></select></div><button id="playSelected" class="menuButton primary">▶ Play Selected</button><button id="createWorldToggle" class="menuButton">＋ Create New World</button><div id="createWorldForm" hidden><input id="newWorldName" class="menuField" maxlength="28" placeholder="World name (e.g. New Frontier)"><button id="createWorld" class="menuButton primary">Create World & Play</button></div><p>Your worlds are saved separately on this device. Select a world to continue its own progress.</p></section><section class="menuPanel"><h2>CHOOSE YOUR CHARACTER</h2><div class="charChoices" id="charChoices"><button class="charChoice" data-char="0"><span class="charSwatch" style="background:#527b70"></span>Explorer</button><button class="charChoice" data-char="1"><span class="charSwatch" style="background:#8a633e"></span>Ranger</button><button class="charChoice" data-char="2"><span class="charSwatch" style="background:#52658e"></span>Pathfinder</button><button class="charChoice" data-char="3"><span class="charSwatch" style="background:#8b4c4c"></span>Survivor</button></div><p>Choose a preset, then customize your appearance. Your look is saved separately from world progress.</p><div class="customControls"><label>Skin tone<select id="skinTone" class="menuField"><option value="0xc98f68">Warm</option><option value="0x8f5d43">Tan</option><option value="0xe0ad86">Light</option><option value="0x65402f">Deep</option></select></label><label>Eye color<select id="eyeColor" class="menuField"><option value="0x6b8f91">Ocean blue</option><option value="0x527b4b">Forest green</option><option value="0x76513a">Brown</option><option value="0x555b66">Grey</option><option value="0x252525">Dark</option></select></label><label>Facial hair<select id="facialHair" class="menuField"><option value="0">Clean shaven</option><option value="1">Stubble</option><option value="2">Short beard</option></select></label><label>Hair style<select id="hairStyle" class="menuField"><option value="0">Short</option><option value="1">Long</option><option value="2">Explorer hood</option><option value="3">Swept</option><option value="4">Tied back</option></select></label><label>Hair color<select id="hairColor" class="menuField"><option value="0x211c19">Natural black</option><option value="0x493226">Dark brown</option><option value="0x805638">Chestnut</option><option value="0xc19a62">Blond</option><option value="0x9b9b9b">Silver</option><option value="0x7b3d32">Auburn</option></select></label><label>Outfit color<select id="outfitColor" class="menuField"><option value="0x527b70">Forest green</option><option value="0x8a633e">Earth brown</option><option value="0x52658e">Slate blue</option><option value="0x8b4c4c">Rust red</option><option value="0x777777">Stone grey</option><option value="0x9a8b45">Olive</option></select></label><button id="saveLook" class="menuButton">Save Character Appearance</button></div></section></div></div></div>
 
 <div id="hud">
@@ -1829,7 +1833,7 @@ function update(dt){
   if(P.food>28)hungerWarned=false;
   eatCool-=dt;
   if(P.food<55&&countOf('berry')>0&&eatCool<=0){takeItem('berry',1);P.food=Math.min(100,P.food+25);eatCool=0.6;pop(P.x,P.y+2.6,P.z,'Ate a berry','#f19ab0')}
-  if(P.food<=0)P.hp-=2*dt;else if(P.food>40&&P.hp<100)P.hp=Math.min(100,P.hp+2*dt);
+  if(P.food<=0)playerDamage(2*dt,null);else if(P.food>40&&P.hp<100)P.hp=Math.min(100,P.hp+2*dt);
 
   var i,j;
   for(i=0;i<res.length;i++){
@@ -2155,7 +2159,7 @@ function update(dt){
           var playerDistance=Math.hypot(P.x-s.x,P.z-s.z);
           if(playerDistance<2.35&&!safe){
             var armor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);
-            P.hp-=Math.min(18,(9+nights*0.65)*(s.damageScale||1))*armor;
+            playerDamage(Math.min(18,(9+nights*0.65)*(s.damageScale||1))*armor,'Wraith strike');
             s.attackCd=1.15;pop(P.x,P.y+2.1,P.z,'Wraith strike','#c9a8ff');
           }else if(playerDistance<4.8&&!safe){s.lunge=0.28;s.lungeHit=false;s.attackCd=2.0;}
         }
@@ -2168,7 +2172,7 @@ function update(dt){
         if(Math.hypot(P.x-s.x,P.z-s.z)<2.25&&!nearFire(P.x,P.z,13)){
           var lungeArmor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);
           var lungeDamage=Math.min(18,(9+nights*0.65)*(s.damageScale||1))*lungeArmor;
-          P.hp-=lungeDamage;pop(P.x,P.y+2.1,P.z,'Wraith lunge -'+Math.ceil(lungeDamage),'#c9a8ff');
+          playerDamage(lungeDamage,'Wraith lunge -'+Math.ceil(lungeDamage));
         }
       }
     }else if(sl<2.45&&s.attackCd<=0&&(!safe||targetWild)){
@@ -2412,6 +2416,15 @@ function updateFloats(dt){
     f.el.style.transform='translate('+((_v.x*0.5+0.5)*vw-30)+'px,'+((-_v.y*0.5+0.5)*vh)+'px)';
     f.el.style.opacity=clamp(f.t/0.6,0,1);
   }
+}
+
+function playerDamage(amount,label){
+  if(dead||!isFinite(amount)||amount<=0)return;
+  P.hp=clamp(P.hp-amount,0,100);
+  var flash=$('damageFlash');
+  if(flash){flash.classList.remove('hit');void flash.offsetWidth;flash.classList.add('hit');}
+  if(label)pop(P.x,P.y+2.1,P.z,label,'#ff9a91');
+  updateHud();
 }
 
 /* ---------- loop ---------- */
