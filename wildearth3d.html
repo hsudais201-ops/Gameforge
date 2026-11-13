@@ -107,6 +107,10 @@
   #bagGrid .slot b,#bagHotbar .slot b{font-size:10px;text-shadow:0 2px 3px #000}
   #bagDiscard{width:100%;text-align:center!important}
   #bagTeam{padding:7px 8px;background:#101b16aa;border:1px solid #ffffff18;border-radius:7px;font-size:10px}
+  .companionCommands{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:8px;padding-top:7px;border-top:1px solid #ffffff18}
+  .companionCommands span{width:100%;color:#c6d3c7;font-size:9px;text-transform:uppercase;letter-spacing:.07em}
+  .companionCommands button{flex:1;min-width:56px;padding:6px 8px!important;border:1px solid #718a70!important;border-radius:5px!important;background:#203329!important;color:#e6eee4!important;font-size:10px!important}
+  .companionCommands button.active{background:#587b4b!important;border-color:#c3d88a!important;color:#fff!important}
   .bagCraft{padding-top:8px;border-top:1px solid #ffffff25}
   .bagCraft>strong{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#d9e5d7}
   #craftList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
@@ -1133,7 +1137,7 @@ function slotHtml(i){
   return '<div class="'+c+'" data-slot="'+i+'" draggable="'+(!!s)+'"'+(s?' data-id="'+s.id+'" title="'+ITEMS[s.id].n+'"':'')+'>'+(i<HOT?'<i>'+(i+1)+'</i>':'')+(s?(ICON[s.id]||ICON.stone)+'<b>'+s.n+'</b>':'')+'</div>';
 }
 function renderInv(force){
-  var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.length;
+  var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.length+'|'+companionMode;
   if(!force&&sig===lastSig)return;
   lastSig=sig;
   var h='',i;
@@ -1163,7 +1167,8 @@ function renderInv(force){
     team.forEach(function(t){cnt[t.sp]=(cnt[t.sp]||0)+1;tn++});
     var th='<strong>Creature log</strong> <small>'+tn+'/12 tamed</small><div class="chips">';
     SPECIES.forEach(function(S,si){th+=cnt[si]?'<span class="chip" style="color:'+RAR[S.r].c+'">'+S.n+' ×'+cnt[si]+'</span>':'<span class="chip off">???</span>'});
-    $('bagTeam').innerHTML=th+'</div>';
+    th+='</div><div class="companionCommands"><span>Companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button></div>';
+    $('bagTeam').innerHTML=th;
     var armor=equippedArmor==='ironarmor'?'Iron Armor':(equippedArmor==='copperarmor'?'Copper Armor':'No armor equipped');
     $('equipStatus').textContent=armor+(armor==='No armor equipped'?'':' · equipped · damage reduction active');
     $('armorChest').style.borderColor=equippedArmor==='ironarmor'?'#f0d27b':(equippedArmor==='copperarmor'?'#d58a58':'#aab4aa');
@@ -1178,6 +1183,11 @@ function renderInv(force){
     updateRecipePanel();
   }
 }
+function setCompanionMode(mode){
+  if(['follow','hold','defend'].indexOf(mode)<0)return;
+  companionMode=mode;renderInv(true);save();
+  say(mode==='follow'?'Companions will follow you.':(mode==='hold'?'Companions will hold their positions.':'Companions will defend a wider area.'),3);
+}
 function slotClick(i){
   if(!bagOpen){if(i<HOT){hotSel=i;renderInv(true)}return}
   if(moveFrom<0){if(slots[i])moveFrom=i;renderInv(true);return}
@@ -1188,6 +1198,7 @@ function slotClick(i){
   else{slots[i]=a;slots[moveFrom]=b}
   moveFrom=-1;renderInv(true);
 }
+$('bagTeam').addEventListener('click',function(e){var b=e.target.closest('[data-team-mode]');if(b)setCompanionMode(b.getAttribute('data-team-mode'));});
 function splitSelectedStack(){if(moveFrom<0||!slots[moveFrom]||slots[moveFrom].n<2)return;var src=slots[moveFrom],target=-1;for(var i=0;i<NSLOTS;i++)if(!slots[i]){target=i;break;}if(target<0){say('No empty slot available for the split stack.');return;}var half=Math.floor(src.n/2);src.n-=half;slots[target]={id:src.id,n:half};moveFrom=-1;renderInv(true);say('Stack split into '+src.n+' and '+half+'.');}
 function equipSelectedArmor(){if(moveFrom<0||!slots[moveFrom])return;var id=slots[moveFrom].id;if(id!=='ironarmor'&&id!=='copperarmor')return;var prev=equippedArmor;slots[moveFrom]=null;moveFrom=-1;if(prev===id){equippedArmor=null;addItem(id,1);renderInv(true);say('Armor unequipped.');return;}equippedArmor=id;if(prev&&!addItem(prev,1)){equippedArmor=prev;addItem(id,1);say('No room to swap armor.');return;}renderInv(true);say((id==='ironarmor'?'Iron':'Copper')+' armor equipped.');}
 function renderBench(){var h='',counts={},i;for(i=0;i<4;i++){var c=benchCells[i];h+='<button type="button" data-benchcell="'+i+'">'+(c?(ICON[c.id]||ICON.stone)+'<small>'+c.n+'</small>':'+')+'</button>';if(c)counts[c.id]=(counts[c.id]||0)+c.n;}$('benchGrid').innerHTML=h;benchResult=null;for(var key in RECIPES){var req=RECIPES[key],match=true,keys=Object.keys(req);if(keys.length>4)continue;for(i=0;i<keys.length;i++)if((counts[keys[i]]||0)!==req[keys[i]])match=false;for(var have in counts)if(!req[have])match=false;if(match){benchResult=key;break;}}var out=$('benchOutput');out.disabled=!benchResult;out.innerHTML=benchResult?(ICON[benchResult]||'✦'):'◇';$('benchHint').textContent=benchResult?'Ready: '+NAMES[benchResult]+' ×'+(OUT[benchResult]||1)+'. Tap the result to craft.':'Select an item, then tap a grid cell to add one unit. Tap a filled cell to return it.';}
@@ -1196,6 +1207,7 @@ function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]|
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
 var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0,craftedCount=0,achievementIds=[];
 var wild=[],team=[],walls=[],fires=[],beds=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[];
+var companionMode='follow';
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34;
 var rainCount=isMobile?150:280,rainGeo=new THREE.BufferGeometry(),rainPositions=new Float32Array(rainCount*3);
@@ -1302,7 +1314,7 @@ function save(){
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
       beds:beds.map(function(b){return {x:b.x,z:b.z}}),
-      clock:clock,nights:nights,wraithsDefeated:wraithsDefeated,craftedCount:craftedCount,achievementIds:achievementIds
+      clock:clock,nights:nights,wraithsDefeated:wraithsDefeated,craftedCount:craftedCount,achievementIds:achievementIds,companionMode:companionMode
     });
     // Keep one verified previous snapshot so a damaged save can be recovered.
     try{
@@ -1338,7 +1350,7 @@ function load(){
     }
     if(!d)d=validSave(localStorage.getItem(OLD_KEY));
     if(!d)return false;
-    P.x=d.P.x;P.z=d.P.z;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.y=heightAt(P.x,P.z);
+    P.x=d.P.x;P.z=d.P.z;companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
       var oldLayout=d.slots.length===30;
       for(var q=0;q<NSLOTS;q++){var oldIndex=oldLayout&&q>=HOT?q-3:q;var it=d.slots[oldIndex];if(it&&it.id==='cage')it={id:'ball',n:it.n};slots[q]=(it&&ITEMS[it.id]&&typeof it.n==='number'&&it.n>0)?{id:it.id,n:Math.min(it.n,ITEMS[it.id].max)}:null}
@@ -2077,13 +2089,13 @@ function update(dt){
     t.guardCd=Math.max(0,(t.guardCd||0)-dt);
     for(j=0;j<wraiths.length;j++){
       var candidate=wraiths[j],wd=Math.hypot(candidate.x-t.x,candidate.z-t.z);
-      if(wd<guardDist&&wd<13&&Math.hypot(candidate.x-P.x,candidate.z-P.z)<19){guard=candidate;guardDist=wd}
+      if(wd<guardDist&&wd<(companionMode==='defend'?19:13)&&Math.hypot(candidate.x-P.x,candidate.z-P.z)<(companionMode==='defend'?27:19)){guard=candidate;guardDist=wd}
     }
     var forwardX=Math.sin(P.face),forwardZ=Math.cos(P.face),rightX=Math.cos(P.face),rightZ=-Math.sin(P.face);
     var row=i===0?0:Math.ceil(i/2),side=i===0?0:(i%2===1?-1:1);
     var lateral=side*(1.25+row*0.18),behind=2.7+row*1.45;
-    var tx=P.x-forwardX*behind+rightX*lateral,tz=P.z-forwardZ*behind+rightZ*lateral;
-    if(guard&&guardDist>2.25){tx=guard.x+(t.x-guard.x)/Math.max(0.01,guardDist)*1.7;tz=guard.z+(t.z-guard.z)/Math.max(0.01,guardDist)*1.7}
+    var tx=companionMode==='hold'?t.x:P.x-forwardX*behind+rightX*lateral,tz=companionMode==='hold'?t.z:P.z-forwardZ*behind+rightZ*lateral;
+    if(companionMode!=='hold'&&guard&&guardDist>2.25){tx=guard.x+(t.x-guard.x)/Math.max(0.01,guardDist)*1.7;tz=guard.z+(t.z-guard.z)/Math.max(0.01,guardDist)*1.7}
     var ddx=tx-t.x,ddz=tz-t.z,dl=Math.hypot(ddx,ddz);
     t.speed=0;t.defending=!!guard;
     if(dl>0.6){
