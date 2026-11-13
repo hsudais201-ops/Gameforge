@@ -2111,7 +2111,7 @@ function update(dt){
     else if(nights>=3&&roll<(nights>=5?0.52:0.34))kind='stalker';
     var profile=kind==='brute'?{hp:3.5,speed:3.8,damage:1.28,lunge:3.6,scale:1.22}:(kind==='stalker'?{hp:1.5,speed:7.2,damage:0.82,lunge:5.5,scale:0.86}:{hp:2,speed:5.1,damage:1,lunge:4.5,scale:1});
     var wg=makeWraith(kind);wg.scale.setScalar(profile.scale);wg.position.set(wxp,heightAt(wxp,wzp),wzp);scene.add(wg);
-    wraiths.push({g:wg,kind:kind,moveSpeed:profile.speed,damageScale:profile.damage,lungeSpeed:profile.lunge,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:profile.hp,hit:0,ph:Math.random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
+    wraiths.push({g:wg,kind:kind,moveSpeed:profile.speed,damageScale:profile.damage,lungeSpeed:profile.lunge,baseScale:profile.scale,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:profile.hp,hit:0,ph:Math.random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
   }
   var safe=nearFire(P.x,P.z,13);
   for(i=wraiths.length-1;i>=0;i--){
@@ -2184,7 +2184,7 @@ function update(dt){
     s.g.position.set(s.x,s.y+0.5+Math.sin(clock*3+s.ph)*0.25,s.z);
     s.g.rotation.y=Math.atan2(sx,sz);
     var pulse=s.windup>0?1+Math.sin((0.42-s.windup)*24)*0.1:(s.lunge>0?1.14:1);
-    s.g.scale.setScalar(s.hit>0?1.12:pulse);
+    s.g.scale.setScalar((s.baseScale||1)*(s.hit>0?1.12:pulse));
     if(s.hp<=0){
       if(nightF>=0.25)gain('fiber',1,s.x,s.y+2.6,s.z,'#c9a8ff');
       scene.remove(s.g);wraiths.splice(i,1);
