@@ -971,7 +971,8 @@ function load(){
     var d=JSON.parse(s);
     P.x=d.P.x;P.z=d.P.z;P.hp=d.P.hp;P.food=d.P.food;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
-      for(var q=0;q<NSLOTS;q++){var it=d.slots[q];if(it&&it.id==='cage')it={id:'ball',n:it.n};slots[q]=(it&&ITEMS[it.id]&&typeof it.n==='number'&&it.n>0)?{id:it.id,n:Math.min(it.n,ITEMS[it.id].max)}:null}
+      var oldLayout=d.slots.length===30;
+      for(var q=0;q<NSLOTS;q++){var oldIndex=oldLayout&&q>=HOT?q-3:q;var it=d.slots[oldIndex];if(it&&it.id==='cage')it={id:'ball',n:it.n};slots[q]=(it&&ITEMS[it.id]&&typeof it.n==='number'&&it.n>0)?{id:it.id,n:Math.min(it.n,ITEMS[it.id].max)}:null}
       hotSel=clamp(d.hot|0,0,HOT-1);
     }else if(d.inv){for(var k in d.inv){var kk=k==='cage'?'ball':k;if(ITEMS[kk]&&d.inv[k]>0)addItem(kk,d.inv[k])}}
     (d.team||[]).forEach(function(t){
