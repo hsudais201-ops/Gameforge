@@ -1182,6 +1182,43 @@ function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]|
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
 var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false;
 var wild=[],team=[],walls=[],fires=[],beds=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[];
+/* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
+var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34;
+var rainCount=isMobile?150:280,rainGeo=new THREE.BufferGeometry(),rainPositions=new Float32Array(rainCount*3);
+for(var rpi=0;rpi<rainCount;rpi++){
+  rainPositions[rpi*3]=(Math.random()-0.5)*54;
+  rainPositions[rpi*3+1]=Math.random()*24;
+  rainPositions[rpi*3+2]=(Math.random()-0.5)*54;
+}
+rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
+var rainMat=new THREE.PointsMaterial({color:0xb9d9ed,size:isMobile?0.105:0.13,transparent:true,opacity:0,depthWrite:false});
+var rainPoints=new THREE.Points(rainGeo,rainMat);rainPoints.frustumCulled=false;rainPoints.visible=false;scene.add(rainPoints);
+function updateWeather(dt){
+  var cycle=clock%240,edge=Math.min(clamp((cycle-150)/9,0,1),clamp((207-cycle)/9,0,1));
+  rainLevel=edge;
+  rainPoints.visible=rainLevel>0.015;
+  rainMat.opacity=rainLevel*0.62;
+  rainPoints.position.set(P.x,P.y+8,P.z);
+  if(rainLevel>0){
+    var pa=rainGeo.attributes.position;
+    for(var ri=0;ri<rainCount;ri++){
+      var k=ri*3;
+      rainPositions[k]+=rainWindX*dt*2.2;
+      rainPositions[k+1]-=dt*(17+rainLevel*5);
+      rainPositions[k+2]+=rainWindZ*dt*2.2;
+      if(rainPositions[k+1]<-7){
+        rainPositions[k]=(Math.random()-0.5)*54;
+        rainPositions[k+1]=14+Math.random()*12;
+        rainPositions[k+2]=(Math.random()-0.5)*54;
+      }
+      if(Math.abs(rainPositions[k])>29)rainPositions[k]*=-0.82;
+      if(Math.abs(rainPositions[k+2])>29)rainPositions[k+2]*=-0.82;
+    }
+    pa.needsUpdate=true;
+  }
+  if(rainLevel>0.45&&!rainWasActive){rainWasActive=true;say('Rain is moving across the wilderness.');}
+  if(rainLevel<0.05&&rainWasActive){rainWasActive=false;say('The rain has cleared.');}
+}
 P.y=heightAt(P.x,P.z);
 
 function landSpot(minFromPlayer){
@@ -1731,6 +1768,7 @@ var hudT=0,saveT=0,flick=0,sprintEmptyNotified=false,hungerWarned=false;
 function update(dt){
   if(dead){respawnTimer=Math.max(0,respawnTimer-dt);var secs=Math.ceil(respawnTimer);$("deathCountdown").textContent=respawnTimer>0?"Respawning in "+secs+" second"+(secs===1?"":"s")+"…":"Ready to return";if(respawnTimer<=0)finishRespawn();return;}
   clock+=dt;flick+=dt;
+  updateWeather(dt);
   streamTimer+=dt;if(streamDirty||streamTimer>0.65){streamTimer=0;updateWorldStreaming(false);}
   envUpdate();
   updateAmbient(dt);
@@ -1829,7 +1867,8 @@ function update(dt){
         // Each species has a preferred activity window; nighttime specialists stay livelier after dark.
         var nightPreference=[0.18,0.42,0.58,0.12,0.82,0.28,0.72,0.9][c.sp]||0.3;
         var activityLevel=dayF*(1-nightPreference)+nightF*nightPreference;
-        pauseChance=clamp(pauseChance+(1-activityLevel)*0.22,0.08,0.92);
+        var rainSensitive=[0,3,5,7].indexOf(c.sp)>=0;
+        pauseChance=clamp(pauseChance+(1-activityLevel)*0.22+(rainSensitive?rainLevel*0.2:rainLevel*0.045),0.08,0.92);
         if(c.state==='alert')pauseChance=Math.min(0.75,pauseChance+0.22);
         if(Math.random()<pauseChance){
           c.vx=0;c.vz=0;
@@ -1865,7 +1904,7 @@ function update(dt){
       if(c.flee<=0&&pdist>12){
         var bestPlant=null,bestPlantScore=0;
         var likesBush=c.sp===0||c.sp===2||c.sp===6||c.sp===7;
-        var likesTree=c.sp===1||c.sp===4||c.sp===5;
+        var likesTree=c.sp===1||c.sp===4||c.sp===5||(rainLevel>0.35&&(c.sp===0||c.sp===3||c.sp===7));
         if(likesBush||likesTree){
           for(var ei=0;ei<res.length;ei++){
             var er=res[ei];
