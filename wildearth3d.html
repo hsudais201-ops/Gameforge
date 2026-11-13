@@ -1765,7 +1765,7 @@ function update(dt){
     var alertRadius=c.sp===4?16:(c.sp===6?13:(c.sp===3?8:11));
     var panicRadius=c.sp===5?5.5:7;
     if(pdist<alertRadius&&c.flee<=0){
-      c.state='alert';c.alertT=0.65+Math.random()*0.45;
+      if(c.state!=='alert'){c.state='alert';c.alertT=0.75+Math.random()*0.55}
       if(pdist<panicRadius||P.speed>1.35){
         c.state='flee';c.flee=Math.max(c.flee,2.2+Math.random()*1.5);
       }
@@ -1773,15 +1773,16 @@ function update(dt){
     if(c.flee>0){
       c.state='flee';c.flee=Math.max(0,c.flee-dt);
       var ax=c.x-P.x,az=c.z-P.z,al=Math.hypot(ax,az)||1;
-      var fleeSpeed=c.sp===4?8.4:(c.sp===6?7.8:6.8);
+      var fleeSpeed=[6.8,7.2,6.2,4.8,8.4,6.8,7.8,6.6][c.sp]||6.8;
       c.vx=ax/al*fleeSpeed;c.vz=az/al*fleeSpeed;
     }else{
       c.t-=dt;
       if(c.t<=0){
-        var pauseChance=c.sp===3?0.55:0.34;
+        var pauseChance=[0.34,0.28,0.48,0.58,0.2,0.34,0.3,0.4][c.sp]||0.34;
+        if(c.state==='alert')pauseChance=Math.min(0.75,pauseChance+0.22);
         if(Math.random()<pauseChance){c.vx=0;c.vz=0;c.state='idle'}
         else{
-          var a=Math.random()*6.283,roamSpeed=c.sp===4?2.4:(c.sp===2?1.35:1.8);
+          var a=Math.random()*6.283,roamSpeed=[1.8,2.1,1.35,1.0,2.4,1.8,2.1,1.7][c.sp]||1.8;
           c.vx=Math.cos(a)*roamSpeed;c.vz=Math.sin(a)*roamSpeed;c.state='wander';
         }
         c.t=rand(2.2,5.5);
@@ -1790,7 +1791,15 @@ function update(dt){
     }
     nxw=c.x+c.vx*dt;nzw=c.z+c.vz*dt;
     if(heightAt(nxw,nzw)>WATER+0.2&&Math.abs(nxw)<HALF-8&&Math.abs(nzw)<HALF-8){c.x=nxw;c.z=nzw}else{c.vx=-c.vx;c.vz=-c.vz;c.t=0.7}
+    var beforeX=c.x,beforeZ=c.z;
     pushOutBoxes(c,0.55);
+    var wallPushX=c.x-beforeX,wallPushZ=c.z-beforeZ,wallPush=Math.hypot(wallPushX,wallPushZ);
+    if(wallPush>0.22){
+      var slideX=-c.vz,slideZ=c.vx,slideLen=Math.hypot(slideX,slideZ)||1;
+      c.vx=slideX/slideLen*Math.max(1.2,Math.hypot(c.vx,c.vz)*0.72);
+      c.vz=slideZ/slideLen*Math.max(1.2,Math.hypot(c.vx,c.vz)*0.72);
+      c.t=Math.max(c.t,0.65);c.state=c.flee>0?'flee':'wander';
+    }
     moving=Math.hypot(c.vx,c.vz)>0.1;
     c.speed=moving?Math.hypot(c.vx,c.vz)/7+0.25:0;
     if(moving){var ty=Math.atan2(c.vx,c.vz),dy=ty-c.yaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));c.yaw+=dy*Math.min(1,dt*(c.state==='flee'?10:6))}
