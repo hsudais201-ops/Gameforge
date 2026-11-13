@@ -144,3 +144,10 @@ test('wetness, drying, cold exposure, and oxygen persist safely in versioned sav
   assert.match(gameScript, /version:5/);
   assert.match(gameScript, /P\.wetness=isFinite\(d\.P\.wetness\)/);
 });
+
+
+test('wildlife breeding is population-limited and offspring inherit parent traits', () => {
+  for (const marker of ['function tryBreed(c,dt)', 'wild.length>=48', 'child.secondParent=mate', 'child.boldness=clamp((c.boldness+mate.boldness)', 'child.sociability=clamp((c.sociability+mate.sociability)', 'child.curiosity=clamp((c.curiosity+mate.curiosity)', 'tryBreed(c,dt)']) {
+    assert.ok(gameScript.includes(marker), 'missing breeding marker: ' + marker);
+  }
+});
