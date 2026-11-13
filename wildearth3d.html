@@ -1193,9 +1193,32 @@ function landSpot(minFromPlayer){
   }
   return {x:30,z:30};
 }
+function wildRouteScore(c,dx,dz){
+  var tx=c.x+dx*6,tz=c.z+dz*6,ty=heightAt(tx,tz),score=dx*1.4+dz*1.4;
+  if(ty<WATER+0.35||ty>14||Math.abs(tx)>HALF-9||Math.abs(tz)>HALF-9)return -100;
+  for(var i=0;i<walls.length;i++){
+    var w=walls[i];if(w.t==='floor')continue;
+    if(Math.abs(tx-w.x)<2.05&&Math.abs(tz-w.z)<0.78)return -35;
+  }
+  for(var j=0;j<fires.length;j++){
+    var f=fires[j],fd=Math.hypot(tx-f.x,tz-f.z),safeR=f.t==='torch'?2.1:5.2;
+    if(fd<safeR)score-=((safeR-fd)/safeR)*8;
+  }
+  return score;
+}
+function wildEscapeDirection(c,awayX,awayZ){
+  var base=Math.atan2(awayX,awayZ),bestX=awayX,bestZ=awayZ,best=-999;
+  for(var k=-2;k<=2;k++){
+    var a=base+k*0.48,dx=Math.sin(a),dz=Math.cos(a);
+    var score=wildRouteScore(c,dx,dz)+(Math.random()*0.12);
+    if(score>best){best=score;bestX=dx;bestZ=dz}
+  }
+  var len=Math.hypot(bestX,bestZ)||1;
+  return {x:bestX/len,z:bestZ/len};
+}
 function spawnWild(fsp,fx,fz){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0};
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
 }
 function addStructure(kind,x,z){
@@ -1770,11 +1793,17 @@ function update(dt){
         c.state='flee';c.flee=Math.max(c.flee,2.2+Math.random()*1.5);
       }
     }
+    var targetX=0,targetZ=0;
     if(c.flee>0){
       c.state='flee';c.flee=Math.max(0,c.flee-dt);
       var ax=c.x-P.x,az=c.z-P.z,al=Math.hypot(ax,az)||1;
+      if(c.aiT<=0){
+        c.escape=wildEscapeDirection(c,ax/al,az/al);
+        c.aiT=rand(0.28,0.48);
+      }
       var fleeSpeed=[6.8,7.2,6.2,4.8,8.4,6.8,7.8,6.6][c.sp]||6.8;
-      c.vx=ax/al*fleeSpeed;c.vz=az/al*fleeSpeed;
+      targetX=c.escape?c.escape.x*fleeSpeed:ax/al*fleeSpeed;
+      targetZ=c.escape?c.escape.z*fleeSpeed:az/al*fleeSpeed;
     }else{
       c.t-=dt;
       if(c.t<=0){
@@ -1788,7 +1817,30 @@ function update(dt){
         c.t=rand(2.2,5.5);
       }
       if(c.alertT>0){c.alertT=Math.max(0,c.alertT-dt);if(c.alertT===0&&c.state==='alert')c.state='idle'}
+      targetX=c.vx;targetZ=c.vz;
+      // Herd-minded species loosely gather, while keeping personal space.
+      if(c.sp===0||c.sp===2||c.sp===6){
+        var gx=0,gz=0,near=0,sepX=0,sepZ=0;
+        for(var n=0;n<wild.length;n++){
+          var other=wild[n];if(other===c||other.sp!==c.sp||other.held)continue;
+          var ox=other.x-c.x,oz=other.z-c.z,od=Math.hypot(ox,oz);
+          if(od<11&&od>0.01){gx+=other.x;gz+=other.z;near++;if(od<2.4){sepX-=ox/od*(2.4-od);sepZ-=oz/od*(2.4-od)}}
+        }
+        if(near){var cohX=gx/near-c.x,cohZ=gz/near-c.z,cl=Math.hypot(cohX,cohZ)||1;
+          targetX+=cohX/cl*0.65+sepX*1.2;targetZ+=cohZ/cl*0.65+sepZ*1.2;}
+      }
     }
+    // Wildlife of different temperaments gives campfires a wide berth.
+    var fireX=0,fireZ=0;
+    for(var fi=0;fi<fires.length;fi++){
+      var fire=fires[fi],fdx=c.x-fire.x,fdz=c.z-fire.z,fd=Math.hypot(fdx,fdz)||0.001;
+      var avoidR=(fire.t==='torch'?2.8:([3.2,4.5,2.4,3.8,5.2,4.8,3.4,4.2][c.sp]||3.5));
+      if(fd<avoidR){var push=(avoidR-fd)/avoidR;fireX+=fdx/fd*push*2.4;fireZ+=fdz/fd*push*2.4;}
+    }
+    targetX+=fireX;targetZ+=fireZ;
+    var accel=c.flee>0?Math.min(1,dt*5.5):Math.min(1,dt*2.6);
+    c.vx+=(targetX-c.vx)*accel;c.vz+=(targetZ-c.vz)*accel;
+    c.aiT=Math.max(0,(c.aiT||0)-dt);
     nxw=c.x+c.vx*dt;nzw=c.z+c.vz*dt;
     if(heightAt(nxw,nzw)>WATER+0.2&&Math.abs(nxw)<HALF-8&&Math.abs(nzw)<HALF-8){c.x=nxw;c.z=nzw}else{c.vx=-c.vx;c.vz=-c.vz;c.t=0.7}
     var beforeX=c.x,beforeZ=c.z;
