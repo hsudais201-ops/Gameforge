@@ -55,3 +55,10 @@ test('storage chests are craftable, interactable, and included in world saves', 
   }
   assert.match(gameScript, /chest:\{wood:12,stone:4\}/);
 });
+
+test('inventory sorting and chest quick-transfer controls are wired', () => {
+  assert.match(html, /id="bagSort"/);
+  assert.ok(gameScript.includes('function sortStorageInventory'));
+  assert.ok(gameScript.includes('chestStore'));
+  assert.ok(gameScript.includes('chestTake'));
+});
