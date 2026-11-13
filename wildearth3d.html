@@ -239,7 +239,7 @@
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
 <div id="bag" hidden>
-  <div class="bagTop"><strong>Inventory</strong><span class="invSub">WILDEARTH survival pack</span><button id="bagClose">✕</button></div>
+  <div class="bagTop"><strong>Inventory</strong><span class="invSub">WILDEARTH survival pack</span><button id="bagSort" type="button">Sort Storage</button><button id="bagClose">✕</button></div>
   <div id="bagInfo"></div>
   <div class="invMain">
     <section class="invSide">
@@ -1282,6 +1282,20 @@ function slotClick(i){
   moveFrom=-1;renderInv(true);
 }
 $('bagTeam').addEventListener('click',function(e){var b=e.target.closest('[data-team-mode]');if(b)setCompanionMode(b.getAttribute('data-team-mode'));});
+function sortStorageInventory(){
+  var items=[];
+  for(var i=HOT;i<NSLOTS;i++)if(slots[i])items.push({id:slots[i].id,n:slots[i].n});
+  items.sort(function(a,b){return a.id.localeCompare(b.id)});
+  var packed=[];
+  items.forEach(function(item){
+    var remaining=item.n;
+    for(var j=0;j<packed.length&&remaining>0;j++)if(packed[j].id===item.id&&packed[j].n<ITEMS[item.id].max){var add=Math.min(remaining,ITEMS[item.id].max-packed[j].n);packed[j].n+=add;remaining-=add;}
+    while(remaining>0){var take=Math.min(remaining,ITEMS[item.id].max);packed.push({id:item.id,n:take});remaining-=take;}
+  });
+  for(var k=HOT;k<NSLOTS;k++)slots[k]=packed[k-HOT]||null;
+  moveFrom=-1;renderInv(true);save();say('Storage inventory sorted.',2);
+}
+$('bagSort').addEventListener('click',sortStorageInventory);
 function splitSelectedStack(){if(moveFrom<0||!slots[moveFrom]||slots[moveFrom].n<2)return;var src=slots[moveFrom],target=-1;for(var i=0;i<NSLOTS;i++)if(!slots[i]){target=i;break;}if(target<0){say('No empty slot available for the split stack.');return;}var half=Math.floor(src.n/2);src.n-=half;slots[target]={id:src.id,n:half};moveFrom=-1;renderInv(true);say('Stack split into '+src.n+' and '+half+'.');}
 function equipSelectedArmor(){if(moveFrom<0||!slots[moveFrom])return;var id=slots[moveFrom].id;if(id!=='ironarmor'&&id!=='copperarmor')return;var prev=equippedArmor;slots[moveFrom]=null;moveFrom=-1;if(prev===id){equippedArmor=null;addItem(id,1);renderInv(true);say('Armor unequipped.');return;}equippedArmor=id;if(prev&&!addItem(prev,1)){equippedArmor=prev;addItem(id,1);say('No room to swap armor.');return;}renderInv(true);say((id==='ironarmor'?'Iron':'Copper')+' armor equipped.');}
 function renderBench(){var h='',counts={},i;for(i=0;i<4;i++){var c=benchCells[i];h+='<button type="button" data-benchcell="'+i+'">'+(c?(ICON[c.id]||ICON.stone)+'<small>'+c.n+'</small>':'+')+'</button>';if(c)counts[c.id]=(counts[c.id]||0)+c.n;}$('benchGrid').innerHTML=h;benchResult=null;for(var key in RECIPES){var req=RECIPES[key],match=true,keys=Object.keys(req);if(keys.length>4)continue;for(i=0;i<keys.length;i++)if((counts[keys[i]]||0)!==req[keys[i]])match=false;for(var have in counts)if(!req[have])match=false;if(match){benchResult=key;break;}}var out=$('benchOutput');out.disabled=!benchResult;out.innerHTML=benchResult?(ICON[benchResult]||'✦'):'◇';$('benchHint').textContent=benchResult?'Ready: '+NAMES[benchResult]+' ×'+(OUT[benchResult]||1)+'. Tap the result to craft.':'Select an item, then tap a grid cell to add one unit. Tap a filled cell to return it.';}
