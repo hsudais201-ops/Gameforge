@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#101a14">
+<title>WILDEARTH — 3D Survival</title><link rel="stylesheet" href="./wildearth3d.css">
+</head>
+<body>
+<div id="loading"><div class="load-mark">W</div><b>WILDEARTH</b><span>BUILDING YOUR WORLD…</span><div class="load-track"><i></i></div></div>
+<div id="error" class="hidden"><h2>3D world could not start</h2><p>This browser may not support WebGL or could not load the 3D engine. Try Chrome with hardware acceleration enabled.</p><a href="./wildearth.html">Open 2D fallback</a></div>
+<main id="game">
+<canvas id="world3d"></canvas>
+<header class="top-hud"><a href="./index.html">← GAMEFORGE</a><div class="logo">WILDEARTH <small>3D SURVIVAL</small></div><button id="pause">Ⅱ</button></header>
+<section class="mission"><span id="day">DAY 1 · MORNING</span><b id="mission">Explore the forest and gather resources</b></section>
+<aside class="stats">
+<div class="stat-title">SURVIVOR <span>● ONLINE</span></div>
+<div class="stat"><label>HEALTH</label><b id="hptext">100</b><i><em id="hpbar" class="hp"></em></i></div>
+<div class="stat"><label>HUNGER</label><b id="foodtext">100</b><i><em id="foodbar" class="food"></em></i></div>
+<div class="stat"><label>THIRST</label><b id="watertext">100</b><i><em id="waterbar" class="water"></em></i></div>
+<div class="bag"><strong>BACKPACK</strong><span>🪵 <b id="wood">0</b></span><span>🪨 <b id="stone">0</b></span><span>🫐 <b id="berries">0</b></span></div>
+</aside>
+<div id="toast"></div>
+<div class="bottom-hint"><span>WASD / ARROWS · MOVE</span><span>E · GATHER</span><span>Q · EAT</span><span>F · BUILD CAMPFIRE</span></div>
+<div class="touch-ui"><div class="stick"><button data-move="up">▲</button><div><button data-move="left">◀</button><button data-move="down">▼</button><button data-move="right">▶</button></div></div><div class="touch-actions"><button data-act="gather">GATHER</button><button data-act="eat">EAT</button><button data-act="build">BUILD</button></div></div>
+<div id="pause-screen" class="overlay hidden"><div><small>WILDEARTH</small><h1>Journey paused</h1><button id="resume">RESUME</button></div></div>
+</main>
+<script type="module" src="./wildearth3d.js"></script>
+</body></html>
