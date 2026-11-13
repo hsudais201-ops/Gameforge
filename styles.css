@@ -14,3 +14,5 @@
 
 /* Resizable scene object controls */
 .inspector-content input[type="range"]{accent-color:var(--green);cursor:ew-resize}.scene-object[data-kind="Platform"]{min-width:0;min-height:0;padding:0}.scene-object{overflow:visible}
+
+.wildearth-link{display:inline-block;text-decoration:none;margin-left:8px}@media(max-width:650px){.wildearth-link{margin:10px 0 0 0}}
