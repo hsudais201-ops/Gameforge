@@ -1218,7 +1218,7 @@ function wildEscapeDirection(c,awayX,awayZ){
 }
 function spawnWild(fsp,fx,fz){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,herdT:rand(0,0.3),herdX:0,herdZ:0,herdAlarm:0};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0};
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
 }
 function addStructure(kind,x,z){
@@ -1797,13 +1797,13 @@ function update(dt){
     c.herdT=Math.max(0,(c.herdT||0)-dt);
     if(c.sp===0||c.sp===2||c.sp===6){
       if(c.herdT<=0){
-        var herdX=0,herdZ=0,herdN=0,alarm=false;
+        var herdX=0,herdZ=0,herdN=0,herdSepX=0,herdSepZ=0,alarm=false;
         for(var hn=0;hn<wild.length;hn++){
           var mate=wild[hn];if(mate===c||mate.sp!==c.sp||mate.held)continue;
           var hx=mate.x-c.x,hz=mate.z-c.z,hd=Math.hypot(hx,hz);
-          if(hd<11&&hd>0.01){herdX+=hx;herdZ+=hz;herdN++;if(hd<8&&mate.flee>0)alarm=true;}
+          if(hd<11&&hd>0.01){herdX+=hx;herdZ+=hz;herdN++;if(hd<2.4){herdSepX-=hx/hd*(2.4-hd);herdSepZ-=hz/hd*(2.4-hd)}if(hd<8&&mate.flee>0)alarm=true;}
         }
-        c.herdX=herdN?herdX/herdN:0;c.herdZ=herdN?herdZ/herdN:0;
+        c.herdX=herdN?herdX/herdN:0;c.herdZ=herdN?herdZ/herdN:0;c.herdSepX=herdSepX;c.herdSepZ=herdSepZ;
         c.herdAlarm=alarm?0.8:Math.max(0,(c.herdAlarm||0)-0.35);
         if(alarm&&pdist<alertRadius*1.7&&c.flee<=0){
           c.state='flee';c.flee=Math.max(c.flee,1.8+Math.random()*0.8);
@@ -1840,8 +1840,8 @@ function update(dt){
       if(c.sp===0||c.sp===2||c.sp===6){
         var cohLen=Math.hypot(c.herdX||0,c.herdZ||0)||1;
         if(cohLen>0.01){
-          targetX+=(c.herdX/cohLen)*0.65;
-          targetZ+=(c.herdZ/cohLen)*0.65;
+          targetX+=(c.herdX/cohLen)*0.65+(c.herdSepX||0)*1.2;
+          targetZ+=(c.herdZ/cohLen)*0.65+(c.herdSepZ||0)*1.2;
         }
       }
     }
