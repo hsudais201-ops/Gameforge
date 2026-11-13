@@ -20,7 +20,7 @@ test('startup and menu entry points remain present', () => {
 });
 
 test('seeded random generator reproduces the same sequence', () => {
-  const declaration = gameScript.match(/function rng\(a\)\{[\s\S]*?\}\nvar R=/)?.[0]?.replace(/\nvar R=$/, '');
+  const declaration = gameScript.match(/function rng\\(a\\)\\{[\\s\\S]*?\\}\\}\\nvar R=/)?.[0]?.replace(/\nvar R=$/, '');
   assert.ok(declaration, 'seeded RNG declaration must exist');
   const rng = new Function(declaration + '; return rng;')();
   const first = rng(12345), second = rng(12345), different = rng(54321);
