@@ -1463,7 +1463,7 @@ function load(){
     (d.walls||[]).forEach(function(w){addStructure(w.t==='stone'?'stonewall':(w.t==='floor'?'floor':'wall'),w.x,w.z)});
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
-    (d.chests||[]).forEach(function(c){addStructure('chest',c.x,c.z);var chest=chests[chests.length-1];if(Array.isArray(c.slots))chest.slots=c.slots.slice(0,18).map(function(it){return it&&ITEMS[it.id]&&typeof it.n==='number'&&it.n>0?{id:it.id,n:Math.min(ITEMS[it.id].max,Math.floor(it.n))}:null});});
+    (d.chests||[]).forEach(function(c){addStructure('chest',c.x,c.z);var chest=chests[chests.length-1];if(Array.isArray(c.slots))chest.slots=c.slots.slice(0,18).map(function(it){return it&&ITEMS[it.id]&&typeof it.n==='number'&&Math.floor(it.n)>0?{id:it.id,n:Math.min(ITEMS[it.id].max,Math.floor(it.n))}:null});});
     clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'].indexOf(a)>=0}):[];questCompletedIds=Array.isArray(d.questCompletedIds)?d.questCompletedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];questAbandonedIds=Array.isArray(d.questAbandonedIds)?d.questAbandonedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];discoveredLandmarks=Array.isArray(d.discoveredLandmarks)?d.discoveredLandmarks.filter(function(a){return ['base_camp','whispering_grove','stonefall_ridge','moonwater_pool','old_watch'].indexOf(a)>=0}):[];exploredCells=Array.isArray(d.exploredCells)?d.exploredCells.filter(function(a){return typeof a==='number'&&a>=0&&a<900}):[];
     if(recovered)setTimeout(function(){say('Recovered your world from its backup save.',5)},500);
     return true;
@@ -1807,7 +1807,7 @@ function renderChestPanel(){
   var inv=slots[hotSel],stored=activeChest.slots[selectedChestSlot];
   var storeRoom=inv?(!stored||stored.id===inv.id?ITEMS[inv.id].max-(stored?stored.n:0):0):0;
   $('chestStore').disabled=!inv||storeRoom<=0;
-  $('chestTake').disabled=!stored||!canAdd(stored.id,stored.n);
+  $('chestTake').disabled=!stored||!canAdd(stored.id,1);
 }
 function openChest(chest){activeChest=chest;selectedChestSlot=0;for(var i=0;i<chest.slots.length;i++)if(chest.slots[i]){selectedChestSlot=i;break;}$('chestStatus').textContent='';$('chestPanel').hidden=false;renderChestPanel();}
 function closeChest(){activeChest=null;$('chestPanel').hidden=true;}
