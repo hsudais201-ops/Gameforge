@@ -1761,6 +1761,15 @@ function animPlayer(dt){
   player.scarfTail.rotation.x=-0.35+Math.sin(clock*5+phase)*0.08+stride*0.18;
   player.scarfTail.rotation.z=Math.sin(clock*4+phase)*0.06;
   player.axe.rotation.z=Math.sin(phase)*0.045*stride;
+  // Secondary motion: breathing, torso counter-rotation, head balance and gear inertia.
+  var breath=Math.sin(clock*2.1);
+  player.torso.scale.y=1+breath*0.012;
+  player.torso.rotation.z=moving?Math.sin(phase)*0.035*stride:Math.sin(clock*0.9)*0.009;
+  player.hips.rotation.x=moving?Math.sin(phase*2)*0.018*stride:Math.sin(clock*0.7)*0.008;
+  player.head.rotation.z=Math.sin(clock*0.65)*0.018+(moving?-Math.sin(phase)*0.012*stride:0);
+  player.armL.rotation.y=Math.sin(phase+0.5)*0.035*stride;
+  player.armR.rotation.y=-Math.sin(phase+0.5)*0.035*stride;
+  player.pack.rotation.y=Math.sin(phase-0.4)*0.025*stride;
   playerLight.position.set(P.x,P.y+2.6,P.z);
 }
 var fireOrder=[];
