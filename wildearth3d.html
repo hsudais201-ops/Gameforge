@@ -2076,7 +2076,8 @@ function update(dt){
     var tries=[[nx,nz],[nx,P.z],[P.x,nz]];
     for(var ti=0;ti<3;ti++){
       var h2=heightAt(tries[ti][0],tries[ti][1]);
-      if((h2-P.y)/step>1.6)continue;
+      var currentGround=heightAt(P.x,P.z);
+      if((h2-currentGround)/step>1.6)continue;
       P.x=tries[ti][0];P.z=tries[ti][1];break;
     }
     P.face=Math.atan2(wx,wz);P.speed=ml*(spd/6);
