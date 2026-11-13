@@ -236,7 +236,10 @@
 <div id="hint"></div>
 <div id="chestPanel" hidden role="dialog" aria-modal="true" aria-labelledby="chestTitle"><div class="chestCard"><div class="chestTop"><strong id="chestTitle">STORAGE CHEST</strong><button id="chestClose" type="button">Close ✕</button></div><p class="questIntro">Select a chest slot, then store the selected hotbar stack or take the selected stack.</p><div id="chestGrid"></div><div class="chestControls"><button id="chestStore" type="button" disabled>Store hotbar stack</button><button id="chestTake" type="button" disabled>Take selected stack</button></div><div id="chestStatus" role="status" aria-live="polite"></div></div></div>
 <button id="settingsBtn" type="button">⚙ Settings</button>
-<div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
+<div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label>
+<label class="settingRow">Joystick dead zone <input id="joyDeadzone" type="range" min="0" max="40" step="5" value="10"></label>
+<label class="settingRow">Camera sensitivity <input id="cameraSensitivity" type="range" min="50" max="200" step="10" value="100"></label>
+<label class="settingRow">Invert camera vertical <input id="invertCamera" type="checkbox"></label><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
 <div id="bag" hidden>
   <div class="bagTop"><strong>Inventory</strong><span class="invSub">WILDEARTH survival pack</span><button id="bagSort" type="button">Sort Storage</button><button id="bagClose">✕</button></div>
@@ -273,6 +276,7 @@
   <button class="act" id="bPlace">Use</button>
   <button class="act" id="bBag">Bag</button>
   <button class="act" id="bSprint" aria-pressed="false">Sprint</button>
+  <button class="act" id="bDodge" type="button">Dodge</button>
 </div>
 <div id="err">The 3D engine could not load. Check your internet connection and reload the page.</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -415,6 +419,8 @@ $('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden
 $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this.value);say('Graphics set to '+renderProfiles[renderLevel].name,2)});
 $('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
 var ACCESS_KEY='mfwilds3d_accessibility_v1',accessPrefs={size:'normal',contrast:false};
+var CONTROL_KEY='mfwilds3d_controls_v1',controlPrefs={deadzone:0.10,sensitivity:1,invertY:false};
+try{var cp=JSON.parse(localStorage.getItem(CONTROL_KEY)||'{}');if(isFinite(cp.deadzone))controlPrefs.deadzone=clamp(cp.deadzone,0,0.4);if(isFinite(cp.sensitivity))controlPrefs.sensitivity=clamp(cp.sensitivity,0.5,2);controlPrefs.invertY=!!cp.invertY}catch(e){}
 try{var ap=JSON.parse(localStorage.getItem(ACCESS_KEY)||'{}');if(ap.size==='large')accessPrefs.size='large';accessPrefs.contrast=!!ap.contrast}catch(e){}
 function applyAccessibility(){
   document.body.classList.toggle('largeUI',accessPrefs.size==='large');
@@ -424,6 +430,16 @@ function applyAccessibility(){
 function saveAccessibility(){try{localStorage.setItem(ACCESS_KEY,JSON.stringify(accessPrefs))}catch(e){}applyAccessibility()}
 $('uiSizeSelect').addEventListener('change',function(){accessPrefs.size=this.value==='large'?'large':'normal';saveAccessibility()});
 $('contrastToggle').addEventListener('change',function(){accessPrefs.contrast=!!this.checked;saveAccessibility()});
+function saveControlPrefs(){try{localStorage.setItem(CONTROL_KEY,JSON.stringify(controlPrefs))}catch(e){}}
+function applyControlPrefs(){
+  $('joyDeadzone').value=Math.round(controlPrefs.deadzone*100);
+  $('cameraSensitivity').value=Math.round(controlPrefs.sensitivity*100);
+  $('invertCamera').checked=controlPrefs.invertY;
+}
+$('joyDeadzone').addEventListener('input',function(){controlPrefs.deadzone=clamp(+this.value/100,0,0.4);saveControlPrefs()});
+$('cameraSensitivity').addEventListener('input',function(){controlPrefs.sensitivity=clamp(+this.value/100,0.5,2);saveControlPrefs()});
+$('invertCamera').addEventListener('change',function(){controlPrefs.invertY=!!this.checked;saveControlPrefs()});
+applyControlPrefs();
 applyAccessibility();
 
 var runtimeDiagnostics=[];
@@ -1142,7 +1158,7 @@ function makeBed(){
 }
 
 /* ---------- state ---------- */
-var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0};
+var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0};
 var NSLOTS=36,HOT=9,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
 var activeChest=null,selectedChestSlot=0;
 var ITEMS={
@@ -1519,6 +1535,19 @@ $('createWorld').addEventListener('click',function(){var name=$('newWorldName').
 /* ---------- input ---------- */
 var keys={},held={gather:false,sprint:false},joy={x:0,y:0};
 var cam={yaw:0,pitch:0.45,dist:9};
+function startDodge(){
+  if(dead||P.dodge>0.02||P.stamina<22||menuOpen||bagOpen||!$('settingsPanel').hidden)return;
+  var mx=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
+  var my=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0)+joy.y;
+  var len=Math.hypot(mx,my);
+  if(len<0.08){mx=0;my=-1;len=1;}
+  mx/=len;my/=len;
+  var sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);
+  P.dodgeX=cy*mx+(-sy)*(-my);P.dodgeZ=(-sy)*mx+(-cy)*(-my);
+  var dl=Math.hypot(P.dodgeX,P.dodgeZ)||1;P.dodgeX/=dl;P.dodgeZ/=dl;
+  P.stamina-=22;P.dodge=0.34;P.invulnerable=0.26;
+  P.face=Math.atan2(P.dodgeX,P.dodgeZ);say('Dodge!',1);
+}
 window.addEventListener('keydown',function(e){
   if(['Space','Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code)>=0)e.preventDefault();
   if(keys[e.code])return;
@@ -1526,6 +1555,7 @@ window.addEventListener('keydown',function(e){
   if(e.code==='Space')held.gather=true;
   else if(e.code==='KeyF')doCatch();
   else if(e.code==='KeyE')doUse();
+  else if(e.code==='KeyV')startDodge();
   else if(e.code==='KeyQ'){hotSel=(hotSel+1)%HOT;renderInv(true)}
   else if(e.code==='KeyI'||e.code==='KeyC'||e.code==='Tab')toggleBag();
   else if(e.code==='Escape'){if(!$('chestPanel').hidden)closeChest();else if(bagOpen)toggleBag();else togglePause();}
@@ -1538,6 +1568,8 @@ function joyMove(e){
   var r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
   var dx=(e.clientX-cx)/(r.width/2),dy=(e.clientY-cy)/(r.height/2),l=Math.hypot(dx,dy);
   if(l>1){dx/=l;dy/=l}
+  var deadzone=controlPrefs.deadzone;
+  if(l<deadzone){dx=0;dy=0;}else{var scaled=(l-deadzone)/(1-deadzone);dx=dx/l*scaled;dy=dy/l*scaled;}
   joy.x=dx;joy.y=dy;
   stickEl.style.transform='translate('+(dx*34)+'px,'+(dy*34)+'px)';
 }
@@ -1550,8 +1582,8 @@ var lookId=null,lastX=0,lastY=0;
 cv.addEventListener('pointerdown',function(e){lookId=e.pointerId;lastX=e.clientX;lastY=e.clientY;cv.setPointerCapture(e.pointerId)});
 cv.addEventListener('pointermove',function(e){
   if(e.pointerId!==lookId)return;
-  cam.yaw-=(e.clientX-lastX)*0.006;
-  cam.pitch=clamp(cam.pitch+(e.clientY-lastY)*0.005,0.08,1.2);
+  cam.yaw-=(e.clientX-lastX)*0.006*controlPrefs.sensitivity;
+  cam.pitch=clamp(cam.pitch+(e.clientY-lastY)*0.005*controlPrefs.sensitivity*(controlPrefs.invertY?-1:1),0.08,1.2);
   lastX=e.clientX;lastY=e.clientY;
 });
 function lookEnd(e){if(e.pointerId===lookId)lookId=null}
@@ -1568,6 +1600,7 @@ bindBtn('bCatch',function(){doCatch()});
 bindBtn('bPlace',function(){doUse()});
 bindBtn('bBag',function(){toggleBag()});
 bindBtn('bSprint',function(){held.sprint=true;$('bSprint').setAttribute('aria-pressed','true')},function(){held.sprint=false;$('bSprint').setAttribute('aria-pressed','false')});
+bindBtn('bDodge',startDodge);
 $('hotbar').addEventListener('click',function(e){var b=e.target.closest('[data-slot]');if(b)slotClick(+b.getAttribute('data-slot'))});
 $('craftAmount').addEventListener('input',updateRecipePanel);
 $('bag').addEventListener('dragstart',function(e){var el=e.target.closest('[data-slot]');if(!el||!slots[+el.getAttribute('data-slot')]){e.preventDefault();return;}e.dataTransfer.setData('text/plain',el.getAttribute('data-slot'));});
@@ -1965,12 +1998,14 @@ function update(dt){
   var sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);
   var fdx=-sy,fdz=-cy,rdx=cy,rdz=-sy;
   var wx=rdx*mx+fdx*(-my),wz=rdz*mx+fdz*(-my);
+  P.dodge=Math.max(0,P.dodge-dt);P.invulnerable=Math.max(0,P.invulnerable-dt);
+  if(P.dodge>0){wx=P.dodgeX;wz=P.dodgeZ;ml=1;}
   var wantsSprint=!!(keys.ShiftLeft||keys.ShiftRight||held.sprint);
   P.sprinting=wantsSprint&&ml>0.08&&P.stamina>0.5;
   if(P.sprinting){P.stamina=Math.max(0,P.stamina-24*dt);if(P.stamina===0&&!sprintEmptyNotified){say('You are exhausted. Rest to recover stamina.',3);sprintEmptyNotified=true;}}
   else{P.stamina=Math.min(100,P.stamina+17*dt);if(P.stamina>25)sprintEmptyNotified=false;}
   $('bSprint').style.opacity=P.sprinting?'1':(P.stamina<5?'0.55':'0.85');
-  var spd=6*(P.sprinting?1.6:1);
+  var spd=6*(P.dodge>0?2.35:(P.sprinting?1.6:1));
   P.speed=0;
   if(ml>0.08){
     var nx=P.x+wx*spd*dt,nz=P.z+wz*spd*dt,step=Math.hypot(wx,wz)*spd*dt||0.001;
@@ -2722,7 +2757,7 @@ function updateFloats(dt){
 }
 
 function playerDamage(amount,label){
-  if(dead||!isFinite(amount)||amount<=0)return;
+  if(dead||P.invulnerable>0||!isFinite(amount)||amount<=0)return;
   P.hp=clamp(P.hp-amount,0,100);
   var flash=$('damageFlash');
   if(flash){flash.classList.remove('hit');void flash.offsetWidth;flash.classList.add('hit');}
