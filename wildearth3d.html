@@ -203,7 +203,16 @@ window.addEventListener('error',function(e){
 window.addEventListener('unhandledrejection',function(e){
   var reason=e.reason;showGameError(reason&&reason.stack?reason.stack:(reason&&reason.message?reason.message:reason));
 });
-var $=function(id){return document.getElementById(id)};
+var $=function(id){
+  var el=document.getElementById(id);
+  if(el)return el;
+  // Keep optional inventory UI nodes from crashing the entire game.
+  // Attach a hidden fallback so later render/update calls remain safe.
+  el=document.createElement('div');el.id=id;el.hidden=true;el.setAttribute('aria-hidden','true');
+  (document.getElementById('bag')||document.body).appendChild(el);
+  console.warn('WILDEARTH: missing UI element #'+id+'; created a safe fallback.');
+  return el;
+};
 if(typeof THREE==='undefined'){$('err').style.display='flex';return}
 
 var isMobile=window.matchMedia('(pointer:coarse)').matches;
