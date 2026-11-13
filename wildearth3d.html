@@ -1619,6 +1619,7 @@ function readGamepad(dt){
   gamepadMove.connected=true;
   function axis(i){var v=gp.axes&&isFinite(gp.axes[i])?gp.axes[i]:0;return Math.abs(v)<0.16?0:Math.sign(v)*(Math.abs(v)-0.16)/0.84;}
   function pressed(i){return !!(gp.buttons&&gp.buttons[i]&&(gp.buttons[i].pressed||gp.buttons[i].value>0.65));}
+  gamepadMove.x=axis(0);gamepadMove.y=axis(1);
   var current=[];for(var bi=0;bi<gp.buttons.length;bi++)current[bi]=pressed(bi);
   if(current[0]&&!gamepadButtons[0])doGather();
   if(current[1]&&!gamepadButtons[1])startDodge();
@@ -1629,7 +1630,6 @@ function readGamepad(dt){
   if(current[12]&&!gamepadButtons[12]){hotSel=(hotSel+HOT-1)%HOT;renderInv(true);}
   if(current[13]&&!gamepadButtons[13]){hotSel=(hotSel+1)%HOT;renderInv(true);}
   gamepadButtons=current;
-  gamepadMove.x=axis(0);gamepadMove.y=axis(1);
   cam.yaw-=axis(2)*dt*2.4;cam.pitch=clamp(cam.pitch+axis(3)*dt*1.7,-0.08,1.12);
 }
 window.addEventListener('gamepadconnected',function(){say('Controller connected. Left stick moves; right stick looks. A gathers, B dodges, X uses, Y catches.',5);});
