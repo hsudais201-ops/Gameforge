@@ -62,3 +62,10 @@ test('inventory sorting and chest quick-transfer controls are wired', () => {
   assert.ok(gameScript.includes('chestStore'));
   assert.ok(gameScript.includes('chestTake'));
 });
+
+test('crafting recipe search and category filters are wired', () => {
+  assert.match(html, /id="craftSearch"/);
+  assert.match(html, /id="craftCategoryFilter"/);
+  assert.ok(gameScript.includes('function applyRecipeFilters'));
+  assert.ok(gameScript.includes('data-craft-category'));
+});
