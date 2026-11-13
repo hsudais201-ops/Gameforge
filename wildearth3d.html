@@ -2206,13 +2206,15 @@ function animCreature(c,dt){
   c.walk+=dt*(4+c.speed*8);
   c.attackAnim=Math.max(0,(c.attackAnim||0)-dt);
   var amp=c.speed*0.7,m=c.m,attack=c.attackAnim>0?Math.sin((1-c.attackAnim/0.38)*Math.PI):0;
+  var rainAffinity=[0.8,0.15,0.25,0.9,0.1,0.85,0.2,0.75][c.sp]||0.2;
+  var rainPose=clamp(rainLevel*rainAffinity,0,1);
   m.g.position.set(c.x,c.y,c.z);m.g.rotation.y=c.yaw;
   for(var i=0;i<4;i++)m.legs[i].rotation.x=Math.sin(c.walk*1.6+(i===0||i===3?0:Math.PI))*amp+(attack>0.4&&i%2===0?-attack*0.32:0);
-  m.g.position.y+=Math.abs(Math.sin(c.walk*1.6))*0.06*c.speed+attack*0.08;
-  m.g.rotation.x=(c.defending?0.035:0)+attack*0.08;
-  m.tail.rotation.y=Math.sin(clock*3+c.walk)*0.35+(c.state==='alert'?0.22:0)+(c.state==='rest'?-0.12:0)+attack*0.45;
+  m.g.position.y+=Math.abs(Math.sin(c.walk*1.6))*0.06*c.speed+attack*0.08-rainPose*0.035;
+  m.g.rotation.x=(c.defending?0.035:0)+attack*0.08+rainPose*0.025;
+  m.tail.rotation.y=Math.sin(clock*3+c.walk)*0.35*(1-rainPose*0.22)+(c.state==='alert'?0.22:0)+(c.state==='rest'?-0.12:0)+attack*0.45;
   // A lowered head sells grazing; resting creatures make slower, softer idle motions.
-  var headLook=c.state==='graze'?0.48:(c.state==='rest'?0.12:0);
+  var headLook=(c.state==='graze'?0.48:(c.state==='rest'?0.12:0))+rainPose*0.055;
   var lookSpeed=c.state==='rest'?0.65:1.7;
   m.head.rotation.x=Math.sin(clock*lookSpeed+c.x)*0.06+headLook+(c.state==='alert'?-0.18:0)+attack*0.22;
   // Curious individuals make small, irregular head turns while calm; shy animals keep a tighter gaze.
