@@ -50,7 +50,7 @@ test('save compatibility keeps legacy inventory migration paths', () => {
 });
 
 test('storage chests are craftable, interactable, and included in world saves', () => {
-  for (const marker of ['chestPanel', 'chestGrid', 'openChest', 'chestStore', 'chestTake', 'chests.map', 'd.chests', 'chestSlots']) {
+  for (const marker of ['chestPanel', 'chestGrid', 'openChest', 'chestStore', 'chestTake', 'chests.map', 'd.chests', 'Array.from({length:18}']) {
     assert.ok(gameScript.includes(marker) || html.includes(marker), 'missing chest system marker: ' + marker);
   }
   assert.match(gameScript, /chest:\\{wood:12,stone:4\\}/);
