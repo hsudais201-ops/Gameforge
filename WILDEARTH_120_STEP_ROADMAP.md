@@ -87,7 +87,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 67. Add storms with wind and lightning.
 - [ ] 68. Add seasonal world-state changes.
 - [ ] 69. Add rare world events and discoverable event rewards.
-- [ ] 70. Add survival difficulty presets.
+- [x] 70. Add survival difficulty presets.
 
 ## H. Inventory, crafting, and equipment
 - [x] 71. Maintain a 36-slot inventory with a 9-slot hotbar.
@@ -150,6 +150,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
 ## Current verified implementation batch
+- Survival presets: added persistent Explorer/Easy, Survivor/Normal, and Wilderness/Hard difficulty choices that scale incoming damage and hunger drain.
 - Player condition HUD: added accessible live status labels for critical health, starvation, hunger, exhaustion, and active dodge windows.
 - Controls and combat: persisted joystick dead-zone, camera sensitivity and vertical inversion settings; added keyboard/touch dodge with stamina cost, movement burst, and brief damage immunity.
 - Crafting UX: added recipe text search across names and ingredients, plus category filtering with empty-category headings hidden.
