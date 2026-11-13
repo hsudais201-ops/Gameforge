@@ -28,6 +28,23 @@
   .questTrack{height:6px;background:#ffffff20;border-radius:8px;overflow:hidden}
   .questTrack i{display:block;height:100%;background:#b6cf82;border-radius:8px}
   .questMeta{display:flex;justify-content:space-between;font-size:10px;color:#c9d7c4;margin-top:5px}
+  .questActions{display:flex;gap:6px;margin-top:8px}
+  .questActions button{flex:1;padding:6px;border:1px solid #a6c09b55;border-radius:7px;background:#203629;color:#edf5e8;font-size:10px;font-weight:700}
+  .questActions button:disabled{opacity:.45}
+  #mapOpen{pointer-events:auto;border:1px solid #b7c99a88;border-radius:999px;padding:5px 10px;background:#294332;color:#f2f5e9;font:700 11px system-ui;cursor:pointer}
+  #mapPanel{position:fixed;inset:0;z-index:54;display:flex;align-items:center;justify-content:center;padding:12px;background:#030a07cc;backdrop-filter:blur(7px)}
+  #mapPanel[hidden]{display:none}
+  .mapCard{width:min(560px,96vw);max-height:90vh;overflow:auto;padding:16px;border:1px solid #a6c09b66;border-radius:16px;background:linear-gradient(145deg,#1a3025,#0c1813)}
+  .mapGrid{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:2px;width:min(100%,390px);aspect-ratio:1;margin:12px auto;background:#09130e;padding:5px;border-radius:8px}
+  .mapCell{min-width:0;border-radius:2px;background:#17231c}
+  .mapCell.seen{background:#45634a}
+  .mapCell.landmark{background:#c49a54}
+  .mapCell.player{background:#f3f0c5;box-shadow:0 0 5px #fff}
+  .mapLegend{display:flex;flex-wrap:wrap;gap:10px;font-size:10px;color:#c9d7c4}
+  .mapLegend span:before{content:'';display:inline-block;width:8px;height:8px;margin-right:4px;border-radius:2px;background:#45634a}
+  .mapLegend .keyLand:before{background:#c49a54}.mapLegend .keyPlayer:before{background:#f3f0c5}
+  #landmarkList{font-size:12px;line-height:1.6;color:#d8e5d4}
+  .mapClose{float:right;padding:7px 11px;border:1px solid #9caf8c66;border-radius:8px;background:#203629;color:#fff}
   .bar{display:inline-block;width:80px;height:7px;background:rgba(255,255,255,.18);border-radius:4px;overflow:hidden;vertical-align:middle;margin-left:6px}
   .bar i{display:block;height:100%}
   #hint{position:fixed;left:50%;top:34%;transform:translateX(-50%);width:max-content;max-width:80%;text-align:center;background:rgba(8,16,12,.74);padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.4;pointer-events:none;transition:opacity .4s}
@@ -197,8 +214,9 @@
     <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
     <span class="pill" id="time"></span>
   </div>
-  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button></div>
+  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div>
 </div>
+<div id="mapPanel" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle"><div class="mapCard"><button class="mapClose" id="mapClose" type="button">Close ✕</button><strong id="mapTitle">WORLD MAP</strong><p class="questIntro">Unexplored areas remain hidden. Explore the world to reveal the map and discover landmarks.</p><div class="mapLegend"><span>Explored</span><span class="keyLand">Landmark</span><span class="keyPlayer">You</span></div><div id="mapGrid" class="mapGrid" aria-label="Exploration map"></div><div id="landmarkList"></div></div></div>
 <div id="questPanel" hidden role="dialog" aria-modal="true" aria-labelledby="questTitle"><div class="questCard"><div class="questHead"><strong id="questTitle">QUEST JOURNAL</strong><button id="questClose" type="button">Close ✕</button></div><p class="questIntro">Track your journey. Objectives complete automatically as you explore, build, craft and survive. Progress is saved with this world.</p><div id="questList"></div><div id="questSummary" class="questIntro" aria-live="polite"></div></div></div>
 <div id="pausePanel" hidden><div class="pauseCard"><div class="pauseBrand">PAUSED</div><p>Your adventure is safely paused.</p><button id="pauseResume" class="pauseAction primary">▶ Resume Game</button><button id="pauseSave" class="pauseAction">Save World</button><button id="pauseSettings" class="pauseAction">⚙ Settings</button><button id="pauseMainMenu" class="pauseAction">Return to Main Menu</button><div id="pauseStatus" role="status" aria-live="polite">Autosave is active.</div></div></div>
 <div id="pauseBtn" aria-label="Pause game"><button id="pauseToggle" type="button">Ⅱ Pause</button></div>
@@ -1223,7 +1241,7 @@ function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]|
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
 var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0,craftedCount=0,achievementIds=[];
 var wild=[],team=[],walls=[],fires=[],beds=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[];
-var companionMode='follow',explorationDistance=0,questCompletedIds=[];
+var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34;
 var rainCount=isMobile?150:280,rainGeo=new THREE.BufferGeometry(),rainPositions=new Float32Array(rainCount*3);
@@ -1330,7 +1348,7 @@ function save(){
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
       beds:beds.map(function(b){return {x:b.x,z:b.z}}),
-      clock:clock,nights:nights,wraithsDefeated:wraithsDefeated,craftedCount:craftedCount,achievementIds:achievementIds,companionMode:companionMode,explorationDistance:explorationDistance,questCompletedIds:questCompletedIds
+      clock:clock,nights:nights,wraithsDefeated:wraithsDefeated,craftedCount:craftedCount,achievementIds:achievementIds,companionMode:companionMode,explorationDistance:explorationDistance,questCompletedIds:questCompletedIds,questAbandonedIds:questAbandonedIds,discoveredLandmarks:discoveredLandmarks,exploredCells:exploredCells
     });
     // Keep one verified previous snapshot so a damaged save can be recovered.
     try{
@@ -1380,7 +1398,7 @@ function load(){
     (d.walls||[]).forEach(function(w){addStructure(w.t==='stone'?'stonewall':(w.t==='floor'?'floor':'wall'),w.x,w.z)});
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
-    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'].indexOf(a)>=0}):[];questCompletedIds=Array.isArray(d.questCompletedIds)?d.questCompletedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector'].indexOf(a)>=0}):[];
+    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'].indexOf(a)>=0}):[];questCompletedIds=Array.isArray(d.questCompletedIds)?d.questCompletedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];questAbandonedIds=Array.isArray(d.questAbandonedIds)?d.questAbandonedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];discoveredLandmarks=Array.isArray(d.discoveredLandmarks)?d.discoveredLandmarks.filter(function(a){return ['base_camp','whispering_grove','stonefall_ridge','moonwater_pool','old_watch'].indexOf(a)>=0}):[];exploredCells=Array.isArray(d.exploredCells)?d.exploredCells.filter(function(a){return typeof a==='number'&&a>=0&&a<900}):[];
     if(recovered)setTimeout(function(){say('Recovered your world from its backup save.',5)},500);
     return true;
   }catch(e){return false}
@@ -2436,6 +2454,48 @@ function checkAchievements(){
   }
 }
 
+
+var LANDMARKS=[
+  {id:'base_camp',name:'First Light Camp',x:0,z:4,lore:'A quiet clearing where the first trail begins. The old stones suggest other travelers once rested here.'},
+  {id:'whispering_grove',name:'Whispering Grove',x:42,z:38,lore:'Tall trees lean toward one another here. Their leaves carry stories from storms long past.'},
+  {id:'stonefall_ridge',name:'Stonefall Ridge',x:-58,z:34,lore:'Broken rock exposes the bones of the land. Ore veins glimmer beneath the weathered surface.'},
+  {id:'moonwater_pool',name:'Moonwater Pool',x:28,z:-68,lore:'Still water reflects the night sky. Wildlife gathers here when the forest grows quiet.'},
+  {id:'old_watch',name:'The Old Watch',x:-72,z:-58,lore:'A forgotten lookout faces the distant wilds. Its silent stones hint at a danger once watched from afar.'}
+];
+function mapCellFor(x,z){var cx=clamp(Math.floor((x+150)/10),0,29),cz=clamp(Math.floor((z+150)/10),0,29);return cz*30+cx}
+function updateExplorationMap(){
+  var cell=mapCellFor(P.x,P.z),changed=false;
+  if(exploredCells.indexOf(cell)<0){exploredCells.push(cell);changed=true}
+  for(var i=0;i<LANDMARKS.length;i++){
+    var l=LANDMARKS[i];
+    if(discoveredLandmarks.indexOf(l.id)<0&&Math.hypot(P.x-l.x,P.z-l.z)<11){
+      discoveredLandmarks.push(l.id);changed=true;
+      say('LANDMARK DISCOVERED: '+l.name,5);
+      if(!$('mapPanel').hidden)renderWorldMap();
+    }
+  }
+  if(changed)save();
+}
+function renderWorldMap(){
+  var seen={},html='',playerCell=mapCellFor(P.x,P.z),marks={};
+  for(var i=0;i<exploredCells.length;i++)seen[exploredCells[i]]=true;
+  for(var j=0;j<LANDMARKS.length;j++)if(discoveredLandmarks.indexOf(LANDMARKS[j].id)>=0)marks[mapCellFor(LANDMARKS[j].x,LANDMARKS[j].z)]=LANDMARKS[j].name;
+  for(var c=0;c<900;c++){
+    var cls='mapCell'+(seen[c]?' seen':'')+(marks[c]?' landmark':'')+(c===playerCell?' player':'');
+    html+='<span class="'+cls+'" title="'+(c===playerCell?'Your position':(marks[c]|| (seen[c]?'Explored':'Unexplored'))) +'"></span>';
+  }
+  $('mapGrid').innerHTML=html;
+  var list='<strong>Discovered landmarks ('+discoveredLandmarks.length+'/'+LANDMARKS.length+')</strong><br>';
+  for(var k=0;k<LANDMARKS.length;k++){
+    var l=LANDMARKS[k],found=discoveredLandmarks.indexOf(l.id)>=0;
+    list+=found?('✦ <b>'+l.name+'</b> — '+l.lore+'<br>'):'? Unknown location<br>';
+  }
+  $('landmarkList').innerHTML=list;
+}
+$('mapOpen').addEventListener('click',function(){updateExplorationMap();renderWorldMap();$('mapPanel').hidden=false;});
+$('mapClose').addEventListener('click',function(){$('mapPanel').hidden=true;});
+$('mapPanel').addEventListener('click',function(e){if(e.target===$('mapPanel'))$('mapPanel').hidden=true;});
+
 function questData(){
   var structures=walls.length+fires.length+beds.length,unique={},i;
   for(i=0;i<team.length;i++)unique[team[i].sp]=true;
@@ -2448,32 +2508,41 @@ function questData(){
     {id:'long_walk',name:'The Long Trail',desc:'Travel 500 world units and discover more of the wilderness.',value:Math.min(Math.floor(explorationDistance),500),target:500},
     {id:'wraith_bane',name:'First Wraith',desc:'Defeat a Wraith and protect the wilds.',value:Math.min(wraithsDefeated,1),target:1},
     {id:'team_builder',name:'Pack Leader',desc:'Tame five creatures to grow your companion team.',value:Math.min(team.length,5),target:5},
-    {id:'wild_collector',name:'Wildlife Observer',desc:'Tame three different creature species.',value:Math.min(speciesCount,3),target:3}
+    {id:'wild_collector',name:'Wildlife Observer',desc:'Tame three different creature species.',value:Math.min(speciesCount,3),target:3},
+    {id:'discover_three',name:'Cartographer',desc:'Discover three named landmarks.',value:Math.min(discoveredLandmarks.length,3),target:3}
   ];
 }
 function renderQuestJournal(){
-  var data=questData(),done=0,html='';
+  var data=questData(),done=0,active=0,html='';
   for(var i=0;i<data.length;i++){
-    var q=data[i],complete=questCompletedIds.indexOf(q.id)>=0;
-    if(complete)done++;
-    var pct=Math.round(q.value/q.target*100);
-    html+='<div class="questItem'+(complete?' done':'')+'"><div class="questItemTop"><span>'+(complete?'✓ ':'')+q.name+'</span><span>'+(complete?'COMPLETE':pct+'%')+'</span></div><div class="questDesc">'+q.desc+'</div><div class="questTrack"><i style="width:'+pct+'%"></i></div><div class="questMeta"><span>Progress</span><span>'+q.value+' / '+q.target+'</span></div></div>';
+    var q=data[i],complete=questCompletedIds.indexOf(q.id)>=0,abandoned=questAbandonedIds.indexOf(q.id)>=0;
+    if(complete)done++;else if(!abandoned)active++;
+    var pct=Math.round(q.value/q.target*100),status=complete?'COMPLETE':(abandoned?'ABANDONED':'ACTIVE');
+    html+='<div class="questItem'+(complete?' done':'')+'"><div class="questItemTop"><span>'+(complete?'✓ ':'')+q.name+'</span><span>'+status+'</span></div><div class="questDesc">'+q.desc+'</div><div class="questTrack"><i style="width:'+pct+'%"></i></div><div class="questMeta"><span>Progress</span><span>'+q.value+' / '+q.target+'</span></div><div class="questActions">'+(complete?'<button disabled>Completed</button>':(abandoned?'<button data-quest-action="activate" data-quest-id="'+q.id+'">Reactivate</button>':'<button data-quest-action="abandon" data-quest-id="'+q.id+'">Abandon</button>'))+'</div></div>';
   }
   $('questList').innerHTML=html;
-  $('questSummary').textContent=done+' of '+data.length+' quests completed · '+(data.length-done)+' remaining';
+  $('questSummary').textContent=done+' completed · '+active+' active · '+(data.length-done-active)+' abandoned';
 }
 function updateQuestJournal(){
   var data=questData(),changed=false;
   for(var i=0;i<data.length;i++){
     var q=data[i];
     if(q.value>=q.target&&questCompletedIds.indexOf(q.id)<0){
-      questCompletedIds.push(q.id);changed=true;
+      questCompletedIds.push(q.id);questAbandonedIds=questAbandonedIds.filter(function(id){return id!==q.id});changed=true;
       say('QUEST COMPLETE: '+q.name,4.5);
     }
   }
   if(changed)save();
   if(!$('questPanel').hidden)renderQuestJournal();
 }
+$('questList').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-quest-action]');if(!b)return;
+  var id=b.getAttribute('data-quest-id'),action=b.getAttribute('data-quest-action');
+  if(questCompletedIds.indexOf(id)>=0)return;
+  if(action==='abandon'&&questAbandonedIds.indexOf(id)<0)questAbandonedIds.push(id);
+  if(action==='activate')questAbandonedIds=questAbandonedIds.filter(function(q){return q!==id});
+  save();renderQuestJournal();
+});
 $('questOpen').addEventListener('click',function(){renderQuestJournal();$('questPanel').hidden=false;});
 $('questClose').addEventListener('click',function(){$('questPanel').hidden=true;});
 $('questPanel').addEventListener('click',function(e){if(e.target===$('questPanel'))$('questPanel').hidden=true;});
@@ -2487,6 +2556,7 @@ function updateHud(){
   $('time').textContent='Day '+(Math.floor(clock/DAY)+1)+' · '+phase;
   renderInv(false);
   checkAchievements();
+  updateExplorationMap();
   updateQuestJournal();
   $('goal').textContent='Goals: tame 10 ('+team.length+'/10) · nights 3 ('+nights+'/3) · Wraiths '+wraithsDefeated+' · crafts '+craftedCount+' · explored '+Math.floor(explorationDistance)+' units · achievements '+achievementIds.length+'/15';
   var tc=nearestOf(wild,P.x,P.z,12,function(o){return !o.held}),te=$('target');
