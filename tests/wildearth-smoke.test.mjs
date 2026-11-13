@@ -106,3 +106,11 @@ test('movement keys can be remapped and persisted without collisions', () => {
     assert.ok(gameScript.includes(marker), 'missing key remapping marker: ' + marker);
   }
 });
+
+test('world seed entry and grid-aligned build placement are available', () => {
+  assert.match(html, /id="newWorldSeed"/);
+  assert.match(html, /id="worldSeedInfo"/);
+  assert.ok(gameScript.includes('function placePos(id)'));
+  assert.ok(gameScript.includes('Math.round(tx/3)*3'));
+  assert.ok(gameScript.includes('Math.round(tz/3)*3'));
+});
