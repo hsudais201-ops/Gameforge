@@ -288,9 +288,10 @@ function buildRock(){
   ]);
 }
 function buildOre(kind){
-  var base=merge([{geo:new THREE.IcosahedronGeometry(1,1),c:kind==='copperOre'?0x655b50:(kind==='ironOre'?0x414b52:0x343b50),m:T(0,0.42,0,0,0,0,1.15,0.78,1),wobble:0.45},{geo:new THREE.IcosahedronGeometry(0.62,1),c:kind==='copperOre'?0x8b6244:(kind==='ironOre'?0x68747c:0x596579),m:T(0.62,0.22,0.24,0,0,0,1,0.7,0.9),wobble:0.35}]);
+  var gold=kind==='goldOre',tin=kind==='tinOre';
+  var base=merge([{geo:new THREE.IcosahedronGeometry(1,1),c:kind==='copperOre'?0x655b50:(kind==='ironOre'?0x414b52:(gold?0x554a32:(tin?0x505d60:0x343b50))),m:T(0,0.42,0,0,0,0,1.15,0.78,1),wobble:0.45},{geo:new THREE.IcosahedronGeometry(0.62,1),c:kind==='copperOre'?0x8b6244:(kind==='ironOre'?0x68747c:(gold?0x92712f:(tin?0x758c8d:0x596579))),m:T(0.62,0.22,0.24,0,0,0,1,0.7,0.9),wobble:0.35}]);
   var parts=[{geo:base,c:0xffffff,m:T(0,0,0)}];
-  var crystal=kind==='copperOre'?0xc87942:(kind==='ironOre'?0xaebbc4:0x72d9ef);
+  var crystal=kind==='copperOre'?0xc87942:(kind==='ironOre'?0xaebbc4:(gold?0xffd34e:(tin?0xa7c7c7:0x72d9ef)));
   var count=kind==='crystalOre'?5:4;
   for(var i=0;i<count;i++){var a=i*2.399,rr=kind==='crystalOre'?0.35:0.42,h=kind==='crystalOre'?0.75+(i%3)*0.22:0.32+(i%2)*0.18;parts.push({geo:new THREE.ConeGeometry(kind==='crystalOre'?0.14:0.12,h,5),c:crystal,m:T(Math.cos(a)*rr,0.58+h*0.42,Math.sin(a)*rr,0,0,-0.12+Math.sin(a)*0.18,1,1,1),flat:true});}
   return merge(parts);
@@ -318,6 +319,8 @@ var meshSpecs={
   copperOre:{geo:buildOre('copperOre'),n:0,list:[]},
   ironOre:{geo:buildOre('ironOre'),n:0,list:[]},
   crystalOre:{geo:buildOre('crystalOre'),n:0,list:[]},
+  tinOre:{geo:buildOre('tinOre'),n:0,list:[]},
+  goldOre:{geo:buildOre('goldOre'),n:0,list:[]},
   bush:{geo:buildBush(),n:0,list:[]},
   birch:{geo:buildBirch(),n:0,list:[]}
 };
@@ -329,7 +332,7 @@ function scatter(kind,type,count,minS,maxS,rad,hp){
     if(Math.hypot(x,z)<12)continue;
     var y=heightAt(x,z);
     if(y<WATER+0.5||y>14)continue;
-    if((kind==='rock'||kind==='copperOre'||kind==='ironOre'||kind==='crystalOre')?false:(Math.abs(heightAt(x+2,z)-y)+Math.abs(heightAt(x,z+2)-y)>3.2))continue;
+    if((kind==='rock'||kind==='copperOre'||kind==='ironOre'||kind==='crystalOre'||kind==='tinOre'||kind==='goldOre')?false:(Math.abs(heightAt(x+2,z)-y)+Math.abs(heightAt(x,z+2)-y)>3.2))continue;
     var s=minS+R()*(maxS-minS);
     res.push({type:type,kind:kind,mesh:null,idx:meshSpecs[kind].n++,x:x,y:y-0.05,z:z,ry:R()*6.283,s:s,rad:rad*s,hp:hp,max:hp,dead:0,hit:0});
     meshSpecs[kind].list.push(res[res.length-1]);
@@ -343,6 +346,8 @@ scatter('rock','rock',(isMobile?70:110),0.8,2.0,1.1,4);
 scatter('copperOre','ore',(isMobile?18:28),0.85,1.25,1.0,5);
 scatter('ironOre','ore',(isMobile?12:20),0.9,1.35,1.05,6);
 scatter('crystalOre','ore',(isMobile?5:9),0.85,1.2,1.0,8);
+scatter('tinOre','ore',(isMobile?12:18),0.85,1.2,1.0,5);
+scatter('goldOre','ore',(isMobile?4:7),0.9,1.25,1.0,9);
 scatter('bush','bush',(isMobile?70:110),0.8,1.3,0,1);
 
 var _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_p=new THREE.Vector3(),_s=new THREE.Vector3();
@@ -774,7 +779,7 @@ var P={x:0,y:0,z:4,hp:100,food:100,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0};
 var NSLOTS=30,HOT=6,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
 var ITEMS={
   wood:{n:'Wood',max:50},stone:{n:'Stone',max:50},fiber:{n:'Fiber',max:50},berry:{n:'Berry',max:20},
-  copperOre:{n:'Copper Ore',max:30},ironOre:{n:'Iron Ore',max:30},crystal:{n:'Lumen Crystal',max:20},copperbar:{n:'Copper Ingot',max:30},ironbar:{n:'Iron Ingot',max:30},crystalcore:{n:'Lumen Core',max:10},copperpick:{n:'Copper Pickaxe',max:1},ironpick:{n:'Iron Pickaxe',max:1},
+  copperOre:{n:'Copper Ore',max:30},ironOre:{n:'Iron Ore',max:30},crystal:{n:'Lumen Crystal',max:20},tinOre:{n:'Tin Ore',max:30},goldOre:{n:'Gold Ore',max:20},tinbar:{n:'Tin Ingot',max:30},goldbar:{n:'Gold Ingot',max:20},crystalcore:{n:'Lumen Core',max:10},copperpick:{n:'Copper Pickaxe',max:1},ironpick:{n:'Iron Pickaxe',max:1},coppersword:{n:'Copper Sword',max:1},ironsword:{n:'Iron Sword',max:1},copperarmor:{n:'Copper Armor',max:1},ironarmor:{n:'Iron Armor',max:1},tonic:{n:'Vitality Tonic',max:8},
   ball:{n:'Capture Ball',max:20},great:{n:'Great Ball',max:10},wall:{n:'Wall block',max:20},fire:{n:'Campfire',max:5},
   torch:{n:'Torch',max:10},axe:{n:'Stone Axe',max:1},pick:{n:'Stone Pickaxe',max:1},salve:{n:'Healing Salve',max:10},
   jam:{n:'Berry Jam',max:10},treat:{n:'Creature Treat',max:10},stonewall:{n:'Stone wall',max:20},floor:{n:'Wood floor',max:20},bed:{n:'Bedroll',max:2}
@@ -834,7 +839,7 @@ function gain(id,n,x,y,z,color){
 }
 function slotHtml(i){
   var s=slots[i],c='slot'+(i<HOT?' hot':'')+(i===hotSel?' on':'')+(i===moveFrom?' mv':'');
-  return '<div class="'+c+'" data-slot="'+i+'"'+(s?' data-id="'+s.id+'" title="'+ITEMS[s.id].n+'"':'')+'>'+(i<HOT?'<i>'+(i+1)+'</i>':'')+(s?ICON[s.id]+'<b>'+s.n+'</b>':'')+'</div>';
+  return '<div class="'+c+'" data-slot="'+i+'"'+(s?' data-id="'+s.id+'" title="'+ITEMS[s.id].n+'"':'')+'>'+(i<HOT?'<i>'+(i+1)+'</i>':'')+(s?(ICON[s.id]||ICON.stone)+'<b>'+s.n+'</b>':'')+'</div>';
 }
 function renderInv(force){
   var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.length;
@@ -847,10 +852,10 @@ function renderInv(force){
   if(cur){
     if(PLACEABLE[cur.id])note=' – Use to place';
     else if(cur.id==='berry'||cur.id==='jam')note=' – Use to eat';
-    else if(cur.id==='salve')note=' – Use to heal';
+    else if(cur.id==='salve'||cur.id==='tonic')note=' – Use to restore health';
     else if(cur.id==='treat')note=' – Use before a throw (+20% catch)';
     else if(cur.id==='ball'||cur.id==='great')note=' – Use to throw at a wild creature';
-    else if(cur.id==='axe'||cur.id==='pick'||cur.id==='copperpick'||cur.id==='ironpick')note=' – works while in your bag';
+    else if(['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(cur.id)>=0)note=' – passive equipment while carried';
   }
   $('hotname').textContent=cur?ITEMS[cur.id].n+note:'Empty slot';
   if(bagOpen){
@@ -866,7 +871,7 @@ function renderInv(force){
     $('bagTeam').innerHTML=th+'</div>';
     var cbs=$('bag').querySelectorAll('[data-craft]');
     for(i=0;i<cbs.length;i++){
-      var ck=cbs[i].getAttribute('data-craft'),r=RECIPES[ck],ok=!((ck==='axe'||ck==='pick')&&countOf(ck)>0);
+      var ck=cbs[i].getAttribute('data-craft'),r=RECIPES[ck],ok=!(['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(ck)>=0&&countOf(ck)>0);
       for(var k in r){if(countOf(k)<r[k])ok=false}
       cbs[i].className=ok?'':'no';
     }
@@ -1088,7 +1093,7 @@ function doGather(){
   P.cool=axe?0.42:0.55;P.swing=0.45;
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5);
-  if(w){w.hp-=(axe?2:1);w.hit=0.25;pop(w.x,w.y+2.6,w.z,'hit','#c9a8ff');return}
+  if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));w.hp-=weaponLevel;w.hit=0.25;pop(w.x,w.y+2.6,w.z,'hit','#c9a8ff');return}
   var r=nearestOf(res,P.x,P.z,4.6,function(o){
     if(o.dead>0)return false;
     var dx=o.x-P.x,dz=o.z-P.z,l=Math.hypot(dx,dz)||1;
@@ -1104,8 +1109,8 @@ function doGather(){
     if(r.type==='tree'){setStump(r,true);gain('wood',axe?3:2,r.x,r.y+3,r.z,'#e2b783')}
     else if(r.type==='rock')gain('stone',pick?3:2,r.x,r.y+1.5,r.z,'#d0d4d8');
     else if(r.type==='ore'){
-      var oreId=r.kind==='copperOre'?'copperOre':(r.kind==='ironOre'?'ironOre':'crystal');
-      var oreQty=r.kind==='crystalOre'?1:(r.kind==='ironOre'?2:2);
+      var oreId=r.kind==='copperOre'?'copperOre':(r.kind==='ironOre'?'ironOre':(r.kind==='tinOre'?'tinOre':(r.kind==='goldOre'?'goldOre':'crystal')));
+      var oreQty=r.kind==='crystalOre'?1:(r.kind==='goldOre'?1:2);
       gain(oreId,oreQty+(pickLevel>=2?1:0),r.x,r.y+1.5,r.z,r.kind==='copperOre'?'#d68a50':(r.kind==='ironOre'?'#b9c7d0':'#72e7ff'));
     }
     else{gain('fiber',1,r.x,r.y+1.5,r.z,'#a9d37a');gain('berry',1,r.x,r.y+2.3,r.z,'#f19ab0')}
@@ -1151,14 +1156,16 @@ function doCatch(){
 var RECIPES={
   ball:{wood:1,stone:1,fiber:1},great:{stone:3,fiber:2,berry:2},treat:{berry:2,fiber:1},
   axe:{wood:3,stone:2,fiber:2},pick:{wood:2,stone:3,fiber:2},
-  copperbar:{copperOre:2,wood:1},ironbar:{ironOre:2,wood:2},crystalcore:{crystal:2,ironbar:1},
+  copperbar:{copperOre:2,wood:1},ironbar:{ironOre:2,wood:2},tinbar:{tinOre:2,wood:1},goldbar:{goldOre:2,wood:2},crystalcore:{crystal:2,ironbar:1},
   copperpick:{copperbar:3,wood:2,fiber:1},ironpick:{ironbar:3,copperbar:1,wood:2,fiber:2,crystalcore:1},
+  coppersword:{copperbar:3,wood:1,fiber:1},ironsword:{ironbar:3,wood:1,crystalcore:1},
+  copperarmor:{copperbar:5,ironbar:1,fiber:3},ironarmor:{ironbar:6,goldbar:1,crystalcore:1},tonic:{berry:3,crystal:1,fiber:2},
   salve:{berry:3,fiber:2},jam:{berry:5,fiber:1},torch:{wood:1,fiber:1},
   wall:{wood:2},stonewall:{stone:3},floor:{wood:2},fire:{wood:2,stone:1},bed:{wood:4,fiber:4}
 };
-var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,crystalcore:1,copperpick:1,ironpick:1,salve:1,jam:1,torch:2,wall:1,stonewall:1,floor:2,fire:1,bed:1};
-var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe'};
-var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick']],['Metallurgy',['copperbar','ironbar','crystalcore']],['Survival',['salve','jam','torch']],['Building',['wall','stonewall','floor','fire','bed']]];
+var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,copperarmor:1,ironarmor:1,tonic:1,salve:1,jam:1,torch:2,wall:1,stonewall:1,floor:2,fire:1,bed:1};
+var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',tonic:'Vitality Tonic'};
+var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword']],['Armor',['copperarmor','ironarmor']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','tonic','jam','torch']],['Building',['wall','stonewall','floor','fire','bed']]];
 function buildCraftUI(){
   var h='';
   CATS.forEach(function(c){
@@ -1174,12 +1181,14 @@ buildCraftUI();
 function rateNow(sp,id){var r0=catchRate(sp,id);return r0>=1?1:Math.min(0.95,r0+(P.lure?0.2:0))}
 function craft(k){
   var r=RECIPES[k],i;
-  if((k==='axe'||k==='pick'||k==='copperpick'||k==='ironpick')&&countOf(k)>0){say('You already have a '+NAMES[k]+'. It works while it is in your bag.');return}
+  if((['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(k)>=0)&&countOf(k)>0){say('You already have a '+NAMES[k]+'. It works while it is in your bag.');return}
   for(i in r){if(countOf(i)<r[i]){say('Not enough materials for '+NAMES[k]+'.');return}}
   for(i in r)takeItem(i,r[i]);
   if(!canAdd(k,OUT[k])){for(i in r)addItem(i,r[i]);say('Your bag is full.');renderInv(true);return}
   addItem(k,OUT[k]);pop(P.x,P.y+2.6,P.z,'+'+OUT[k]+' '+NAMES[k],'#9be3b8');
-  if(k==='axe'||k==='pick'||k==='copperpick'||k==='ironpick')say(NAMES[k]+' ready. Mining power improves automatically while it is in your bag.');
+  if(['axe','pick','copperpick','ironpick'].indexOf(k)>=0)say(NAMES[k]+' ready. Mining power improves automatically while it is in your bag.');
+  else if(k==='coppersword'||k==='ironsword')say(NAMES[k]+' ready. Your attacks against night creatures are stronger while carried.');
+  else if(k==='copperarmor'||k==='ironarmor')say(NAMES[k]+' equipped automatically from your bag. Incoming night-creature damage is reduced.');
   renderInv(true);
 }
 function placePos(id){
@@ -1200,6 +1209,10 @@ function doUse(){
     if(P.food>=90){say('You are not hungry.');return}
     takeItem('jam',1);P.food=Math.min(100,P.food+60);pop(P.x,P.y+2.6,P.z,'Ate berry jam','#e8465f');renderInv(true);
   }
+  else if(id==='tonic'){
+    if(P.hp>=100&&P.food>=90){say('You do not need a tonic right now.');return}
+    takeItem('tonic',1);P.hp=Math.min(100,P.hp+55);P.food=Math.min(100,P.food+18);pop(P.x,P.y+2.6,P.z,'Vitality restored','#8cf0d2');burst(P.x,P.y+1.2,P.z,0x69d8bb,16);renderInv(true);
+  }
   else if(id==='salve'){
     if(P.hp>=95){say('You are not hurt.');return}
     takeItem('salve',1);P.hp=Math.min(100,P.hp+40);pop(P.x,P.y+2.6,P.z,'+40 health','#9be3b8');burst(P.x,P.y+1.2,P.z,0x7bc47f,10);renderInv(true);
@@ -1209,7 +1222,7 @@ function doUse(){
     takeItem('treat',1);P.lure=true;pop(P.x,P.y+2.6,P.z,'Treat scent: next throw +20%','#ffd36a');renderInv(true);
   }
   else if(id==='ball'||id==='great')doCatch();
-  else if(id==='axe'||id==='pick')say(ITEMS[id].n+' works automatically while it is in your bag.');
+  else if(['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(id)>=0)say(ITEMS[id].n+' works automatically while it is in your bag.');
   else say(ITEMS[id].n+' is a material. Open the Bag to craft with it.');
 }
 function doPlace(id){
@@ -1398,7 +1411,7 @@ function update(dt){
     var swp=Math.min(8.5,5+nights*0.4);
     s.x+=sx/sl*swp*dt;s.z+=sz/sl*swp*dt;pushOutBoxes(s,0.7);
     s.y+=(heightAt(s.x,s.z)-s.y)*Math.min(1,dt*8);
-    if(sl<1.8&&!safe)P.hp-=14*dt;
+    if(sl<1.8&&!safe){var armor=countOf('ironarmor')>0?0.42:(countOf('copperarmor')>0?0.7:1);P.hp-=14*armor*dt;}
     if(nearFire(s.x,s.z,9))s.hp-=2*dt;
     for(j=0;j<team.length;j++){if(Math.hypot(team[j].x-s.x,team[j].z-s.z)<4)s.hp-=1.5*dt}
     s.g.position.set(s.x,s.y+0.5+Math.sin(clock*3+s.ph)*0.25,s.z);
