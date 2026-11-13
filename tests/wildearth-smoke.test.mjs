@@ -48,3 +48,10 @@ test('save compatibility keeps legacy inventory migration paths', () => {
   assert.match(gameScript, /mfwilds3d_v2/);
   assert.match(gameScript, /mfwilds3d_v1/);
 });
+
+test('storage chests are craftable, interactable, and included in world saves', () => {
+  for (const marker of ['chestPanel', 'chestGrid', 'openChest', 'chestStore', 'chestTake', 'chests.map', 'd.chests', 'chestSlots']) {
+    assert.ok(gameScript.includes(marker) || html.includes(marker), 'missing chest system marker: ' + marker);
+  }
+  assert.match(gameScript, /chest:\\{wood:12,stone:4\\}/);
+});
