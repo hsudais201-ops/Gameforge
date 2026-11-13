@@ -72,9 +72,9 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 54. Add Shade, Stalker, and Brute variants.
 - [x] 55. Add player damage feedback and centralized damage handling.
 - [x] 56. Add companion interception and guardian attacks.
-- [ ] 57. Add weapon hit validation and clearer hit confirmation.
+- [x] 57. Add weapon hit validation and clearer hit confirmation.
 - [x] 58. Add dodge or evade with stamina cost.
-- [ ] 59. Add enemy resistance and vulnerability profiles.
+- [x] 59. Add enemy resistance and vulnerability profiles.
 - [ ] 60. Add a boss encounter with multi-stage behavior.
 
 ## G. Survival, weather, and world events
@@ -177,6 +177,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Wildlife ecology: adults of the same species can breed when calm and nearby; offspring inherit blended personality traits with small variation, and a hard local population cap prevents runaway growth. Parent links are cleaned when offspring are removed.
 
 - Creature care: wildlife now has hunger needs and species-specific preferred foods. Feeding compatible berries or treats reduces hunger and builds trust; trust improves capture odds and is visible in the nearby-creature HUD.
+
+- Combat refinement: melee hits now require a forward-facing weapon arc for wildlife and Wraiths, with visible hit bursts and numeric confirmation. Wraith Brutes resist weapon damage while Stalkers are more vulnerable; Shade remains baseline.
 
 ## Verification policy
 Source-level syntax and structural checks are not substitutes for playing the game. Browser, mobile, performance, and save-migration tests remain open until actually run on target devices.
