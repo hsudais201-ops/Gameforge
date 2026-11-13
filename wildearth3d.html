@@ -1364,7 +1364,7 @@ function load(){
     (d.walls||[]).forEach(function(w){addStructure(w.t==='stone'?'stonewall':(w.t==='floor'?'floor':'wall'),w.x,w.z)});
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
-    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder'].indexOf(a)>=0}):[];
+    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder'].indexOf(a)>=0}):[];
     if(recovered)setTimeout(function(){say('Recovered your world from its backup save.',5)},500);
     return true;
   }catch(e){return false}
@@ -2393,7 +2393,9 @@ function animFires(){
 }
 
 function checkAchievements(){
-  var totalStructures=walls.length+fires.length+beds.length;
+  var totalStructures=walls.length+fires.length+beds.length,uniqueSpecies={};
+  for(var us=0;us<team.length;us++)uniqueSpecies[team[us].sp]=true;
+  var speciesCount=Object.keys(uniqueSpecies).length;
   var tests=[
     ['first_friend',team.length>=1,'First Friend','Tame your first creature'],
     ['pack_leader',team.length>=10,'Pack Leader','Tame 10 creatures'],
@@ -2402,7 +2404,11 @@ function checkAchievements(){
     ['wraith_hunter',wraithsDefeated>=1,'Wraith Hunter','Defeat your first Wraith'],
     ['wraith_slayer',wraithsDefeated>=10,'Wraith Slayer','Defeat 10 Wraiths'],
     ['maker',craftedCount>=10,'Master Maker','Craft 10 items'],
-    ['builder',totalStructures>=10,'Builder','Place 10 structures']
+    ['builder',totalStructures>=10,'Builder','Place 10 structures'],
+    ['naturalist',speciesCount>=SPECIES.length,'Naturalist','Tame one of every creature species'],
+    ['night_owl',nights>=10,'Night Owl','Survive 10 nights'],
+    ['wraith_legend',wraithsDefeated>=25,'Wraith Legend','Defeat 25 Wraiths'],
+    ['master_builder',totalStructures>=25,'Master Builder','Place 25 structures']
   ];
   for(var ai=0;ai<tests.length;ai++){
     var a=tests[ai];if(a[1]&&achievementIds.indexOf(a[0])<0){achievementIds.push(a[0]);say('ACHIEVEMENT UNLOCKED: '+a[2]+' — '+a[3],5);save();}
@@ -2418,7 +2424,7 @@ function updateHud(){
   $('time').textContent='Day '+(Math.floor(clock/DAY)+1)+' · '+phase;
   renderInv(false);
   checkAchievements();
-  $('goal').textContent='Goals: tame 10 ('+team.length+'/10) · nights 3 ('+nights+'/3) · Wraiths '+wraithsDefeated+' · crafts '+craftedCount+' · achievements '+achievementIds.length+'/8';
+  $('goal').textContent='Goals: tame 10 ('+team.length+'/10) · nights 3 ('+nights+'/3) · Wraiths '+wraithsDefeated+' · crafts '+craftedCount+' · achievements '+achievementIds.length+'/12';
   var tc=nearestOf(wild,P.x,P.z,12,function(o){return !o.held}),te=$('target');
   if(tc){
     var TS=SPECIES[tc.sp],TR=RAR[TS.r],bid=ballForCatch();
