@@ -239,6 +239,8 @@
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label>
 <label class="settingRow">Survival difficulty<select id="difficultySelect"><option value="easy">Explorer · Easy</option><option value="normal" selected>Survivor · Normal</option><option value="hard">Wilderness · Hard</option></select></label>
 <label class="settingRow">Notification duration <input id="notificationDuration" type="range" min="1" max="8" step="0.5" value="3.5"></label>
+<label class="settingRow">Ambient music volume <input id="musicVolume" type="range" min="0" max="0.3" step="0.01" value="0.08"></label>
+<label class="settingRow">Sound effects volume <input id="effectsVolume" type="range" min="0" max="0.8" step="0.02" value="0.35"></label>
 <label class="settingRow">Joystick dead zone <input id="joyDeadzone" type="range" min="0" max="40" step="5" value="10"></label>
 <label class="settingRow">Camera sensitivity <input id="cameraSensitivity" type="range" min="50" max="200" step="10" value="100"></label>
 <div class="settingNote">Movement keys — choose a button, then press a new key.</div>
@@ -445,6 +447,9 @@ $('pauseMainMenu').addEventListener('click',function(){save();pauseOpen=false;$(
 $('saveWorldBtn').addEventListener('click',function(){var ok=save();var status=$('saveStatus');status.textContent=ok?'World saved successfully.':'Could not save. Check available device storage.';say(ok?'World saved.':'Save failed — device storage may be full.',3)});
 $('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});if(pauseOpen)$('pausePanel').hidden=false;
 $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this.value);say('Graphics set to '+renderProfiles[renderLevel].name,2)});
+$('musicVolume').value=String(audioPrefs.music);$('effectsVolume').value=String(audioPrefs.effects);
+$('musicVolume').addEventListener('input',function(){audioPrefs.music=clamp(+this.value,0,0.3);if(musicBus)musicBus.gain.setTargetAtTime(audioPrefs.music,audioCtx.currentTime,0.04);saveAudioPrefs();initAudio();});
+$('effectsVolume').addEventListener('input',function(){audioPrefs.effects=clamp(+this.value,0,0.8);if(effectsBus)effectsBus.gain.setTargetAtTime(audioPrefs.effects,audioCtx.currentTime,0.04);saveAudioPrefs();initAudio();});
 $('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
 var ACCESS_KEY='mfwilds3d_accessibility_v1',accessPrefs={size:'normal',contrast:false};
 var CONTROL_KEY='mfwilds3d_controls_v1',controlPrefs={deadzone:0.10,sensitivity:1,invertY:false};
@@ -1209,6 +1214,26 @@ function makeBed(){
 
 /* ---------- state ---------- */
 var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
+var AUDIO_KEY='mfwilds3d_audio_v1',audioPrefs={music:0.08,effects:0.35},audioCtx=null,musicBus=null,effectsBus=null;
+try{var savedAudio=JSON.parse(localStorage.getItem(AUDIO_KEY)||'{}');if(isFinite(savedAudio.music))audioPrefs.music=clamp(savedAudio.music,0,0.3);if(isFinite(savedAudio.effects))audioPrefs.effects=clamp(savedAudio.effects,0,0.8);}catch(e){}
+function saveAudioPrefs(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs));}catch(e){}}
+function initAudio(){
+  if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}
+  var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  try{
+    audioCtx=new AC();musicBus=audioCtx.createGain();musicBus.gain.value=audioPrefs.music;musicBus.connect(audioCtx.destination);
+    effectsBus=audioCtx.createGain();effectsBus.gain.value=audioPrefs.effects;effectsBus.connect(audioCtx.destination);
+    var low=audioCtx.createOscillator(),high=audioCtx.createOscillator(),lowGain=audioCtx.createGain(),highGain=audioCtx.createGain();
+    low.type='sine';low.frequency.value=110;high.type='sine';high.frequency.value=164.81;lowGain.gain.value=0.24;highGain.gain.value=0.12;
+    low.connect(lowGain);high.connect(highGain);lowGain.connect(musicBus);highGain.connect(musicBus);low.start();high.start();
+  }catch(e){audioCtx=null;}
+}
+function playSfx(kind){
+  if(!audioCtx||!effectsBus||audioPrefs.effects<=0)return;
+  var tones={gather:[250,0.13,'triangle'],capture:[620,0.28,'sine'],damage:[92,0.22,'sawtooth'],rain:[175,0.34,'sine'],creature:[420,0.2,'triangle'],warning:[130,0.3,'sawtooth'],ui:[540,0.08,'sine']},tone=tones[kind]||tones.ui;
+  try{var now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=tone[2];osc.frequency.setValueAtTime(tone[0],now);osc.frequency.exponentialRampToValueAtTime(Math.max(45,tone[0]*0.72),now+tone[1]);gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(Math.max(0.001,audioPrefs.effects*0.16),now+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+tone[1]);osc.connect(gain);gain.connect(effectsBus);osc.start(now);osc.stop(now+tone[1]+0.02);}catch(e){}
+}
+document.addEventListener('pointerdown',initAudio,{once:true});document.addEventListener('keydown',initAudio,{once:true});
 var NSLOTS=36,HOT=9,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
 var activeChest=null,selectedChestSlot=0;
 var ITEMS={
@@ -1413,7 +1438,7 @@ function updateWeather(dt){
     }
     pa.needsUpdate=true;
   }
-  if(rainLevel>0.45&&!rainWasActive){rainWasActive=true;say('Rain is moving across the wilderness.');}
+  if(rainLevel>0.45&&!rainWasActive){rainWasActive=true;playSfx('rain');say('Rain is moving across the wilderness.');}
   if(rainLevel<0.05&&rainWasActive){rainWasActive=false;say('The rain has cleared.');}
 }
 P.y=heightAt(P.x,P.z);
@@ -1474,7 +1499,7 @@ function tryBreed(c,dt){
   child.sociability=clamp((c.sociability+mate.sociability)*0.5+rand(-0.06,0.06),0,1);
   child.curiosity=clamp((c.curiosity+mate.curiosity)*0.5+rand(-0.1,0.1),0,1);
   mate.young=child;c.breedT=mate.breedT=300;
-  say(SPECIES[c.sp].n+'s welcomed a new juvenile.');
+  playSfx('creature');say(SPECIES[c.sp].n+'s welcomed a new juvenile.');
 }
 function addStructure(kind,x,z){
   var y=heightAt(x,z),o;
@@ -1792,7 +1817,7 @@ function inWeaponArc(o,range,threshold){
 function doGather(){
   if(P.cool>0)return;
   var axe=countOf('axe')>0,pickLevel=countOf('ironpick')>0?3:(countOf('copperpick')>0?2:(countOf('pick')>0?1:0)),pick=pickLevel>0;
-  P.cool=axe?0.42:0.55;P.swing=0.45;
+  P.cool=axe?0.42:0.55;P.swing=0.45;playSfx('gather');
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5,function(o){return inWeaponArc(o,5,0.25)});
   if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var dealt=Math.max(1,weaponLevel*(w.damageTaken||1));w.hp-=dealt;w.hit=0.25;burst(w.x,w.y+1.2,w.z,0xc9a8ff,6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),'#c9a8ff');return}
@@ -1853,7 +1878,7 @@ function doCatch(){
   var id=ballForCatch();
   if(!id){say('You need a Capture Ball. Open the Bag to craft some.');return}
   if(team.length+shots.length>=12){say('Your team is full (12).');return}
-  var ok=random()<rateNow(c.sp,id,c);P.lure=false;
+  var ok=random()<rateNow(c.sp,id,c);P.lure=false;playSfx('capture');
   takeItem(id,1);renderInv(true);
   P.face=Math.atan2(c.x-P.x,c.z-P.z);P.swing=0.45;
   c.held=true;c.vx=0;c.vz=0;c.speed=0;
@@ -1903,7 +1928,7 @@ function feedCreature(c,item){
   if(item!=='treat'&&item!==preferred){say(SPECIES[c.sp].n+' prefers '+ITEMS[preferred].n.toLowerCase()+'.');return true;}
   if(c.hunger<8&&c.trust>0.9){say(SPECIES[c.sp].n+' is full and already trusts you.');return true;}
   takeItem(item,1);c.hunger=Math.max(0,(c.hunger||0)-48);c.trust=clamp((c.trust||0)+(item==='treat'?0.28:0.2),0,1);c.flee=Math.max(0,(c.flee||0)-1.5);c.alertT=0;
-  pop(c.x,c.y+2,c.z,'Trust '+Math.round(c.trust*100)+'%','#b9e6a7');say(SPECIES[c.sp].n+' enjoyed the food. Trust is '+Math.round(c.trust*100)+'%.');renderInv(true);return true;
+  playSfx('creature');pop(c.x,c.y+2,c.z,'Trust '+Math.round(c.trust*100)+'%','#b9e6a7');say(SPECIES[c.sp].n+' enjoyed the food. Trust is '+Math.round(c.trust*100)+'%.');renderInv(true);return true;
 }
 function craft(k,amount){
   var qty=Math.max(1,Math.min(99,parseInt(amount,10)||1)),output=(OUT[k]||1)*qty;
@@ -2446,6 +2471,7 @@ function update(dt){
   if(nightF>0.55&&wraiths.length<wraithCap&&spawnT<=0){
     spawnT=Math.max(3.5,6-nights*0.12);
     var wa=random()*6.283,wxp=clamp(P.x+Math.cos(wa)*42,-HALF+8,HALF-8),wzp=clamp(P.z+Math.sin(wa)*42,-HALF+8,HALF-8);
+    playSfx('warning');
     var kind='shade',roll=random();
     if(nights>=5&&roll<0.2)kind='brute';
     else if(nights>=3&&roll<(nights>=5?0.52:0.34))kind='stalker';
@@ -2908,6 +2934,7 @@ function updateFloats(dt){
 
 function playerDamage(amount,label){
   if(dead||P.invulnerable>0||!isFinite(amount)||amount<=0)return;
+  playSfx('damage');
   P.hp=clamp(P.hp-amount*difficultyScale(),0,100);
   var flash=$('damageFlash');
   if(flash){flash.classList.remove('hit');void flash.offsetWidth;flash.classList.add('hit');}
