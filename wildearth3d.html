@@ -1598,6 +1598,29 @@ function doUse(){
   else if(['axe','pick','copperpick','ironpick','coppersword','ironsword'].indexOf(id)>=0)say(ITEMS[id].n+' works automatically while it is in your bag.');
   else say(ITEMS[id].n+' is a material. Open the Bag to craft with it.');
 }
+function safeRespawnPoint(ax,az){
+  var radii=[2.6,3.4,4.2],steps=12;
+  for(var ri=0;ri<radii.length;ri++){
+    for(var n=0;n<steps;n++){
+      var ang=(n/steps)*Math.PI*2+(ri%2)*0.13;
+      var x=ax+Math.cos(ang)*radii[ri],z=az+Math.sin(ang)*radii[ri];
+      if(Math.abs(x)>HALF-14||Math.abs(z)>HALF-14)continue;
+      var y=heightAt(x,z);
+      if(y<WATER+0.65||y>14)continue;
+      var slope=Math.max(Math.abs(heightAt(x+0.9,z)-y),Math.abs(heightAt(x-0.9,z)-y),Math.abs(heightAt(x,z+0.9)-y),Math.abs(heightAt(x,z-0.9)-y));
+      if(slope>0.8)continue;
+      var blocked=false;
+      for(var wi=0;wi<walls.length;wi++){
+        var w=walls[wi];
+        if(Math.abs(x-w.x)<1.75&&Math.abs(z-w.z)<1.75){blocked=true;break;}
+      }
+      if(blocked)continue;
+      return {x:x,z:z,y:y};
+    }
+  }
+  return null;
+}
+function bedHasSafeExit(x,z){return !!safeRespawnPoint(x,z);}
 function doPlace(id){
   var p=placePos(id),i;
   if(heightAt(p.x,p.z)<WATER+0.3){say('You cannot build in the water.');return}
@@ -1609,6 +1632,8 @@ function doPlace(id){
     for(i=0;i<fires.length;i++){if(Math.hypot(fires[i].x-p.x,fires[i].z-p.z)<mind){say('Too close to another fire or torch.');return}}
   }else if(id==='bed'){
     for(i=0;i<beds.length;i++){if(Math.hypot(beds[i].x-p.x,beds[i].z-p.z)<2.5){say('There is already a bedroll here.');return}}
+    if(Math.max(Math.abs(heightAt(p.x+1.2,p.z)-heightAt(p.x-1.2,p.z)),Math.abs(heightAt(p.x,p.z+1.2)-heightAt(p.x,p.z-1.2)))>1.35){say('The ground is too uneven for a bedroll. Find flatter ground.');return}
+    if(!bedHasSafeExit(p.x,p.z)){say('There is no safe space around this spot. Clear nearby walls or choose a flatter, more open place.');return}
   }
   addStructure(id,p.x,p.z);
   takeItem(id,1);renderInv(true);save();
@@ -1890,8 +1915,11 @@ function beginDeath(){
 function finishRespawn(){
   if(!dead)return;
   var choice=$('deathSpawn').value,bd=beds.length?beds[beds.length-1]:null;
-  if(choice==='bed'&&bd){P.x=bd.x+1.6;P.z=bd.z;}else{P.x=0;P.z=4;}
-  P.y=heightAt(P.x,P.z);P.hp=100;P.food=60;P.stamina=100;P.sprinting=false;P.speed=0;P.swing=0;P.cool=0;
+  var spawn=choice==='bed'&&bd?safeRespawnPoint(bd.x,bd.z):null;
+  if(!spawn&&choice==='bed')say('Your bedroll area is blocked. Returning to base camp instead.');
+  if(!spawn)spawn=safeRespawnPoint(0,4);
+  if(!spawn)spawn={x:0,z:4,y:heightAt(0,4)};
+  P.x=spawn.x;P.z=spawn.z;P.y=spawn.y;P.hp=100;P.food=60;P.stamina=100;P.sprinting=false;P.speed=0;P.swing=0;P.cool=0;
   held.sprint=false;held.gather=false;joy.x=0;joy.y=0;Object.keys(keys).forEach(function(k){keys[k]=false});
   wraiths.forEach(function(w){scene.remove(w.g)});wraiths.length=0;
   dead=false;respawnTimer=0;$('deathPanel').hidden=true;last=performance.now();save();updateHud();
