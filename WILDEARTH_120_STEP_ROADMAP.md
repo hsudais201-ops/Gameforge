@@ -142,7 +142,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 112. Keep resolution independent from graphics-quality selection.
 - [x] 113. Cap renderer pixel ratio for constrained hardware.
 - [ ] 114. Profile CPU and GPU frame time on low-end Chromebook hardware.
-- [ ] 115. Add adaptive shadow and particle budgets per quality profile.
+- [x] 115. Add adaptive shadow and particle budgets per quality profile.
 - [ ] 116. Add memory cleanup for streamed-out objects and effects.
 - [ ] 117. Add mobile touch-layout and viewport regression tests.
 - [ ] 118. Add long-session save/load and world-streaming stress tests.
@@ -150,6 +150,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
 ## Current verified implementation batch
+- Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
 - World/build foundations: added optional world-seed entry and reproducibility display; building pieces already snap to a consistent 3-metre grid and are now covered by smoke tests.
 - Keyboard accessibility: added four remappable movement bindings with reserved-key and duplicate checks; bindings persist locally.
 - Survival presets: added persistent Explorer/Easy, Survivor/Normal, and Wilderness/Hard difficulty choices that scale incoming damage and hunger drain.
