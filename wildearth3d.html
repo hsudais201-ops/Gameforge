@@ -28,6 +28,7 @@
   .questTrack{height:6px;background:#ffffff20;border-radius:8px;overflow:hidden}
   .questTrack i{display:block;height:100%;background:#b6cf82;border-radius:8px}
   .questMeta{display:flex;justify-content:space-between;font-size:10px;color:#c9d7c4;margin-top:5px}
+  .questSectionTitle{font-size:12px;letter-spacing:.1em;color:#d7c18c;margin:18px 0 6px}
   .questActions{display:flex;gap:6px;margin-top:8px}
   .questActions button{flex:1;padding:6px;border:1px solid #a6c09b55;border-radius:7px;background:#203629;color:#edf5e8;font-size:10px;font-weight:700}
   .questActions button:disabled{opacity:.45}
@@ -217,7 +218,7 @@
   <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div>
 </div>
 <div id="mapPanel" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle"><div class="mapCard"><button class="mapClose" id="mapClose" type="button">Close ✕</button><strong id="mapTitle">WORLD MAP</strong><p class="questIntro">Unexplored areas remain hidden. Explore the world to reveal the map and discover landmarks.</p><div class="mapLegend"><span>Explored</span><span class="keyLand">Landmark</span><span class="keyPlayer">You</span></div><div id="mapGrid" class="mapGrid" aria-label="Exploration map"></div><div id="landmarkList"></div></div></div>
-<div id="questPanel" hidden role="dialog" aria-modal="true" aria-labelledby="questTitle"><div class="questCard"><div class="questHead"><strong id="questTitle">QUEST JOURNAL</strong><button id="questClose" type="button">Close ✕</button></div><p class="questIntro">Track your journey. Objectives complete automatically as you explore, build, craft and survive. Progress is saved with this world.</p><div id="questList"></div><div id="questSummary" class="questIntro" aria-live="polite"></div></div></div>
+<div id="questPanel" hidden role="dialog" aria-modal="true" aria-labelledby="questTitle"><div class="questCard"><div class="questHead"><strong id="questTitle">QUEST JOURNAL</strong><button id="questClose" type="button">Close ✕</button></div><p class="questIntro">Track your journey. Objectives complete automatically as you explore, build, craft and survive. Progress is saved with this world.</p><div id="questList"></div><div id="questSummary" class="questIntro" aria-live="polite"></div><h3 class="questSectionTitle">FIELD TUTORIAL</h3><div id="tutorialList"></div><h3 class="questSectionTitle">MAIN STORY · A NEW DAWN</h3><div id="mainQuest"></div></div></div>
 <div id="pausePanel" hidden><div class="pauseCard"><div class="pauseBrand">PAUSED</div><p>Your adventure is safely paused.</p><button id="pauseResume" class="pauseAction primary">▶ Resume Game</button><button id="pauseSave" class="pauseAction">Save World</button><button id="pauseSettings" class="pauseAction">⚙ Settings</button><button id="pauseMainMenu" class="pauseAction">Return to Main Menu</button><div id="pauseStatus" role="status" aria-live="polite">Autosave is active.</div></div></div>
 <div id="pauseBtn" aria-label="Pause game"><button id="pauseToggle" type="button">Ⅱ Pause</button></div>
 <div id="deathPanel" hidden role="dialog" aria-modal="true" aria-labelledby="deathTitle"><div class="deathCard"><div class="deathIcon">✦</div><div class="deathTitle" id="deathTitle">YOU FELL</div><p>Your journey is not over. Choose where to recover and return to the wild.</p><label for="deathSpawn">Respawn location</label><select id="deathSpawn"></select><div id="deathCountdown" aria-live="polite">Respawning in 5 seconds…</div><button id="respawnNow" type="button">Respawn Now</button><p>Penalty: lose half of your carried wood, stone and fiber.</p></div></div>
@@ -2522,6 +2523,25 @@ function renderQuestJournal(){
   }
   $('questList').innerHTML=html;
   $('questSummary').textContent=done+' completed · '+active+' active · '+(data.length-done-active)+' abandoned';
+  var tutorials=[
+    {name:'Take your first steps',desc:'Explore at least 10 world units.',value:Math.min(Math.floor(explorationDistance),10),target:10},
+    {name:'Gather supplies',desc:'Carry at least 3 wood.',value:Math.min(countOf('wood'),3),target:3},
+    {name:'Learn to craft',desc:'Craft your first item.',value:Math.min(craftedCount,1),target:1},
+    {name:'Meet a companion',desc:'Tame your first creature.',value:Math.min(team.length,1),target:1}
+  ];
+  var th='';
+  for(var ti=0;ti<tutorials.length;ti++){var t=tutorials[ti],td=t.value>=t.target;th+='<div class="questItem'+(td?' done':'')+'"><div class="questItemTop"><span>'+(td?'✓ ':'')+t.name+'</span><span>'+(td?'DONE':t.value+'/'+t.target)+'</span></div><div class="questDesc">'+t.desc+'</div><div class="questTrack"><i style="width:'+Math.round(t.value/t.target*100)+'%"></i></div></div>';}
+  $('tutorialList').innerHTML=th;
+  var story=[
+    {name:'The First Bond',desc:'Tame a creature to form your first alliance.',done:team.length>=1},
+    {name:'A Safe Haven',desc:'Build five structures to establish a camp.',done:team.length>=1&&walls.length+fires.length+beds.length>=5},
+    {name:'Survive the Long Night',desc:'Survive one night after establishing your camp.',done:team.length>=1&&walls.length+fires.length+beds.length>=5&&nights>=1},
+    {name:'The Shadow Threat',desc:'Defeat a Wraith and protect your new home.',done:team.length>=1&&walls.length+fires.length+beds.length>=5&&nights>=1&&wraithsDefeated>=1}
+  ];
+  var stage=0;while(stage<story.length&&story[stage].done)stage++;
+  var sh='';
+  for(var si=0;si<story.length;si++){var st=story[si];sh+='<div class="questItem'+(st.done?' done':'')+'"><div class="questItemTop"><span>'+(st.done?'✓ ':(si===stage?'▶ ':'🔒 '))+st.name+'</span><span>'+(st.done?'COMPLETE':(si===stage?'CURRENT':'LOCKED'))+'</span></div><div class="questDesc">'+st.desc+'</div></div>';}
+  $('mainQuest').innerHTML=sh+(stage===story.length?'<p class="questIntro">Chapter complete. Your story in the wild continues.</p>':'<p class="questIntro">Story progress: '+stage+' / '+story.length+' chapters complete.</p>');
 }
 function updateQuestJournal(){
   var data=questData(),changed=false;
