@@ -1098,7 +1098,7 @@ function doGather(){
   if(r.type==='ore'&&pickLevel===0){say('You need a pickaxe to mine ore.');return;}
   var dmg=(r.type==='tree'&&axe)?2:((r.type==='rock'||r.type==='ore')?Math.max(1,pickLevel):1);
   r.hp-=dmg;r.hit=0.28;
-  burst(r.x,r.y+1.2,r.z,r.type==='tree'?0x8a5a3a:(r.type==='rock'?0xb4bac0:LEAF.bush),3);
+  burst(r.x,r.y+1.2,r.z,r.type==='tree'?0x8a5a3a:(r.type==='rock'?0xb4bac0:(r.type==='ore'?(r.kind==='copperOre'?0xc87942:(r.kind==='ironOre'?0xaebbc4:0x72d9ef)):LEAF.bush)),3);
   if(r.hp<=0){
     r.hit=0;r.dead=60;setInst(r,0,true);startFall(r);
     if(r.type==='tree'){setStump(r,true);gain('wood',axe?3:2,r.x,r.y+3,r.z,'#e2b783')}
