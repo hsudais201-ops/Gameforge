@@ -969,14 +969,24 @@ function makeCreature(sp){
   }
   return {g:g,legs:legs,head:head,tail:tail};
 }
-function makeWraith(){
-  var g=new THREE.Group();
-  var m=stdMat(0x1d1233,0.6,{transparent:true,opacity:0.88,emissive:0x1a0a33,emissiveIntensity:0.6});
-  var body=mesh(new THREE.ConeGeometry(0.7,2.2,10),m,0,1.2,0);body.rotation.x=Math.PI;g.add(body);
-  g.add(mesh(new THREE.SphereGeometry(0.55,12,10),m,0,2.35,0));
-  var em=stdMat(0xd8b8ff,0.3,{emissive:0xb78cff,emissiveIntensity:2});
-  g.add(mesh(new THREE.SphereGeometry(0.1,8,6),em,-0.2,2.4,0.45));
-  g.add(mesh(new THREE.SphereGeometry(0.1,8,6),em,0.2,2.4,0.45));
+function makeWraith(kind){
+  var g=new THREE.Group(),palette={
+    shade:{body:0x1d1233,glow:0xb78cff,eye:0xd8b8ff},
+    stalker:{body:0x102c35,glow:0x38d6d0,eye:0xc4fff8},
+    brute:{body:0x35151c,glow:0xff633f,eye:0xffd0a8}
+  },p=palette[kind]||palette.shade;
+  var m=stdMat(p.body,0.6,{transparent:true,opacity:0.88,emissive:p.body,emissiveIntensity:0.72});
+  var body=mesh(new THREE.ConeGeometry(kind==='brute'?0.9:0.7,kind==='brute'?2.5:2.2,10),m,0,1.2,0);body.rotation.x=Math.PI;g.add(body);
+  g.add(mesh(new THREE.SphereGeometry(kind==='brute'?0.68:0.55,12,10),m,0,2.35,0));
+  var em=stdMat(p.eye,0.3,{emissive:p.glow,emissiveIntensity:2.2});
+  g.add(mesh(new THREE.SphereGeometry(kind==='brute'?0.13:0.1,8,6),em,-0.2,2.4,0.45));
+  g.add(mesh(new THREE.SphereGeometry(kind==='brute'?0.13:0.1,8,6),em,0.2,2.4,0.45));
+  if(kind==='brute'){
+    var crest=mesh(new THREE.ConeGeometry(0.22,0.7,6),em,0,3.02,0.02);g.add(crest);
+    var shoulder=mesh(new THREE.TorusGeometry(0.72,0.09,6,12),em,0,1.85,0);shoulder.rotation.x=Math.PI/2;g.add(shoulder);
+  }else if(kind==='stalker'){
+    for(var si=-1;si<=1;si+=2){var fin=mesh(new THREE.ConeGeometry(0.12,0.75,5),em,si*0.48,1.65,-0.08);fin.rotation.z=si*0.55;g.add(fin);}
+  }
   g.traverse(function(o){o.castShadow=false});
   return g;
 }
@@ -2096,8 +2106,12 @@ function update(dt){
   if(nightF>0.55&&wraiths.length<wraithCap&&spawnT<=0){
     spawnT=Math.max(3.5,6-nights*0.12);
     var wa=Math.random()*6.283,wxp=clamp(P.x+Math.cos(wa)*42,-HALF+8,HALF-8),wzp=clamp(P.z+Math.sin(wa)*42,-HALF+8,HALF-8);
-    var wg=makeWraith();wg.position.set(wxp,heightAt(wxp,wzp),wzp);scene.add(wg);
-    wraiths.push({g:wg,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:2,hit:0,ph:Math.random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
+    var kind='shade',roll=Math.random();
+    if(nights>=5&&roll<0.2)kind='brute';
+    else if(nights>=3&&roll<(nights>=5?0.52:0.34))kind='stalker';
+    var profile=kind==='brute'?{hp:3.5,speed:3.8,damage:1.28,lunge:3.6,scale:1.22}:(kind==='stalker'?{hp:1.5,speed:7.2,damage:0.82,lunge:5.5,scale:0.86}:{hp:2,speed:5.1,damage:1,lunge:4.5,scale:1});
+    var wg=makeWraith(kind);wg.scale.setScalar(profile.scale);wg.position.set(wxp,heightAt(wxp,wzp),wzp);scene.add(wg);
+    wraiths.push({g:wg,kind:kind,moveSpeed:profile.speed,damageScale:profile.damage,lungeSpeed:profile.lunge,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:profile.hp,hit:0,ph:Math.random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
   }
   var safe=nearFire(P.x,P.z,13);
   for(i=wraiths.length-1;i>=0;i--){
@@ -2124,7 +2138,7 @@ function update(dt){
         var gd=Math.hypot(protector.x-s.x,protector.z-s.z);
         if(gd<guardianDistance){guardianDistance=gd;guardian=protector;}
       }
-      if(guardian){s.hp-=0.45;s.hit=0.22;s.guardHitCd=1.8;guardian.attackAnim=0.38;guardian.state='protect';
+      if(guardian){s.hp-=0.75;s.hit=0.22;s.guardHitCd=1.55;guardian.attackAnim=0.38;guardian.state='protect';
         burst(s.x,s.y+1.5,s.z,0xc9a8ff,4);pop(s.x,s.y+2.3,s.z,'Guardian strike','#b8e6a1');}
     }
     s.attackCd=Math.max(0,(s.attackCd||0)-dt);
@@ -2141,19 +2155,19 @@ function update(dt){
           var playerDistance=Math.hypot(P.x-s.x,P.z-s.z);
           if(playerDistance<2.35&&!safe){
             var armor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);
-            P.hp-=Math.min(18,9+nights*0.65)*armor;
+            P.hp-=Math.min(18,(9+nights*0.65)*(s.damageScale||1))*armor;
             s.attackCd=1.15;pop(P.x,P.y+2.1,P.z,'Wraith strike','#c9a8ff');
           }else if(playerDistance<4.8&&!safe){s.lunge=0.28;s.lungeHit=false;s.attackCd=2.0;}
         }
       }
     }else if(s.lunge>0){
       s.lunge=Math.max(0,s.lunge-dt);
-      s.x+=s.attackX*4.5*dt;s.z+=s.attackZ*4.5*dt;
+      s.x+=s.attackX*(s.lungeSpeed||4.5)*dt;s.z+=s.attackZ*(s.lungeSpeed||4.5)*dt;
       if(s.lunge===0&&!s.lungeHit){
         s.lungeHit=true;
         if(Math.hypot(P.x-s.x,P.z-s.z)<2.25&&!nearFire(P.x,P.z,13)){
           var lungeArmor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);
-          var lungeDamage=Math.min(18,9+nights*0.65)*lungeArmor;
+          var lungeDamage=Math.min(18,(9+nights*0.65)*(s.damageScale||1))*lungeArmor;
           P.hp-=lungeDamage;pop(P.x,P.y+2.1,P.z,'Wraith lunge -'+Math.ceil(lungeDamage),'#c9a8ff');
         }
       }
@@ -2161,7 +2175,7 @@ function update(dt){
       s.windup=0.42;s.attackX=sx/sl;s.attackZ=sz/sl;s.attackTarget=targetWild||null;s.lungeHit=false;
       s.attackCd=1.7;
     }else{
-      var swp=Math.min(8.5,5+nights*0.4);
+      var swp=Math.min(9.5,(s.moveSpeed||5.1)+nights*0.32);
       s.x+=sx/sl*swp*dt;s.z+=sz/sl*swp*dt;
     }
     pushOutBoxes(s,0.7);
