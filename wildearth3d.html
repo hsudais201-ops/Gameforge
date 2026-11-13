@@ -237,6 +237,7 @@
 <div id="chestPanel" hidden role="dialog" aria-modal="true" aria-labelledby="chestTitle"><div class="chestCard"><div class="chestTop"><strong id="chestTitle">STORAGE CHEST</strong><button id="chestClose" type="button">Close ✕</button></div><p class="questIntro">Select a chest slot, then store the selected hotbar stack or take the selected stack.</p><div id="chestGrid"></div><div class="chestControls"><button id="chestStore" type="button" disabled>Store hotbar stack</button><button id="chestTake" type="button" disabled>Take selected stack</button></div><div id="chestStatus" role="status" aria-live="polite"></div></div></div>
 <button id="settingsBtn" type="button">⚙ Settings</button>
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label>
+<label class="settingRow">Survival difficulty<select id="difficultySelect"><option value="easy">Explorer · Easy</option><option value="normal" selected>Survivor · Normal</option><option value="hard">Wilderness · Hard</option></select></label>
 <label class="settingRow">Joystick dead zone <input id="joyDeadzone" type="range" min="0" max="40" step="5" value="10"></label>
 <label class="settingRow">Camera sensitivity <input id="cameraSensitivity" type="range" min="50" max="200" step="10" value="100"></label>
 <label class="settingRow">Invert camera vertical <input id="invertCamera" type="checkbox"></label><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
@@ -420,6 +421,10 @@ $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this
 $('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
 var ACCESS_KEY='mfwilds3d_accessibility_v1',accessPrefs={size:'normal',contrast:false};
 var CONTROL_KEY='mfwilds3d_controls_v1',controlPrefs={deadzone:0.10,sensitivity:1,invertY:false};
+var DIFFICULTY_KEY='mfwilds3d_difficulty_v1',survivalDifficulty='normal';
+try{var dp=localStorage.getItem(DIFFICULTY_KEY);if(dp==='easy'||dp==='hard')survivalDifficulty=dp}catch(e){}
+function difficultyScale(){return survivalDifficulty==='easy'?0.72:(survivalDifficulty==='hard'?1.35:1)}
+function hungerScale(){return survivalDifficulty==='easy'?0.8:(survivalDifficulty==='hard'?1.25:1)}
 try{var cp=JSON.parse(localStorage.getItem(CONTROL_KEY)||'{}');if(isFinite(cp.deadzone))controlPrefs.deadzone=clamp(cp.deadzone,0,0.4);if(isFinite(cp.sensitivity))controlPrefs.sensitivity=clamp(cp.sensitivity,0.5,2);controlPrefs.invertY=!!cp.invertY}catch(e){}
 try{var ap=JSON.parse(localStorage.getItem(ACCESS_KEY)||'{}');if(ap.size==='large')accessPrefs.size='large';accessPrefs.contrast=!!ap.contrast}catch(e){}
 function applyAccessibility(){
@@ -439,6 +444,8 @@ function applyControlPrefs(){
 $('joyDeadzone').addEventListener('input',function(){controlPrefs.deadzone=clamp(+this.value/100,0,0.4);saveControlPrefs()});
 $('cameraSensitivity').addEventListener('input',function(){controlPrefs.sensitivity=clamp(+this.value/100,0.5,2);saveControlPrefs()});
 $('invertCamera').addEventListener('change',function(){controlPrefs.invertY=!!this.checked;saveControlPrefs()});
+$('difficultySelect').value=survivalDifficulty;
+$('difficultySelect').addEventListener('change',function(){survivalDifficulty=['easy','normal','hard'].indexOf(this.value)>=0?this.value:'normal';try{localStorage.setItem(DIFFICULTY_KEY,survivalDifficulty)}catch(e){}say('Survival difficulty: '+this.options[this.selectedIndex].text,3);});
 applyControlPrefs();
 applyAccessibility();
 
@@ -2025,7 +2032,7 @@ function update(dt){
   P.cool-=dt;if(P.swing>0)P.swing-=dt;
   if(held.gather)doGather();
 
-  P.food=Math.max(0,P.food-0.3*dt);
+  P.food=Math.max(0,P.food-0.3*dt*hungerScale());
   if(P.food<20&&!hungerWarned){say('You are hungry. Eat berries or crafted food soon.',4);hungerWarned=true;}
   if(P.food>28)hungerWarned=false;
   eatCool-=dt;
@@ -2765,7 +2772,7 @@ function updateFloats(dt){
 
 function playerDamage(amount,label){
   if(dead||P.invulnerable>0||!isFinite(amount)||amount<=0)return;
-  P.hp=clamp(P.hp-amount,0,100);
+  P.hp=clamp(P.hp-amount*difficultyScale(),0,100);
   var flash=$('damageFlash');
   if(flash){flash.classList.remove('hit');void flash.offsetWidth;flash.classList.add('hit');}
   if(label)pop(P.x,P.y+2.1,P.z,label,'#ff9a91');
