@@ -686,7 +686,7 @@ function makePlayer(){
   hips.add(mesh(new THREE.CylinderGeometry(0.085,0.095,0.16,10),skinMat,0,0.91,0));
   var head=new THREE.Group();head.position.set(0,1.12,0);hips.add(head);
   head.add(mesh(new THREE.SphereGeometry(0.225,18,14),skinMat,0,0.02,0));
-  var hairCap=mesh(new THREE.SphereGeometry(0.17,14,9,0,Math.PI*2,0,Math.PI*0.52),dark,0,0.09,-0.005,1,0.82,1);head.add(hairCap);var hairLongL=mesh(new THREE.BoxGeometry(0.055,0.2,0.09),dark,-0.18,-0.055,0.07),hairLongR=mesh(new THREE.BoxGeometry(0.055,0.2,0.09),dark,0.18,-0.055,0.07);head.add(hairLongL);head.add(hairLongR);var hood=mesh(new THREE.SphereGeometry(0.245,14,10,0,Math.PI*2,0,Math.PI*0.55),stdMat(0x35483f),0,0.07,-0.015,1,1.05,1);head.add(hood);hairLongL.visible=false;hairLongR.visible=false;hood.visible=false;
+  // Hair is built as layered low-poly meshes, following the head instead of floating box strips.\n  var hairCap=mesh(new THREE.SphereGeometry(0.205,18,12,0,Math.PI*2,0,Math.PI*0.62),dark,0,0.085,-0.012,1,0.88,1);head.add(hairCap);\n  var hairFringe=mesh(new THREE.SphereGeometry(0.105,12,8),dark,0,0.105,0.157,1.15,0.48,0.52);head.add(hairFringe);\n  var hairLongL=new THREE.Group(),hairLongR=new THREE.Group();head.add(hairLongL);head.add(hairLongR);\n  [-1,1].forEach(function(side){var hg=side<0?hairLongL:hairLongR;hg.add(mesh(new THREE.SphereGeometry(0.075,10,8),dark,side*0.165,-0.035,0.025,0.78,1.65,0.9));hg.add(mesh(new THREE.SphereGeometry(0.055,10,8),dark,side*0.17,-0.15,-0.015,0.78,1.5,0.85));hg.add(mesh(new THREE.SphereGeometry(0.04,9,7),dark,side*0.16,-0.235,-0.035,0.8,1.15,0.8));});\n  var hood=mesh(new THREE.SphereGeometry(0.252,16,12,0,Math.PI*2,0,Math.PI*0.62),stdMat(0x35483f),0,0.065,-0.025,1,1.04,1);head.add(hood);hairLongL.visible=false;hairLongR.visible=false;hood.visible=false;
   head.add(mesh(new THREE.SphereGeometry(0.11,12,8),stdMat(0x30251e),0,-0.005,0.15,1.35,0.55,0.72));
   head.add(mesh(new THREE.SphereGeometry(0.038,8,6),skinMat,0,-0.035,0.205,0.8,0.8,0.8));
   [-1,1].forEach(function(side){head.add(mesh(new THREE.SphereGeometry(0.035,8,6),skinMat,side*0.22,0,0));head.add(mesh(new THREE.SphereGeometry(0.018,8,6),dark,side*0.078,0.035,0.205));head.add(mesh(new THREE.BoxGeometry(0.075,0.018,0.025),dark,side*0.078,0.078,0.205));});
@@ -760,7 +760,7 @@ function makePlayer(){
   axe.add(mesh(new THREE.BoxGeometry(0.12,0.12,0.035),trim,0,0.62,0.245));
   axe.add(mesh(new THREE.BoxGeometry(0.12,0.035,0.035),metal,0,0.69,0.245));
 
-  g.userData.customMaterials={skin:skinMat,cloth:cloth,cloth2:cloth2,leather:leather,hair:dark};g.userData.hairStyles={short:hairCap,longL:hairLongL,longR:hairLongR,hood:hood};
+  g.userData.customMaterials={skin:skinMat,cloth:cloth,cloth2:cloth2,leather:leather,hair:dark};g.userData.hairStyles={short:hairCap,fringe:hairFringe,longL:hairLongL,longR:hairLongR,hood:hood};
   return {g:g,hips:hips,legL:legL,legR:legR,armL:armL,armR:armR,head:head,torso:torso,pack:pack,scarfTail:scarfTail,axe:axe};
 }
 var player=makePlayer();scene.add(player.g);
@@ -1167,7 +1167,7 @@ function syncCustomizationControls(){var mats=player.g.userData.customMaterials;
 syncCustomizationControls();
 $('skinTone').addEventListener('change',function(){player.g.userData.customMaterials.skin.color.set(this.value);try{localStorage.setItem('mfwilds3d_skin',this.value)}catch(e){}});
 $('outfitColor').addEventListener('change',function(){var c=+this.value;player.g.userData.customMaterials.cloth.color.setHex(c);player.g.userData.customMaterials.cloth2.color.setHex(c);try{localStorage.setItem('mfwilds3d_outfit',this.value)}catch(e){}});
-function applyHairStyle(value){var h=player.g.userData.hairStyles;h.longL.visible=value==='1';h.longR.visible=value==='1';h.hood.visible=value==='2';player.g.userData.customMaterials.hair.color.setHex(0x211c19);try{localStorage.setItem('mfwilds3d_hair',value)}catch(e){}}
+function applyHairStyle(value){var h=player.g.userData.hairStyles;var hoodMode=value==='2';h.short.visible=!hoodMode;h.fringe.visible=!hoodMode;h.longL.visible=value==='1';h.longR.visible=value==='1';h.hood.visible=hoodMode;player.g.userData.customMaterials.hair.color.setHex(0x211c19);try{localStorage.setItem('mfwilds3d_hair',value)}catch(e){}}
 $('hairStyle').addEventListener('change',function(){applyHairStyle(this.value);});
 $('saveLook').addEventListener('click',function(){try{localStorage.setItem('mfwilds3d_skin',$('skinTone').value);localStorage.setItem('mfwilds3d_outfit',$('outfitColor').value);localStorage.setItem('mfwilds3d_hair',$('hairStyle').value);}catch(e){}say('Character appearance saved.',3);});
 function restoreCharacterAppearance(){var m=player.g.userData.customMaterials;try{var sk=localStorage.getItem('mfwilds3d_skin'),oc=localStorage.getItem('mfwilds3d_outfit'),hr=localStorage.getItem('mfwilds3d_hair');if(sk)m.skin.color.set(sk);if(oc){m.cloth.color.set(oc);m.cloth2.color.set(oc);}applyHairStyle(hr||'0');$('skinTone').value=sk||'0xc98f68';$('outfitColor').value=oc||('0x'+m.cloth.color.getHexString());$('hairStyle').value=hr||'0';}catch(e){}}
