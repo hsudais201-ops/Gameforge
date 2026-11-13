@@ -1253,10 +1253,13 @@ function wildEscapeDirection(c,awayX,awayZ){
   var len=Math.hypot(bestX,bestZ)||1;
   return {x:bestX/len,z:bestZ/len};
 }
-function spawnWild(fsp,fx,fz){
+function spawnWild(fsp,fx,fz,isJuvenile,parent){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:rand(0.15,0.95),personalityPhase:rand(0,6.283),herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,parent:parent||null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
+  if(c.isJuvenile)m.g.scale.setScalar(0.72);
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
+  if(parent)parent.young=c;
+  return c;
 }
 function addStructure(kind,x,z){
   var y=heightAt(x,z),o;
@@ -1973,6 +1976,12 @@ function update(dt){
       c.envT=rand(1.0,1.6);
     }
     if(c.flee<=0){targetX+=c.envX||0;targetZ+=c.envZ||0;}
+    // Juveniles keep a loose following distance from their parent without teleporting or ignoring danger.
+    if(c.isJuvenile&&c.parent&&wild.indexOf(c.parent)>=0&&!c.parent.held&&c.flee<=0){
+      var familyDx=c.parent.x-c.x,familyDz=c.parent.z-c.z,familyLen=Math.hypot(familyDx,familyDz)||1;
+      if(familyLen>3.1){var followSpeed=familyLen>8?4.2:2.8;targetX=familyDx/familyLen*followSpeed;targetZ=familyDz/familyLen*followSpeed;}
+      else{targetX*=0.22;targetZ*=0.22;}
+    }
     // Wildlife of different temperaments gives campfires a wide berth.
     var fireX=0,fireZ=0;
     for(var fi=0;fi<fires.length;fi++){
@@ -2022,7 +2031,15 @@ function update(dt){
     animCreature(c,dt);
   }
   wildT-=dt;
-  if(wild.length<(isMobile?24:34)&&wildT<=0){spawnWild();wildT=6}
+  if(wild.length<(isMobile?24:34)&&wildT<=0){
+    var newAdult=spawnWild();
+    // A small share of natural spawns arrive with one juvenile that stays close to its parent.
+    if(wild.length<(isMobile?24:34)&&Math.random()<0.14){
+      var familyAngle=Math.random()*6.283,familyDist=rand(1.8,2.8);
+      spawnWild(newAdult.sp,newAdult.x+Math.cos(familyAngle)*familyDist,newAdult.z+Math.sin(familyAngle)*familyDist,true,newAdult);
+    }
+    wildT=6;
+  }
 
   for(i=0;i<team.length;i++){
     var t=team[i],guard=null,guardDist=999;
@@ -2070,16 +2087,30 @@ function update(dt){
     var s=wraiths[i];
     if(s.hit>0)s.hit=Math.max(0,s.hit-dt);
     if(nightF<0.25)s.hp-=3*dt;
-    var sx=P.x-s.x,sz=P.z-s.z,sl=Math.hypot(sx,sz)||1;
+    var sx=P.x-s.x,sz=P.z-s.z,sl=Math.hypot(sx,sz)||1,targetWild=null;
+    // Wraiths prioritize the player, but may stalk nearby adult wildlife when the player is far away.
+    if(sl>15&&!safe){
+      var huntDistance=12;
+      for(var hi=0;hi<wild.length;hi++){
+        var prey=wild[hi];if(prey.held||prey.isJuvenile)continue;
+        var preyDistance=Math.hypot(prey.x-s.x,prey.z-s.z);
+        if(preyDistance<huntDistance){huntDistance=preyDistance;targetWild=prey;}
+      }
+      if(targetWild){sx=targetWild.x-s.x;sz=targetWild.z-s.z;sl=Math.hypot(sx,sz)||1;}
+    }
     s.attackCd=Math.max(0,(s.attackCd||0)-dt);
     if(s.windup>0){
       s.windup=Math.max(0,s.windup-dt);
       s.x+=s.attackX*2.8*dt;s.z+=s.attackZ*2.8*dt;
-      if(s.windup===0&&sl<2.35&&!safe){
-        var armor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);
-        P.hp-=Math.min(18,9+nights*0.65)*armor;
-        s.attackCd=1.15;
-        pop(P.x,P.y+2.1,P.z,'Wraith strike','#c9a8ff');
+      if(s.windup===0){
+        if(targetWild&&wild.indexOf(targetWild)>=0&&Math.hypot(targetWild.x-s.x,targetWild.z-s.z)<2.6){
+          targetWild.flee=Math.max(targetWild.flee,3.2+Math.random()*1.4);targetWild.state='flee';targetWild.alertT=1.4;targetWild.threatX=s.x;targetWild.threatZ=s.z;
+          s.attackCd=2.1;pop(targetWild.x,targetWild.y+1.8,targetWild.z,'Wildlife startled','#c9a8ff');
+        }else if(!targetWild&&Math.hypot(P.x-s.x,P.z-s.z)<2.35&&!safe){
+          var armor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);
+          P.hp-=Math.min(18,9+nights*0.65)*armor;
+          s.attackCd=1.15;pop(P.x,P.y+2.1,P.z,'Wraith strike','#c9a8ff');
+        }
       }
     }else if(s.lunge>0){
       s.lunge=Math.max(0,s.lunge-dt);
