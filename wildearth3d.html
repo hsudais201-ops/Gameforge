@@ -1188,22 +1188,47 @@ function addStructure(kind,x,z){
 
 /* ---------- save / load ---------- */
 function save(){
+  var snapshot;
   try{
-    localStorage.setItem(SAVE_KEY,JSON.stringify({
-      P:{x:P.x,z:P.z,hp:P.hp,food:P.food},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
+    snapshot=JSON.stringify({
+      version:3,P:{x:P.x,z:P.z,hp:P.hp,food:P.food},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
       beds:beds.map(function(b){return {x:b.x,z:b.z}}),
       clock:clock,nights:nights
-    }));
+    });
+    // Keep one verified previous snapshot so a damaged save can be recovered.
+    try{
+      var previous=localStorage.getItem(SAVE_KEY);
+      if(previous){
+        var check=JSON.parse(previous);
+        if(check&&check.P&&isFinite(check.P.x)&&isFinite(check.P.z))
+          localStorage.setItem(SAVE_KEY+'_backup',previous);
+      }
+    }catch(backupError){}
+    localStorage.setItem(SAVE_KEY,snapshot);
   }catch(e){}
 }
 function load(){
   try{
-    var s=localStorage.getItem(SAVE_KEY)||localStorage.getItem(OLD_KEY);if(!s)return false;
-    var d=JSON.parse(s);
-    P.x=d.P.x;P.z=d.P.z;P.hp=d.P.hp;P.food=d.P.food;P.y=heightAt(P.x,P.z);
+    var s=localStorage.getItem(SAVE_KEY),d=null,recovered=false;
+    function validSave(raw){
+      if(!raw)return null;
+      try{
+        var parsed=JSON.parse(raw);
+        if(!parsed||!parsed.P||!isFinite(parsed.P.x)||!isFinite(parsed.P.z))return null;
+        return parsed;
+      }catch(parseError){return null}
+    }
+    d=validSave(s);
+    if(!d){
+      d=validSave(localStorage.getItem(SAVE_KEY+'_backup'));
+      recovered=!!d;
+    }
+    if(!d)d=validSave(localStorage.getItem(OLD_KEY));
+    if(!d)return false;
+    P.x=d.P.x;P.z=d.P.z;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
       var oldLayout=d.slots.length===30;
       for(var q=0;q<NSLOTS;q++){var oldIndex=oldLayout&&q>=HOT?q-3:q;var it=d.slots[oldIndex];if(it&&it.id==='cage')it={id:'ball',n:it.n};slots[q]=(it&&ITEMS[it.id]&&typeof it.n==='number'&&it.n>0)?{id:it.id,n:Math.min(it.n,ITEMS[it.id].max)}:null}
@@ -1217,7 +1242,8 @@ function load(){
     (d.walls||[]).forEach(function(w){addStructure(w.t==='stone'?'stonewall':(w.t==='floor'?'floor':'wall'),w.x,w.z)});
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
-    clock=d.clock||0;nights=d.nights||0;
+    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;
+    if(recovered)setTimeout(function(){say('Recovered your world from its backup save.',5)},500);
     return true;
   }catch(e){return false}
 }
