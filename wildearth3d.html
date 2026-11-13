@@ -95,6 +95,13 @@
   .craftArrow{font-size:20px;color:#e8eadd}
   .craftOutput{width:37px;height:37px;display:grid;place-items:center;font-size:23px;color:#f3d77d}
   .craftCaption{font-size:9px;text-align:center;opacity:.65;line-height:1.35}
+  #chestPanel{position:fixed;inset:0;z-index:58;display:flex;align-items:center;justify-content:center;padding:14px;background:#030a07cc;backdrop-filter:blur(7px)}
+  #chestPanel[hidden]{display:none}.chestCard{width:min(440px,94vw);padding:16px;border:1px solid #a6c09b88;border-radius:14px;background:linear-gradient(145deg,#263c2d,#101b15);box-shadow:0 20px 70px #000c}
+  .chestTop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.chestTop strong{font-size:17px}
+  .chestTop button,.chestControls button{padding:9px 12px;border:1px solid #91a58d;border-radius:7px;background:#203629;color:#fff;font-weight:700}
+  #chestGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:12px 0}.chestSlot{min-width:0;aspect-ratio:1;border:1px solid #829487;border-radius:5px;background:linear-gradient(145deg,#536457,#27362d);color:#fff;font-size:10px;overflow:hidden}
+  .chestSlot.selected{outline:2px solid #f1d27a}.chestSlot small{display:block;font-size:9px}.chestControls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.chestControls button:disabled{opacity:.4}
+  #chestStatus{min-height:18px;margin-top:8px;font-size:11px;color:#c8d8c5}
   #bag{gap:8px}
   #benchGrid button{width:34px;height:34px;border:2px solid #89918b;border-radius:4px;background:linear-gradient(145deg,#626b65,#333b36);color:#fff;font-size:20px;position:relative}
   #benchGrid button small{position:absolute;right:2px;bottom:0;font-size:9px}
@@ -227,6 +234,7 @@
 <div id="pauseBtn" aria-label="Pause game"><button id="pauseToggle" type="button">Ⅱ Pause</button></div>
 <div id="deathPanel" hidden role="dialog" aria-modal="true" aria-labelledby="deathTitle"><div class="deathCard"><div class="deathIcon">✦</div><div class="deathTitle" id="deathTitle">YOU FELL</div><p>Your journey is not over. Choose where to recover and return to the wild.</p><label for="deathSpawn">Respawn location</label><select id="deathSpawn"></select><div id="deathCountdown" aria-live="polite">Respawning in 5 seconds…</div><button id="respawnNow" type="button">Respawn Now</button><p>Penalty: lose half of your carried wood, stone and fiber.</p></div></div>
 <div id="hint"></div>
+<div id="chestPanel" hidden role="dialog" aria-modal="true" aria-labelledby="chestTitle"><div class="chestCard"><div class="chestTop"><strong id="chestTitle">STORAGE CHEST</strong><button id="chestClose" type="button">Close ✕</button></div><p class="questIntro">Select a chest slot, then store the selected hotbar stack or take the selected stack.</p><div id="chestGrid"></div><div class="chestControls"><button id="chestStore" type="button" disabled>Store hotbar stack</button><button id="chestTake" type="button" disabled>Take selected stack</button></div><div id="chestStatus" role="status" aria-live="polite"></div></div></div>
 <button id="settingsBtn" type="button">⚙ Settings</button>
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
@@ -1074,6 +1082,7 @@ function makeWraith(kind){
 
 /* ---------- structures ---------- */
 var wallMat=stdMat(0x8d6b43,0.9),plankMat=stdMat(0x6b4d2e,0.95);
+function makeChest(){var g=new THREE.Group(),wood=stdMat(0x80552f,0.94),trim=stdMat(0xc39a58,0.6,{metalness:0.2}),dark=stdMat(0x38291d,1);g.add(mesh(new THREE.BoxGeometry(1.35,0.82,0.92),wood,0,0.48,0));g.add(mesh(new THREE.BoxGeometry(1.4,0.12,0.98),trim,0,0.9,0));g.add(mesh(new THREE.BoxGeometry(1.25,0.38,0.86),wood,0,1.13,0));g.add(mesh(new THREE.BoxGeometry(0.16,0.3,0.06),trim,0,0.84,0.49));g.add(mesh(new THREE.BoxGeometry(0.08,0.13,0.035),dark,0,0.84,0.53));return g;}
 function makeWall(){
   var g=new THREE.Group();
   /* A wall is a thin panel, not a full 3x3x3 cube. */
@@ -1135,14 +1144,15 @@ function makeBed(){
 /* ---------- state ---------- */
 var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0};
 var NSLOTS=36,HOT=9,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
+var activeChest=null,selectedChestSlot=0;
 var ITEMS={
   wood:{n:'Wood',max:50},stone:{n:'Stone',max:50},fiber:{n:'Fiber',max:50},berry:{n:'Berry',max:20},
   copperOre:{n:'Copper Ore',max:30},ironOre:{n:'Iron Ore',max:30},crystal:{n:'Lumen Crystal',max:20},tinOre:{n:'Tin Ore',max:30},goldOre:{n:'Gold Ore',max:20},copperbar:{n:'Copper Ingot',max:30},ironbar:{n:'Iron Ingot',max:30},tinbar:{n:'Tin Ingot',max:30},goldbar:{n:'Gold Ingot',max:20},crystalcore:{n:'Lumen Core',max:10},copperpick:{n:'Copper Pickaxe',max:1},ironpick:{n:'Iron Pickaxe',max:1},coppersword:{n:'Copper Sword',max:1},ironsword:{n:'Iron Sword',max:1},copperarmor:{n:'Copper Armor',max:1},ironarmor:{n:'Iron Armor',max:1},tonic:{n:'Vitality Tonic',max:8},
   ball:{n:'Capture Ball',max:20},great:{n:'Great Ball',max:10},wall:{n:'Wall block',max:20},fire:{n:'Campfire',max:5},
   torch:{n:'Torch',max:10},axe:{n:'Stone Axe',max:1},pick:{n:'Stone Pickaxe',max:1},salve:{n:'Healing Salve',max:10},
-  jam:{n:'Berry Jam',max:10},treat:{n:'Creature Treat',max:10},stonewall:{n:'Stone wall',max:20},floor:{n:'Wood floor',max:20},bed:{n:'Bedroll',max:2}
+  jam:{n:'Berry Jam',max:10},treat:{n:'Creature Treat',max:10},stonewall:{n:'Stone wall',max:20},floor:{n:'Wood floor',max:20},bed:{n:'Bedroll',max:2},chest:{n:'Storage Chest',max:8}
 };
-var PLACEABLE={wall:1,stonewall:1,floor:1,fire:1,torch:1,bed:1};
+var PLACEABLE={wall:1,stonewall:1,floor:1,fire:1,torch:1,bed:1,chest:1};
 var GRID={wall:1,stonewall:1,floor:1};
 var GOFF={wall:1.0,stonewall:1.0,floor:0.1,fire:0.25,torch:0.85,bed:0.15};
 var ICON={
@@ -1279,7 +1289,7 @@ function benchCellClick(i){var c=benchCells[i];if(moveFrom>=0&&slots[moveFrom]){
 function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]||1;if(!canAdd(key,n)){say('Your backpack is full.');return;}addItem(key,n);craftedCount++;checkAchievements();benchCells=[null,null,null,null];renderInv(true);say('Crafted '+NAMES[key]+'.');}
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
 var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0,craftedCount=0,achievementIds=[];
-var wild=[],team=[],walls=[],fires=[],beds=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[];
+var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[];
 var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34;
@@ -1371,6 +1381,8 @@ function addStructure(kind,x,z){
     o={x:x,z:z,y:y,t:'torch',k:0.55};o.g=makeTorch();o.g.position.set(x,y,z);scene.add(o.g);fires.push(o);
   }else if(kind==='bed'){
     o={x:x,z:z,y:y};o.g=makeBed();o.g.position.set(x,y,z);o.g.rotation.y=P.face;scene.add(o.g);beds.push(o);
+  }else if(kind==='chest'){
+    o={x:x,z:z,y:y,t:'chest',slots:Array.from({length:18},function(){return null;})};o.g=makeChest();o.g.position.set(x,y,z);scene.add(o.g);chests.push(o);
   }else{
     o={x:x,z:z,y:y,t:'fire',k:1};o.g=makeFire();o.g.position.set(x,y,z);scene.add(o.g);fires.push(o);
   }
@@ -1386,7 +1398,7 @@ function save(){
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
-      beds:beds.map(function(b){return {x:b.x,z:b.z}}),
+      beds:beds.map(function(b){return {x:b.x,z:b.z}}),chests:chests.map(function(c){return {x:c.x,z:c.z,slots:c.slots.map(function(it){return it?{id:it.id,n:it.n}:null})}}),
       clock:clock,nights:nights,wraithsDefeated:wraithsDefeated,craftedCount:craftedCount,achievementIds:achievementIds,companionMode:companionMode,explorationDistance:explorationDistance,questCompletedIds:questCompletedIds,questAbandonedIds:questAbandonedIds,discoveredLandmarks:discoveredLandmarks,exploredCells:exploredCells
     });
     // Keep one verified previous snapshot so a damaged save can be recovered.
@@ -1437,6 +1449,7 @@ function load(){
     (d.walls||[]).forEach(function(w){addStructure(w.t==='stone'?'stonewall':(w.t==='floor'?'floor':'wall'),w.x,w.z)});
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
+    (d.chests||[]).forEach(function(c){addStructure('chest',c.x,c.z);var chest=chests[chests.length-1];if(Array.isArray(c.slots))chest.slots=c.slots.slice(0,18).map(function(it){return it&&ITEMS[it.id]&&typeof it.n==='number'&&it.n>0?{id:it.id,n:Math.min(ITEMS[it.id].max,Math.floor(it.n))}:null});});
     clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'].indexOf(a)>=0}):[];questCompletedIds=Array.isArray(d.questCompletedIds)?d.questCompletedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];questAbandonedIds=Array.isArray(d.questAbandonedIds)?d.questAbandonedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];discoveredLandmarks=Array.isArray(d.discoveredLandmarks)?d.discoveredLandmarks.filter(function(a){return ['base_camp','whispering_grove','stonefall_ridge','moonwater_pool','old_watch'].indexOf(a)>=0}):[];exploredCells=Array.isArray(d.exploredCells)?d.exploredCells.filter(function(a){return typeof a==='number'&&a>=0&&a<900}):[];
     if(recovered)setTimeout(function(){say('Recovered your world from its backup save.',5)},500);
     return true;
@@ -1697,11 +1710,11 @@ var RECIPES={
   coppersword:{copperbar:3,wood:1,fiber:1},ironsword:{ironbar:3,wood:1,crystalcore:1},
   copperarmor:{copperbar:5,ironbar:1,fiber:3},ironarmor:{ironbar:6,goldbar:1,crystalcore:1},tonic:{berry:3,crystal:1,fiber:2},
   salve:{berry:3,fiber:2},jam:{berry:5,fiber:1},torch:{wood:1,fiber:1},
-  wall:{wood:2},stonewall:{stone:3},floor:{wood:2},fire:{wood:2,stone:1},bed:{wood:4,fiber:4}
+  wall:{wood:2},stonewall:{stone:3},floor:{wood:2},fire:{wood:2,stone:1},bed:{wood:4,fiber:4},chest:{wood:12,stone:4}
 };
-var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,copperarmor:1,ironarmor:1,tonic:1,salve:1,jam:1,torch:2,wall:1,stonewall:1,floor:2,fire:1,bed:1};
-var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',tonic:'Vitality Tonic'};
-var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword']],['Armor',['copperarmor','ironarmor']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','tonic','jam','torch']],['Building',['wall','stonewall','floor','fire','bed']]];
+var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,copperarmor:1,ironarmor:1,tonic:1,salve:1,jam:1,torch:2,wall:1,stonewall:1,floor:2,fire:1,bed:1,chest:1};
+var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',chest:'Storage Chest',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',tonic:'Vitality Tonic'};
+var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword']],['Armor',['copperarmor','ironarmor']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','tonic','jam','torch']],['Building',['wall','stonewall','floor','fire','bed','chest']]];
 var selectedRecipe=null;
 function updateRecipePanel(){var k=selectedRecipe,a=Math.max(1,Math.min(99,parseInt($('craftAmount').value,10)||1));$('craftAmount').value=a;if(!k){$('craftSelected').disabled=true;return;}var r=RECIPES[k],lines=[],ok=true;for(var id in r){var need=r[id]*a,have=countOf(id);lines.push((ITEMS[id]?ITEMS[id].n:id)+': '+have+' / '+need);if(have<need)ok=false;}$('recipeSelected').textContent=NAMES[k]+' ×'+((OUT[k]||1)*a);$('recipeIngredients').innerHTML=lines.join('<br>');var unique=['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(k)>=0;if(unique&&(countOf(k)>0||a>1))ok=false;if(!canAdd(k,(OUT[k]||1)*a))ok=false;$('craftTotal').textContent=ok?'Ready to craft.':'Insufficient ingredients, space, or item already owned.';$('craftSelected').disabled=!ok;var bs=$('craftList').querySelectorAll('[data-craft]');for(var j=0;j<bs.length;j++)bs[j].classList.toggle('selected',bs[j].getAttribute('data-craft')===k);}
 function buildCraftUI(){
@@ -1737,6 +1750,8 @@ function placePos(id){
   return {x:clamp(tx,-HALF+12,HALF-12),z:clamp(tz,-HALF+12,HALF-12)};
 }
 function doUse(){
+  var nearbyChest=nearestOf(chests,P.x,P.z,4.8);
+  if(nearbyChest){openChest(nearbyChest);return;}
   var s=slots[hotSel];
   if(!s){say('Select an item in the hotbar. Open the Bag to move items there.');return}
   var id=s.id;
@@ -1802,6 +1817,8 @@ function doPlace(id){
     for(i=0;i<beds.length;i++){if(Math.hypot(beds[i].x-p.x,beds[i].z-p.z)<2.5){say('There is already a bedroll here.');return}}
     if(Math.max(Math.abs(heightAt(p.x+1.2,p.z)-heightAt(p.x-1.2,p.z)),Math.abs(heightAt(p.x,p.z+1.2)-heightAt(p.x,p.z-1.2)))>1.35){say('The ground is too uneven for a bedroll. Find flatter ground.');return}
     if(!bedHasSafeExit(p.x,p.z)){say('There is no safe space around this spot. Clear nearby walls or choose a flatter, more open place.');return}
+  }else if(id==='chest'){
+    for(i=0;i<chests.length;i++){if(Math.hypot(chests[i].x-p.x,chests[i].z-p.z)<2.5){say('A storage chest is already nearby.');return}}
   }
   addStructure(id,p.x,p.z);
   takeItem(id,1);renderInv(true);save();
@@ -1811,7 +1828,7 @@ var ghost={};
 (function(){
   var gm=stdMat(0xffffff,0.8,{transparent:true,opacity:0.35}),gf=stdMat(0xffb347,0.8,{transparent:true,opacity:0.5});
   var wallGhost=new THREE.BoxGeometry(3,3.0,0.3);
-  var defs={wall:[wallGhost,gm],stonewall:[wallGhost,gm],floor:[new THREE.BoxGeometry(3,0.2,3),gm],fire:[new THREE.CylinderGeometry(0.9,0.9,0.5,14),gf],torch:[new THREE.CylinderGeometry(0.12,0.12,1.7,8),gf],bed:[new THREE.BoxGeometry(1.1,0.3,2),gm]};
+  var defs={wall:[wallGhost,gm],stonewall:[wallGhost,gm],floor:[new THREE.BoxGeometry(3,0.2,3),gm],fire:[new THREE.CylinderGeometry(0.9,0.9,0.5,14),gf],torch:[new THREE.CylinderGeometry(0.12,0.12,1.7,8),gf],bed:[new THREE.BoxGeometry(1.1,0.3,2),gm],chest:[new THREE.BoxGeometry(1.4,1.25,0.98),gm]};
   for(var k in defs){var m=new THREE.Mesh(defs[k][0],defs[k][1]);m.visible=false;scene.add(m);ghost[k]=m}
 })();
 
