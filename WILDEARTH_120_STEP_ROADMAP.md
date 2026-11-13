@@ -14,7 +14,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 06. Preserve compatibility with older inventory layouts.
 - [ ] 07. Add automated smoke tests for startup, menu, and world entry.
 - [ ] 08. Add a deterministic test seed for reproducible bug reports.
-- [ ] 09. Add structured runtime diagnostics and an exportable error report.
+- [x] 09. Add structured runtime diagnostics and an exportable error report.
 - [ ] 10. Add a versioned save migration test suite.
 
 ## B. Player, controls, and camera
@@ -133,7 +133,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 105. Add audio settings and separate music/effects volume.
 - [ ] 106. Add original ambient, weather, creature, and UI sound effects.
 - [ ] 107. Add subtitle and notification duration settings.
-- [ ] 108. Add scalable UI text and high-contrast mode.
+- [x] 108. Add scalable UI text and high-contrast mode.
 - [ ] 109. Add controller/gamepad navigation.
 - [ ] 110. Add localization-ready text tables.
 
@@ -157,6 +157,7 @@ This is the execution tracker for the next development stages. A checked item me
 - Quest journal: nine automatically progressing objectives, active/completed/abandoned states, reactivation, completion alerts, progress bars, and per-world persistence.
 - Exploration: 30×30 fog-of-war map grid, five discoverable named landmarks, discovery alerts, and lore entries saved per world.
 - Progression: four field tutorial objectives and a four-stage main story with sequential completion conditions.
+- Diagnostics and accessibility: local runtime error/unhandled-rejection capture with JSON report export; Normal/Large UI text and high-contrast mode, saved locally.
 
 ## Verification policy
 Source-level syntax and structural checks are not substitutes for playing the game. Browser, mobile, performance, and save-migration tests remain open until actually run on target devices.
