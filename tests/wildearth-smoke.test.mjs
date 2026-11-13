@@ -43,7 +43,7 @@ test('world seed is stored per world and can be overridden for reproduction', ()
 });
 
 test('save compatibility keeps legacy inventory migration paths', () => {
-  assert.match(gameScript, /version:4/);
+  assert.match(gameScript, /version:5/);
   assert.match(gameScript, /d\.slots\.length===30/);
   assert.match(gameScript, /mfwilds3d_v2/);
   assert.match(gameScript, /mfwilds3d_v1/);
@@ -121,4 +121,26 @@ test('graphics profiles adapt weather particle budgets with quality changes', ()
   assert.ok(gameScript.includes('function applyWeatherBudget()'));
   assert.ok(gameScript.includes('applyWeatherBudget();'));
   assert.ok(gameScript.includes('rainCount=target'));
+});
+
+
+test('procedural biomes drive terrain materials, resource placement, and wildlife habitat', () => {
+  for (const marker of ['var BIOMES=', 'function biomeAt(x,z)', 'function habitatWeight(sp,b)', 'pickSpecies(s.x,s.z)', 'var habitatChance=']) {
+    assert.ok(gameScript.includes(marker), 'missing biome ecology marker: ' + marker);
+  }
+  assert.match(html, /id="biomeStatus"/);
+});
+
+test('swimming has slower movement, buoyancy, oxygen drain, and drowning damage', () => {
+  for (const marker of ['P.swimming=waterDepth>0.55', 'P.y+=(WATER-0.45-P.y)', 'P.oxygen=Math.max(0,P.oxygen-dt*8)', "playerDamage(4*dt,'Drowning')", '(P.swimming?0.58:1)']) {
+    assert.ok(gameScript.includes(marker), 'missing swimming marker: ' + marker);
+  }
+});
+
+test('wetness, drying, cold exposure, and oxygen persist safely in versioned saves', () => {
+  for (const marker of ['wetness:P.wetness', 'oxygen:P.oxygen', 'P.wetness=Math.min(100', 'P.wetness=Math.max(0', "playerDamage(0.45*dt,'Cold exposure')", 'P.temperature<0.08']) {
+    assert.ok(gameScript.includes(marker), 'missing exposure marker: ' + marker);
+  }
+  assert.match(gameScript, /version:5/);
+  assert.match(gameScript, /P\.wetness=isFinite\(d\.P\.wetness\)/);
 });
