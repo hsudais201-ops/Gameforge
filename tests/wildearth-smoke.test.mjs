@@ -78,3 +78,11 @@ test('control preferences and dodge action are wired', () => {
     assert.ok(gameScript.includes(marker), 'missing control/dodge marker: ' + marker);
   }
 });
+
+test('player condition states are exposed through an accessible HUD indicator', () => {
+  assert.match(html, /id="statusEffects"/);
+  assert.ok(gameScript.includes("statuses.push('CRITICAL HEALTH')"));
+  assert.ok(gameScript.includes("statuses.push('STARVING')"));
+  assert.ok(gameScript.includes("statuses.push('EXHAUSTED')"));
+  assert.ok(gameScript.includes("statuses.push('DODGING')"));
+});
