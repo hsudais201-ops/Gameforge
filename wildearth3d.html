@@ -156,7 +156,7 @@ function applyRenderProfile(level){
   renderer.shadowMap.enabled=profile.shadows;
   sun.castShadow=profile.shadows;
   if(profile.shadows){
-    if(sun.shadow.mapSize.width!==profile.shadowSize||sun.shadow.mapSize.height!==profile.shadowSize){
+    if(sun.shadow.mapSize.x!==profile.shadowSize||sun.shadow.mapSize.y!==profile.shadowSize){
       sun.shadow.mapSize.set(profile.shadowSize,profile.shadowSize);
       sun.shadow.map=null;
     }
