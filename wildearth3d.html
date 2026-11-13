@@ -1193,8 +1193,8 @@ function landSpot(minFromPlayer){
   }
   return {x:30,z:30};
 }
-function wildRouteScore(c,dx,dz){
-  var tx=c.x+dx*6,tz=c.z+dz*6,ty=heightAt(tx,tz),score=dx*1.4+dz*1.4;
+function wildRouteScore(c,dx,dz,awayX,awayZ){
+  var tx=c.x+dx*6,tz=c.z+dz*6,ty=heightAt(tx,tz),score=(dx*awayX+dz*awayZ)*3.5;
   if(ty<WATER+0.35||ty>14||Math.abs(tx)>HALF-9||Math.abs(tz)>HALF-9)return -100;
   for(var i=0;i<walls.length;i++){
     var w=walls[i];if(w.t==='floor')continue;
@@ -1210,7 +1210,7 @@ function wildEscapeDirection(c,awayX,awayZ){
   var base=Math.atan2(awayX,awayZ),bestX=awayX,bestZ=awayZ,best=-999;
   for(var k=-2;k<=2;k++){
     var a=base+k*0.48,dx=Math.sin(a),dz=Math.cos(a);
-    var score=wildRouteScore(c,dx,dz)+(Math.random()*0.12);
+    var score=wildRouteScore(c,dx,dz,awayX,awayZ)+(Math.random()*0.12);
     if(score>best){best=score;bestX=dx;bestZ=dz}
   }
   var len=Math.hypot(bestX,bestZ)||1;
