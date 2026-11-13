@@ -172,3 +172,12 @@ test('Wraith variants have distinct resistance and vulnerability profiles', () =
     assert.ok(gameScript.includes(marker), 'missing enemy resistance marker: ' + marker);
   }
 });
+
+
+test('gamepad support maps sticks, camera, combat actions, and hotbar navigation', () => {
+  for (const marker of ['function readGamepad(dt)', 'navigator.getGamepads()', 'gamepadMove.x=axis(0)', 'cam.yaw-=axis(2)', 'doGather()', 'startDodge()', 'doUse()', 'doCatch()', 'gamepadMove.x+gamepadMove.y']) {
+    assert.ok(gameScript.includes(marker), 'missing gamepad marker: ' + marker);
+  }
+  assert.match(gameScript, /current\[12\].*hotSel/);
+  assert.match(gameScript, /current\[13\].*hotSel/);
+});
