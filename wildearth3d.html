@@ -1002,10 +1002,6 @@ function renderInv(force){
     var mv=moveFrom>=0?slots[moveFrom]:null;
     $('bagInfo').textContent=mv?'Moving '+ITEMS[mv.id].n+'. Tap another slot to place or stack it.':'Tap an item, then tap a slot to move or stack it. The first 9 slots are your hotbar. Tap an item, then tap another slot to move, swap or stack it.';
     $('bagDiscard').style.display=mv?'':'none';
-    var preview=mv;
-    $('itemTitle').textContent=preview?ITEMS[preview.id].n:'Nothing selected';
-    $('itemCount').textContent=preview?'Stack size: '+preview.n+' · '+(preview.n===1?'item':'items'):'Select an item to inspect its stack';
-    $('itemPreview').querySelector('.previewIcon').innerHTML=preview?(ICON[preview.id]||ICON.stone):'◇';
     $('quickMove').disabled=!mv;
     $('quickDiscard').disabled=!mv;
     $('splitStack').disabled=!(mv&&mv.n>1);
