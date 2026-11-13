@@ -1255,8 +1255,9 @@ function wildEscapeDirection(c,awayX,awayZ){
 }
 function spawnWild(fsp,fx,fz,isJuvenile,parent){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,ageSeconds:0,growthScale:isJuvenile?0.72:1,parent:parent||null,young:null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,hp:sp===4||sp===7?72:(sp===3?110:90),maxHp:sp===4||sp===7?72:(sp===3?110:90),hitTimer:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,ageSeconds:0,growthScale:isJuvenile?0.72:1,parent:parent||null,young:null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
   if(c.isJuvenile)m.g.scale.setScalar(0.72);
+  c.hp=c.maxHp*(c.isJuvenile?0.72:1);
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
   if(parent)parent.young=c;
   return c;
@@ -1524,7 +1525,12 @@ function doGather(){
   P.cool=axe?0.42:0.55;P.swing=0.45;
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5);
-  if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));w.hp-=weaponLevel;w.hit=0.25;pop(w.x,w.y+2.6,w.z,'hit','#c9a8ff');return}
+  if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));w.hp-=weaponLevel;w.hit=0.25;pop(w.x,w.y+2.6,w.z,'-'+weaponLevel,'#c9a8ff');return}
+  var prey=nearestOf(wild,P.x,P.z,3.4,function(o){if(o.held)return false;var dx=o.x-P.x,dz=o.z-P.z,l=Math.hypot(dx,dz)||1;return (dx*fx+dz*fz)/l>0.35;});
+  if(prey){var huntWeapon=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var preyDamage=12+huntWeapon*7;prey.hp=Math.max(0,prey.hp-preyDamage);prey.hitTimer=0.22;prey.flee=Math.max(prey.flee,2.6);prey.state='flee';prey.alertT=1.2;P.face=Math.atan2(prey.x-P.x,prey.z-P.z);burst(prey.x,prey.y+1.1,prey.z,SPECIES[prey.sp].c,5);pop(prey.x,prey.y+2.1,prey.z,'-'+preyDamage,'#ffd08a');
+    if(prey.hp<=0){var preyIndex=wild.indexOf(prey);if(prey.parent)prey.parent.young=null;if(prey.young)prey.young.parent=null;scene.remove(prey.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[prey.sp].w,prey.sp===3?3:2,prey.x,prey.y+1.2,prey.z,'#d8c6a1');say(SPECIES[prey.sp].n+' has been defeated.');}
+    return;
+  }
   var r=nearestOf(res,P.x,P.z,4.6,function(o){
     if(o.dead>0)return false;
     var dx=o.x-P.x,dz=o.z-P.z,l=Math.hypot(dx,dz)||1;
@@ -1825,6 +1831,7 @@ function update(dt){
   for(i=0;i<wild.length;i++){
     var c=wild[i],moving=false,nxw,nzw;
     if(c.held)continue;
+    if(c.hp<c.maxHp&&c.hitTimer<=0){var recovery=c.state==='rest'?2.4:(c.state==='graze'?1.2:0.45);c.hp=Math.min(c.maxHp,c.hp+recovery*dt);}
     if(c.isJuvenile){c.ageSeconds=(c.ageSeconds||0)+dt;c.growthScale=0.72+0.28*clamp(c.ageSeconds/720,0,1);if(c.growthScale>=1){c.isJuvenile=false;c.parent=null;c.boldness=Math.max(c.boldness||0,0.28);c.sociability=Math.min(c.sociability||0.7,0.82);}}
     if(c.young&&wild.indexOf(c.young)<0)c.young=null;
     var pdx=c.x-P.x,pdz=c.z-P.z,pdist=Math.hypot(pdx,pdz)||0.001;
@@ -2115,8 +2122,9 @@ function update(dt){
       if(s.windup===0){
         var struckWild=s.attackTarget;s.attackTarget=null;
         if(struckWild&&wild.indexOf(struckWild)>=0&&Math.hypot(struckWild.x-s.x,struckWild.z-s.z)<2.6){
-          struckWild.flee=Math.max(struckWild.flee,3.2+Math.random()*1.4);struckWild.state='flee';struckWild.alertT=1.4;struckWild.threatX=s.x;struckWild.threatZ=s.z;
-          s.attackCd=2.1;pop(struckWild.x,struckWild.y+1.8,struckWild.z,'Wildlife startled','#c9a8ff');
+          struckWild.hp=Math.max(0,struckWild.hp-14);struckWild.hitTimer=0.22;struckWild.flee=Math.max(struckWild.flee,3.2+Math.random()*1.4);struckWild.state='flee';struckWild.alertT=1.4;struckWild.threatX=s.x;struckWild.threatZ=s.z;
+          s.attackCd=2.1;pop(struckWild.x,struckWild.y+1.8,struckWild.z,'Wraith -14','#c9a8ff');
+          if(struckWild.hp<=0){var preyIndex=wild.indexOf(struckWild);if(struckWild.parent)struckWild.parent.young=null;if(struckWild.young)struckWild.young.parent=null;scene.remove(struckWild.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[struckWild.sp].w,1,struckWild.x,struckWild.y+1,struckWild.z,'#b8a6d8');pop(struckWild.x,struckWild.y+2,struckWild.z,'Wildlife lost','#c9a8ff');}
         }else if(!struckWild&&Math.hypot(P.x-s.x,P.z-s.z)<2.35&&!safe){
           var armor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);
           P.hp-=Math.min(18,9+nights*0.65)*armor;
@@ -2247,10 +2255,13 @@ $('respawnNow').addEventListener('click',function(){if(dead)finishRespawn();});
 function animCreature(c,dt){
   c.walk+=dt*(4+c.speed*8);
   c.attackAnim=Math.max(0,(c.attackAnim||0)-dt);
+  c.hitTimer=Math.max(0,(c.hitTimer||0)-dt);
   var amp=c.speed*0.7,m=c.m,attack=c.attackAnim>0?Math.sin((1-c.attackAnim/0.38)*Math.PI):0;
   var rainAffinity=[0.8,0.15,0.25,0.9,0.1,0.85,0.2,0.75][c.sp]||0.2;
   var rainPose=clamp(rainLevel*rainAffinity,0,1);
-  if(c.isJuvenile)m.g.scale.setScalar(c.growthScale||0.72);else m.g.scale.setScalar(1);
+  var creatureScale=c.isJuvenile?(c.growthScale||0.72):1;
+  var damagePulse=c.hitTimer>0?1+Math.sin((c.hitTimer/0.22)*Math.PI)*0.13:1;
+  m.g.scale.setScalar(creatureScale*damagePulse);
   m.g.position.set(c.x,c.y,c.z);m.g.rotation.y=c.yaw;
   for(var i=0;i<4;i++)m.legs[i].rotation.x=Math.sin(c.walk*1.6+(i===0||i===3?0:Math.PI))*amp+(attack>0.4&&i%2===0?-attack*0.32:0);
   m.g.position.y+=Math.abs(Math.sin(c.walk*1.6))*0.06*c.speed+attack*0.08-rainPose*0.035;
