@@ -3,32 +3,45 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../wildearth3d.html', import.meta.url), 'utf8');
-const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)].map(m => m[1]).filter(s => s.trim());
+const scriptMatch = html.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+const gameScript = scriptMatch?.[1] ?? '';
 
 test('game script parses without syntax errors', () => {
-  assert.ok(scripts.length > 0, 'expected the game entry script');
-  for (const source of scripts) assert.doesNotThrow(() => new Function(source));
+  assert.ok(gameScript.trim(), 'expected the game entry script');
+  assert.doesNotThrow(() => new Function(gameScript));
 });
 
 test('startup and menu entry points remain present', () => {
   for (const id of ['c', 'mainMenu', 'worldSelect', 'playSelected', 'createWorld', 'settingsPanel', 'pausePanel']) {
     assert.match(html, new RegExp('id="' + id + '"'), 'missing required UI node: ' + id);
   }
-  assert.match(html, /requestAnimationFrame\\(frame\\)/, 'animation loop must be started');
-  assert.match(html, /updateWorldStreaming\\(true\\)/, 'world streaming must initialize');
+  assert.match(gameScript, /requestAnimationFrame\(frame\)/, 'animation loop must be started');
+  assert.match(gameScript, /updateWorldStreaming\(true\)/, 'world streaming must initialize');
+});
+
+test('seeded random generator reproduces the same sequence', () => {
+  const declaration = gameScript.match(/function rng\(a\)\{[\s\S]*?\}\nvar R=/)?.[0]?.replace(/\nvar R=$/, '');
+  assert.ok(declaration, 'seeded RNG declaration must exist');
+  const rng = new Function(declaration + '; return rng;')();
+  const first = rng(12345), second = rng(12345), different = rng(54321);
+  const sequenceA = [first(), first(), first(), first()];
+  const sequenceB = [second(), second(), second(), second()];
+  const sequenceC = [different(), different(), different(), different()];
+  assert.deepEqual(sequenceA, sequenceB);
+  assert.notDeepEqual(sequenceA, sequenceC);
 });
 
 test('world seed is stored per world and can be overridden for reproduction', () => {
-  assert.match(html, /seedFromString/);
-  assert.match(html, /worldSeed/);
-  assert.match(html, /URLSearchParams\\(location\\.search\\)/);
-  assert.match(html, /R=rng\\(worldSeed\\)/);
-  assert.match(html, /newWorldSeed/);
+  assert.match(gameScript, /seedFromString/);
+  assert.match(gameScript, /worldSeed/);
+  assert.match(gameScript, /URLSearchParams\(location\.search\)/);
+  assert.match(gameScript, /R=rng\(worldSeed\)/);
+  assert.match(html, /id="newWorldSeed"/);
 });
 
 test('save compatibility keeps legacy inventory migration paths', () => {
-  assert.match(html, /version:4/);
-  assert.match(html, /d\\.slots\\.length===30/);
-  assert.match(html, /mfwilds3d_v2/);
-  assert.match(html, /mfwilds3d_v1/);
+  assert.match(gameScript, /version:4/);
+  assert.match(gameScript, /d\.slots\.length===30/);
+  assert.match(gameScript, /mfwilds3d_v2/);
+  assert.match(gameScript, /mfwilds3d_v1/);
 });
