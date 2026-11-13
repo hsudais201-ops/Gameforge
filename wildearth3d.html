@@ -135,10 +135,22 @@
   .settingRow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px}
   .settingRow select,.settingRow button{background:#1d3a2a;color:#fff;border:1px solid #ffffff44;border-radius:8px;padding:8px;font:inherit;max-width:155px}
   #settingsPanel .settingNote{font-size:11px;opacity:.7;line-height:1.4}
+
+  #mainMenu{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(115deg,#07110deF,#0b1b15d9),radial-gradient(ellipse at 70% 30%,#5e8055 0%,transparent 55%);backdrop-filter:blur(8px);overflow:auto}
+  #mainMenu[hidden]{display:none}
+  .menuCard{width:min(920px,96vw);max-height:94dvh;overflow:auto;box-sizing:border-box;padding:clamp(16px,3vw,30px);border:1px solid #a6c09b66;border-radius:18px;background:linear-gradient(145deg,#1a3025f5,#0c1813f7);box-shadow:0 24px 90px #000b}
+  .menuBrand{font-size:clamp(30px,6vw,54px);font-weight:950;letter-spacing:.12em;color:#e9f2df;text-shadow:0 5px 22px #7a9c54aa}.menuTag{color:#b5c9ad;font-size:12px;letter-spacing:.2em;margin:4px 0 22px}
+  .menuGrid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}.menuPanel{padding:15px;border:1px solid #a6c09b35;border-radius:12px;background:#07140e77}.menuPanel h2{font-size:15px;margin:0 0 12px;color:#e8f0dd}.menuPanel p{font-size:12px;color:#b8c8b7;line-height:1.5}
+  .menuButton{width:100%;padding:12px 14px;margin:5px 0;border:1px solid #9caf8c;border-radius:8px;background:linear-gradient(#607d4d,#334d32);color:#fff;font-weight:750;font-size:14px;text-align:left;cursor:pointer}.menuButton.primary{background:linear-gradient(#c49a54,#805a2d);border-color:#e7c37a;color:#fff}.menuButton:active{filter:brightness(1.2)}
+  .menuField{width:100%;box-sizing:border-box;padding:11px;border:1px solid #718d77;border-radius:7px;background:#0c1a13;color:#f3f5eb;font:14px system-ui;margin:5px 0 10px}.worldChoice{display:flex;gap:8px;align-items:center;margin:7px 0;padding:9px;border:1px solid #ffffff22;border-radius:8px;background:#102218}.worldChoice select{flex:1;min-width:0}.charChoices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.charChoice{padding:10px 7px;border:1px solid #ffffff35;border-radius:8px;background:#203629;color:#fff;text-align:center;font-size:12px}.charChoice.active{outline:2px solid #e7c37a;background:#526b3e}.charSwatch{display:block;width:34px;height:34px;border-radius:50%;margin:0 auto 6px;border:2px solid #ffffff88}
+  @media(max-width:650px){#mainMenu{align-items:flex-start;padding:9px}.menuGrid{grid-template-columns:1fr;gap:9px}.menuCard{max-height:98dvh;padding:15px}.menuTag{margin-bottom:12px}.menuPanel{padding:11px}}
+
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="mainMenu"><div class="menuCard"><div class="menuBrand">WILDEARTH</div><div class="menuTag">SURVIVE · EXPLORE · BUILD · DISCOVER</div><div class="menuGrid"><section class="menuPanel"><h2>YOUR WORLD</h2><div class="worldChoice"><label for="worldSelect">Selected world</label><select id="worldSelect" class="menuField" aria-label="Select world"></select></div><button id="playSelected" class="menuButton primary">▶ Play Selected</button><button id="createWorldToggle" class="menuButton">＋ Create New World</button><div id="createWorldForm" hidden><input id="newWorldName" class="menuField" maxlength="28" placeholder="World name (e.g. New Frontier)"><button id="createWorld" class="menuButton primary">Create World & Play</button></div><p>Your worlds are saved separately on this device. Select a world to continue its own progress.</p></section><section class="menuPanel"><h2>CHOOSE YOUR CHARACTER</h2><div class="charChoices" id="charChoices"><button class="charChoice" data-char="0"><span class="charSwatch" style="background:#527b70"></span>Explorer</button><button class="charChoice" data-char="1"><span class="charSwatch" style="background:#8a633e"></span>Ranger</button><button class="charChoice" data-char="2"><span class="charSwatch" style="background:#52658e"></span>Pathfinder</button><button class="charChoice" data-char="3"><span class="charSwatch" style="background:#8b4c4c"></span>Survivor</button></div><p>Choose a visual outfit tint. You can change your character here at any time; your world progress stays safe.</p></section></div></div></div>
+
 <div id="hud">
   <div class="row">
     <span class="pill">Health<span class="bar"><i id="hp" style="background:#e8574f"></i></span></span>
@@ -216,7 +228,15 @@ var $=function(id){
 if(typeof THREE==='undefined'){$('err').style.display='flex';return}
 
 var isMobile=window.matchMedia('(pointer:coarse)').matches;
-var WORLD=300,HALF=WORLD/2,WATER=-1.2,DAY=240,SAVE_KEY='mfwilds3d_v2',OLD_KEY='mfwilds3d_v1';
+var WORLD=300,HALF=WORLD/2,WATER=-1.2,DAY=240,OLD_KEY='mfwilds3d_v1';
+var WORLD_LIST_KEY='mfwilds3d_world_list_v1',SELECTED_WORLD_KEY='mfwilds3d_selected_world_v1',CHARACTER_KEY='mfwilds3d_character_v1';
+var worldList=[];try{worldList=JSON.parse(localStorage.getItem(WORLD_LIST_KEY)||'[]');if(!Array.isArray(worldList))worldList=[];}catch(e){worldList=[];}
+if(!worldList.length)worldList=[{id:'world-1',name:'My First World',created:Date.now()}];
+var selectedWorldId=localStorage.getItem(SELECTED_WORLD_KEY)||worldList[0].id;
+if(!worldList.some(function(w){return w.id===selectedWorldId;}))selectedWorldId=worldList[0].id;
+function persistWorldList(){localStorage.setItem(WORLD_LIST_KEY,JSON.stringify(worldList));localStorage.setItem(SELECTED_WORLD_KEY,selectedWorldId);}
+persistWorldList();
+var SAVE_KEY='mfwilds3d_world_'+selectedWorldId;
 var vw=window.innerWidth,vh=window.innerHeight;
 
 function clamp(v,a,b){return v<a?a:v>b?b:v}
@@ -745,6 +765,10 @@ function makePlayer(){
   return {g:g,hips:hips,legL:legL,legR:legR,armL:armL,armR:armR,head:head,torso:torso,pack:pack,scarfTail:scarfTail,axe:axe};
 }
 var player=makePlayer();scene.add(player.g);
+var characterStyles=[0x527b70,0x8a633e,0x52658e,0x8b4c4c],selectedCharacter=0;
+try{selectedCharacter=clamp(parseInt(localStorage.getItem(CHARACTER_KEY)||'0',10)||0,0,3);}catch(e){}
+function applyCharacterStyle(index){selectedCharacter=clamp(index|0,0,3);var tint=new THREE.Color(characterStyles[selectedCharacter]);player.g.traverse(function(o){if(!o.isMesh||!o.material||!o.material.color)return;if(o.userData.baseColor===undefined)o.userData.baseColor=o.material.color.getHex();var base=new THREE.Color(o.userData.baseColor);base.lerp(tint,0.18);o.material.color.copy(base);});try{localStorage.setItem(CHARACTER_KEY,String(selectedCharacter));}catch(e){}var buttons=document.querySelectorAll('.charChoice');buttons.forEach(function(b){b.classList.toggle('active',+b.getAttribute('data-char')===selectedCharacter);});}
+applyCharacterStyle(selectedCharacter);
 
 var SPECIES=[
   {n:'Fluffo',c:0x8fd16a,w:'wood',rough:1,r:'common'},
@@ -1118,6 +1142,7 @@ function load(){
     return true;
   }catch(e){return false}
 }
+if(!localStorage.getItem(SAVE_KEY)&&selectedWorldId===worldList[0].id){try{var legacy=localStorage.getItem('mfwilds3d_v2');if(legacy)localStorage.setItem(SAVE_KEY,legacy);}catch(e){}}
 var loaded=load();
 /* debug views: index.html#zoo shows every creature, index.html#night starts at night */
 if(!loaded){addItem('wood',5);addItem('fiber',2);addItem('ball',5)}
@@ -1133,6 +1158,17 @@ if(location.hash==='#chop'){
 if(location.hash==='#craft'||location.hash==='#chop')window.__dbg=Object.assign(window.__dbg||{},{falls:falls,P:P,slots:slots,walls:walls,fires:fires,beds:beds});
 for(var wi=0;wi<(isMobile?28:40);wi++)spawnWild();
 updateWorldStreaming(true);
+
+
+/* ---------- title menu / world selection ---------- */
+var mainMenu=$('mainMenu'),menuOpen=true;
+function refreshWorldMenu(){var sel=$('worldSelect');sel.innerHTML='';worldList.forEach(function(w){var op=document.createElement('option');op.value=w.id;op.textContent=w.name;sel.appendChild(op);});sel.value=selectedWorldId;}
+refreshWorldMenu();
+document.querySelectorAll('.charChoice').forEach(function(b){b.addEventListener('click',function(){applyCharacterStyle(+b.getAttribute('data-char'));});});
+$('worldSelect').addEventListener('change',function(){selectedWorldId=this.value;persistWorldList();});
+$('playSelected').addEventListener('click',function(){selectedWorldId=$('worldSelect').value;persistWorldList();mainMenu.hidden=true;menuOpen=false;say('Welcome to '+(worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0]).name+'. Your adventure continues.',4);});
+$('createWorldToggle').addEventListener('click',function(){$('createWorldForm').hidden=!$('createWorldForm').hidden;if(!$('createWorldForm').hidden)$('newWorldName').focus();});
+$('createWorld').addEventListener('click',function(){var name=$('newWorldName').value.trim().slice(0,28)||'New World '+(worldList.length+1);var id='world-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);worldList.push({id:id,name:name,created:Date.now()});selectedWorldId=id;persistWorldList();try{localStorage.removeItem('mfwilds3d_v2');}catch(e){}location.reload();});
 
 /* ---------- input ---------- */
 var keys={},held={gather:false},joy={x:0,y:0};
@@ -1779,7 +1815,7 @@ function frame(now){
   if(!pageActive)return;
   try{
     var dt=Math.min(0.05,(now-last)/1000);last=now;
-    update(dt);updateCamera();updateFloats(dt);
+    if(!menuOpen)update(dt);updateCamera();if(!menuOpen)updateFloats(dt);
     renderer.render(scene,camera);
     requestAnimationFrame(frame);
   }catch(error){
