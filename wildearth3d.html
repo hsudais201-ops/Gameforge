@@ -21,22 +21,29 @@
   .act:active{background:#2f6f4f}
   #hotwrap{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(max(18px,env(safe-area-inset-bottom)) + 148px);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:5}
   #hotname{background:rgba(8,16,12,.62);padding:3px 10px;border-radius:999px;font-size:11px;white-space:nowrap;pointer-events:none}
-  #hotbar{display:flex;gap:6px}
+  #hotbar{display:flex;gap:4px;max-width:96vw}
+  #hotbar .slot{width:clamp(31px,calc((96vw - 40px)/9),44px);height:clamp(31px,calc((96vw - 40px)/9),44px);border-radius:5px;background:linear-gradient(145deg,rgba(75,82,79,.94),rgba(29,35,32,.96));border:2px solid #89918b;box-shadow:inset 1px 1px #ffffff22,inset -1px -1px #0008}
+  #hotbar .slot.on{border:2px solid #f5e28a;background:linear-gradient(145deg,#65745b,#344b38);box-shadow:0 0 0 2px #f5e28a55,inset 1px 1px #ffffff33}
+  #hotbar .slot svg{width:78%;height:78%}
   #target{background:rgba(8,16,12,.72);padding:3px 10px;border-radius:999px;font-size:11px;white-space:nowrap;pointer-events:none;font-weight:600}
-  .slot{width:46px;height:46px;box-sizing:border-box;border-radius:10px;background:rgba(8,16,12,.7);border:2px solid rgba(255,255,255,.22);position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
-  .slot.hot{border-color:rgba(255,255,255,.4)}
-  .slot.on{border-color:#9be3b8;background:rgba(47,111,79,.78)}
+  .slot{width:40px;height:40px;box-sizing:border-box;border-radius:5px;background:linear-gradient(145deg,#626b65,#333b36);border:2px solid #89918b;box-shadow:inset 1px 1px #ffffff22,inset -1px -1px #0008;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
+  .slot.hot{border-color:#aab4ad}
+  .slot.on{border-color:#f5e28a;background:linear-gradient(145deg,#65745b,#344b38);box-shadow:0 0 0 1px #f5e28a55,inset 1px 1px #ffffff33}
   .slot.mv{border-color:#ffe58a;background:rgba(120,96,20,.8)}
   .slot svg{width:28px;height:28px;pointer-events:none}
   .slot b{position:absolute;right:3px;bottom:1px;font:700 11px system-ui,sans-serif;text-shadow:0 1px 2px #000;pointer-events:none}
   .slot i{position:absolute;left:4px;top:1px;font:600 9px system-ui,sans-serif;opacity:.75;font-style:normal;pointer-events:none}
   @media (min-width:700px){#hotwrap{bottom:max(14px,env(safe-area-inset-bottom))}}
-  #bag{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,372px);max-height:calc(100% - 24px);overflow-y:auto;box-sizing:border-box;background:rgba(10,20,15,.95);border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:12px;z-index:20;display:flex;flex-direction:column;gap:10px}
+  #bag{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(96vw,448px);max-height:92vh;overflow-y:auto;box-sizing:border-box;background:linear-gradient(145deg,rgba(72,79,73,.98),rgba(37,43,39,.99));border:2px solid #9ba59d;border-radius:7px;padding:12px;z-index:20;display:flex;flex-direction:column;gap:9px;box-shadow:0 16px 48px #000b,inset 0 0 0 1px #ffffff18}
   #bag[hidden]{display:none}
   .bagTop{display:flex;align-items:center;justify-content:space-between;gap:8px}
   #bagInfo{font-size:11px;opacity:.75}
-  #bagGrid{display:grid;grid-template-columns:repeat(6,46px);gap:6px;justify-content:center}
-  #bag button{background:rgba(30,60,45,.9);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:8px 10px;font:12px system-ui,sans-serif;text-align:left}
+  .invLabel{font-size:11px;font-weight:700;letter-spacing:.04em;color:#e4e9e4;text-shadow:0 1px 2px #000;margin:2px 0}
+  #bagGrid,#bagHotbar{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;justify-content:center;width:100%}
+  #bagGrid .slot,#bagHotbar .slot{width:100%;height:auto;aspect-ratio:1;min-width:0}
+  #bagGrid .slot svg,#bagHotbar .slot svg{width:78%;height:78%}
+  #bagHotbar{padding-top:7px;border-top:2px solid #202722}
+  #bag button{background:linear-gradient(#59665d,#354239);color:#fff;border:1px solid #aab5ac;border-radius:4px;padding:8px 10px;font:12px system-ui,sans-serif;text-align:left}
   #bag button:active{background:#2f6f4f}
   #bag button.no{opacity:.45}
   #bag small{opacity:.7;margin-left:6px}
@@ -72,7 +79,10 @@
 <div id="bag" hidden>
   <div class="bagTop"><strong>Backpack</strong><button id="bagClose">Close</button></div>
   <div id="bagInfo"></div>
+  <div class="invLabel">Inventory</div>
   <div id="bagGrid"></div>
+  <div class="invLabel">Hotbar</div>
+  <div id="bagHotbar"></div>
   <button id="bagDiscard" style="display:none">Discard this stack</button>
   <div id="bagTeam"></div>
   <div class="bagCraft"><strong>Craft</strong><div id="craftList"></div></div>
@@ -788,7 +798,7 @@ function makeBed(){
 
 /* ---------- state ---------- */
 var P={x:0,y:0,z:4,hp:100,food:100,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0};
-var NSLOTS=30,HOT=6,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
+var NSLOTS=36,HOT=9,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
 var ITEMS={
   wood:{n:'Wood',max:50},stone:{n:'Stone',max:50},fiber:{n:'Fiber',max:50},berry:{n:'Berry',max:20},
   copperOre:{n:'Copper Ore',max:30},ironOre:{n:'Iron Ore',max:30},crystal:{n:'Lumen Crystal',max:20},tinOre:{n:'Tin Ore',max:30},goldOre:{n:'Gold Ore',max:20},copperbar:{n:'Copper Ingot',max:30},ironbar:{n:'Iron Ingot',max:30},tinbar:{n:'Tin Ingot',max:30},goldbar:{n:'Gold Ingot',max:20},crystalcore:{n:'Lumen Core',max:10},copperpick:{n:'Copper Pickaxe',max:1},ironpick:{n:'Iron Pickaxe',max:1},coppersword:{n:'Copper Sword',max:1},ironsword:{n:'Iron Sword',max:1},copperarmor:{n:'Copper Armor',max:1},ironarmor:{n:'Iron Armor',max:1},tonic:{n:'Vitality Tonic',max:8},
@@ -880,10 +890,10 @@ function renderInv(force){
   }
   $('hotname').textContent=cur?ITEMS[cur.id].n+note:'Empty slot';
   if(bagOpen){
-    var g='';for(i=0;i<NSLOTS;i++)g+=slotHtml(i);
-    $('bagGrid').innerHTML=g;
+    var g='',bh='';for(i=HOT;i<NSLOTS;i++)g+=slotHtml(i);for(i=0;i<HOT;i++)bh+=slotHtml(i);
+    $('bagGrid').innerHTML=g;$('bagHotbar').innerHTML=bh;
     var mv=moveFrom>=0?slots[moveFrom]:null;
-    $('bagInfo').textContent=mv?'Moving '+ITEMS[mv.id].n+'. Tap another slot to place or stack it.':'Tap an item, then tap a slot to move or stack it. Slots 1-6 are your hotbar.';
+    $('bagInfo').textContent=mv?'Moving '+ITEMS[mv.id].n+'. Tap another slot to place or stack it.':'Tap an item, then tap a slot to move or stack it. The first 9 slots are your hotbar. Tap an item, then tap another slot to move, swap or stack it.';
     $('bagDiscard').style.display=mv?'':'none';
     var cnt={},tn=0;
     team.forEach(function(t){cnt[t.sp]=(cnt[t.sp]||0)+1;tn++});
@@ -1004,7 +1014,7 @@ window.addEventListener('keydown',function(e){
   else if(e.code==='KeyQ'){hotSel=(hotSel+1)%HOT;renderInv(true)}
   else if(e.code==='KeyI'||e.code==='KeyC'||e.code==='Tab')toggleBag();
   else if(e.code==='Escape'&&bagOpen)toggleBag();
-  else if(/^Digit[1-6]$/.test(e.code)){hotSel=+e.code.slice(5)-1;renderInv(true)}
+  else if(/^Digit[1-9]$/.test(e.code)){hotSel=+e.code.slice(5)-1;renderInv(true)}
 });
 window.addEventListener('keyup',function(e){keys[e.code]=false;if(e.code==='Space')held.gather=false});
 
