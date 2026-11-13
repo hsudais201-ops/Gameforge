@@ -134,7 +134,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 106. Add original ambient, weather, creature, and UI sound effects.
 - [ ] 107. Add subtitle and notification duration settings.
 - [x] 108. Add scalable UI text and high-contrast mode.
-- [ ] 109. Add controller/gamepad navigation.
+- [x] 109. Add controller/gamepad navigation.
 - [ ] 110. Add localization-ready text tables.
 
 ## L. Performance, QA, and release
@@ -179,6 +179,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Creature care: wildlife now has hunger needs and species-specific preferred foods. Feeding compatible berries or treats reduces hunger and builds trust; trust improves capture odds and is visible in the nearby-creature HUD.
 
 - Combat refinement: melee hits now require a forward-facing weapon arc for wildlife and Wraiths, with visible hit bursts and numeric confirmation. Wraith Brutes resist weapon damage while Stalkers are more vulnerable; Shade remains baseline.
+
+- Controller support: added Gamepad API polling with left-stick movement, right-stick camera look, face-button gather/dodge/use/catch actions, and shoulder/D-pad hotbar selection. Controller connection and disconnection are announced.
 
 ## Verification policy
 Source-level syntax and structural checks are not substitutes for playing the game. Browser, mobile, performance, and save-migration tests remain open until actually run on target devices.
