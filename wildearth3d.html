@@ -85,6 +85,9 @@ var $=function(id){return document.getElementById(id)};
 if(typeof THREE==='undefined'){$('err').style.display='flex';return}
 
 var isMobile=window.matchMedia('(pointer:coarse)').matches;
+var deviceMemory=navigator.deviceMemory||4;
+var cpuCores=navigator.hardwareConcurrency||4;
+var lowMemoryDevice=deviceMemory<=4||cpuCores<=4;
 var WORLD=300,HALF=WORLD/2,WATER=-1.2,DAY=240,SAVE_KEY='mfwilds3d_v2',OLD_KEY='mfwilds3d_v1';
 var vw=window.innerWidth,vh=window.innerHeight;
 
@@ -112,8 +115,8 @@ function heightAt(x,z){
 
 /* ---------- renderer / scene ---------- */
 var cv=$('c');
-var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!isMobile,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,isMobile?1.5:2));
+var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!isMobile&&!lowMemoryDevice,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,lowMemoryDevice?1:isMobile?1.25:1.75));
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
 renderer.shadowMap.enabled=true;
@@ -131,11 +134,49 @@ window.addEventListener('resize',resize);resize();
 var hemi=new THREE.HemisphereLight(0xbfd8ff,0x4a5a3a,0.6);scene.add(hemi);
 var sun=new THREE.DirectionalLight(0xfff1d6,1.2);
 sun.castShadow=true;
-sun.shadow.mapSize.set(isMobile?1024:2048,isMobile?1024:2048);
+sun.shadow.mapSize.set(isMobile?512:1024,isMobile?512:1024);
 sun.shadow.camera.left=-45;sun.shadow.camera.right=45;sun.shadow.camera.top=45;sun.shadow.camera.bottom=-45;
-sun.shadow.camera.near=10;sun.shadow.camera.far=190;
+sun.shadow.camera.near=10;sun.shadow.camera.far=150;
 sun.shadow.bias=-0.0005;sun.shadow.normalBias=0.06;
 scene.add(sun);scene.add(sun.target);
+
+/* ---------- adaptive rendering system ---------- */
+var renderProfiles=[
+  {name:'LOW',pixelRatio:0.75,shadows:false,shadowSize:0},
+  {name:'BALANCED',pixelRatio:1,shadows:!isMobile,shadowSize:512},
+  {name:'HIGH',pixelRatio:Math.min(window.devicePixelRatio||1,1.5),shadows:true,shadowSize:1024}
+];
+var renderLevel=lowMemoryDevice?0:(isMobile?1:2);
+var renderStats={frames:0,elapsed:0,slowTime:0,fastTime:0,lastChange:0};
+function applyRenderProfile(level){
+  renderLevel=clamp(level,0,renderProfiles.length-1);
+  var profile=renderProfiles[renderLevel];
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,profile.pixelRatio));
+  renderer.setSize(vw,vh,false);
+  renderer.shadowMap.enabled=profile.shadows;
+  sun.castShadow=profile.shadows;
+  if(profile.shadows){
+    if(sun.shadow.mapSize.width!==profile.shadowSize||sun.shadow.mapSize.height!==profile.shadowSize){
+      sun.shadow.mapSize.set(profile.shadowSize,profile.shadowSize);
+      sun.shadow.map=null;
+    }
+  }else if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
+  renderer.shadowMap.needsUpdate=true;
+  renderStats.lastChange=performance.now();
+}
+function sampleRenderPerformance(dt){
+  renderStats.frames++;renderStats.elapsed+=dt;
+  if(renderStats.elapsed<2.5)return;
+  var fps=renderStats.frames/renderStats.elapsed;
+  renderStats.frames=0;renderStats.elapsed=0;
+  if(fps<38){renderStats.slowTime+=2.5;renderStats.fastTime=0;}
+  else if(fps>56){renderStats.fastTime+=2.5;renderStats.slowTime=0;}
+  else{renderStats.slowTime=Math.max(0,renderStats.slowTime-2.5);renderStats.fastTime=0;}
+  var now=performance.now();
+  if(renderStats.slowTime>=5&&renderLevel>0&&now-renderStats.lastChange>5000){applyRenderProfile(renderLevel-1);renderStats.slowTime=0;}
+  else if(renderStats.fastTime>=12&&renderLevel<2&&!lowMemoryDevice&&now-renderStats.lastChange>12000){applyRenderProfile(renderLevel+1);renderStats.fastTime=0;}
+}
+applyRenderProfile(renderLevel);
 var moon=new THREE.DirectionalLight(0x8aa4ff,0);scene.add(moon);
 var playerLight=new THREE.PointLight(0xffd9a0,0,14,2);scene.add(playerLight);
 var fireLights=[];
@@ -1403,13 +1444,21 @@ function updateFloats(dt){
 }
 
 /* ---------- loop ---------- */
-var last=performance.now();
+var last=performance.now(),pageActive=true;
 function frame(now){
+  if(!pageActive)return;
   var dt=Math.min(0.05,(now-last)/1000);last=now;
   update(dt);updateCamera();updateFloats(dt);
   renderer.render(scene,camera);
+  sampleRenderPerformance(dt);
   requestAnimationFrame(frame);
 }
+document.addEventListener('visibilitychange',function(){
+  pageActive=!document.hidden;
+  if(pageActive){last=performance.now();requestAnimationFrame(frame);}
+});
+cv.addEventListener('webglcontextlost',function(e){e.preventDefault();pageActive=false;$('hint').textContent='Graphics paused. Reload the game if the display does not recover.';$('hint').style.opacity='1';});
+cv.addEventListener('webglcontextrestored',function(){pageActive=true;applyRenderProfile(renderLevel);last=performance.now();requestAnimationFrame(frame);});
 window.addEventListener('beforeunload',save);
 updateHud();
 say(loaded?'Welcome back. Your base was saved.':'Left stick moves. Drag the right side to look. Hold Gather near trees, rocks and bushes. You start with 5 Capture Balls: get near a wild creature and tap Catch to throw one. Open the Bag to craft more.',7);
