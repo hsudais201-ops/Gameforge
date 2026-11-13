@@ -1818,27 +1818,47 @@ function update(dt){
   }
 
   spawnT-=dt;
-  if(nightF>0.55&&wraiths.length<3+nights&&spawnT<=0){
-    spawnT=2.5;
+  var wraithCap=Math.min(6,2+Math.floor(nights/2));
+  if(nightF>0.55&&wraiths.length<wraithCap&&spawnT<=0){
+    spawnT=Math.max(3.5,6-nights*0.12);
     var wa=Math.random()*6.283,wxp=clamp(P.x+Math.cos(wa)*42,-HALF+8,HALF-8),wzp=clamp(P.z+Math.sin(wa)*42,-HALF+8,HALF-8);
     var wg=makeWraith();wg.position.set(wxp,heightAt(wxp,wzp),wzp);scene.add(wg);
-    wraiths.push({g:wg,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:2,hit:0,ph:Math.random()*6});
+    wraiths.push({g:wg,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:2,hit:0,ph:Math.random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
   }
   var safe=nearFire(P.x,P.z,13);
   for(i=wraiths.length-1;i>=0;i--){
     var s=wraiths[i];
-    if(s.hit>0)s.hit-=dt;
+    if(s.hit>0)s.hit=Math.max(0,s.hit-dt);
     if(nightF<0.25)s.hp-=3*dt;
     var sx=P.x-s.x,sz=P.z-s.z,sl=Math.hypot(sx,sz)||1;
-    var swp=Math.min(8.5,5+nights*0.4);
-    s.x+=sx/sl*swp*dt;s.z+=sz/sl*swp*dt;pushOutBoxes(s,0.7);
+    s.attackCd=Math.max(0,(s.attackCd||0)-dt);
+    if(s.windup>0){
+      s.windup=Math.max(0,s.windup-dt);
+      s.x+=s.attackX*2.8*dt;s.z+=s.attackZ*2.8*dt;
+      if(s.windup===0&&sl<2.35&&!safe){
+        var armor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);
+        P.hp-=Math.min(18,9+nights*0.65)*armor;
+        s.attackCd=1.15;
+        pop(P.x,P.y+2.1,P.z,'Wraith strike','#c9a8ff');
+      }
+    }else if(s.lunge>0){
+      s.lunge=Math.max(0,s.lunge-dt);
+      s.x+=s.attackX*4.5*dt;s.z+=s.attackZ*4.5*dt;
+    }else if(sl<2.45&&s.attackCd<=0&&!safe){
+      s.windup=0.42;s.attackX=sx/sl;s.attackZ=sz/sl;
+      s.attackCd=1.7;
+    }else{
+      var swp=Math.min(8.5,5+nights*0.4);
+      s.x+=sx/sl*swp*dt;s.z+=sz/sl*swp*dt;
+    }
+    pushOutBoxes(s,0.7);
     s.y+=(heightAt(s.x,s.z)-s.y)*Math.min(1,dt*8);
-    if(sl<1.8&&!safe){var armor=equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1);P.hp-=14*armor*dt;}
     if(nearFire(s.x,s.z,9))s.hp-=2*dt;
     for(j=0;j<team.length;j++){if(Math.hypot(team[j].x-s.x,team[j].z-s.z)<4)s.hp-=1.5*dt}
     s.g.position.set(s.x,s.y+0.5+Math.sin(clock*3+s.ph)*0.25,s.z);
     s.g.rotation.y=Math.atan2(sx,sz);
-    s.g.scale.setScalar(s.hit>0?1.12:1);
+    var pulse=s.windup>0?1+Math.sin((0.42-s.windup)*24)*0.1:1;
+    s.g.scale.setScalar(s.hit>0?1.12:pulse);
     if(s.hp<=0){
       if(nightF>=0.25)gain('fiber',1,s.x,s.y+2.6,s.z,'#c9a8ff');
       scene.remove(s.g);wraiths.splice(i,1);
