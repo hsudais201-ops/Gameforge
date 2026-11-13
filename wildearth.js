@@ -12,7 +12,7 @@
   const input = { up:false,down:false,left:false,right:false };
   const defaults = () => ({
     player:{x:WORLD.width/2,y:WORLD.height/2,hp:100,hunger:100,thirst:100,stamina:100},
-    bag:{wood:0,stone:0,berries:0,water:0},day:1,time:0,fire:false,
+    bag:{wood:0,stone:0,berries:0,water:0},day:1,time:0.25,fire:false,
     objects:makeWorld(),note:"The forest is quiet. Find resources before nightfall."
   });
   function makeWorld(){
@@ -76,7 +76,7 @@
   $("craft-button").addEventListener("click",craft);
   function pause(){paused=!paused;$("pause-overlay").classList.toggle("hidden",!paused);$("pause-button").textContent=paused?"▶":"Ⅱ";}
   $("pause-button").addEventListener("click",pause);$("resume-button").addEventListener("click",pause);
-  $("restart-button").addEventListener("click",()=>{state=defaults();paused=false;ended=false;$("gameover-overlay").classList.add("hidden");updateHud();save();notify("A new journey begins.");});
+  $("restart-button").addEventListener("click",()=>{state=defaults();player=state.player;paused=false;ended=false;$("gameover-overlay").classList.add("hidden");updateHud();save();notify("A new journey begins.");});
   function endJourney(){ended=true;$("end-title").textContent="The wild wins this time";$("end-copy").textContent="You survived "+Math.max(1,state.day)+" day(s). Start again and prepare better."; $("gameover-overlay").classList.remove("hidden");}
   function update(dt){
     if(paused||ended)return;
