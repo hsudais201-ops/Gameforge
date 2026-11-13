@@ -23,5 +23,5 @@
 <div class="touch-ui"><div class="stick"><button data-move="up">▲</button><div><button data-move="left">◀</button><button data-move="down">▼</button><button data-move="right">▶</button></div></div><div class="touch-actions"><button data-act="gather">GATHER</button><button data-act="eat">EAT</button><button data-act="build">BUILD</button></div></div>
 <div id="pause-screen" class="overlay hidden"><div><small>WILDEARTH</small><h1>Journey paused</h1><button id="resume">RESUME</button></div></div>
 </main>
-<script type="module" src="./wildearth3d.js"></script>
+<script>window.addEventListener("error",function(){var l=document.getElementById("loading"),e=document.getElementById("error");if(l)l.classList.add("hidden");if(e){e.classList.remove("hidden");e.querySelector("p").textContent="The 3D engine could not load. Check your internet connection and WebGL support, then refresh. A 2D fallback is available below.";}});</script><script type="module" src="./wildearth3d.js"></script>
 </body></html>
