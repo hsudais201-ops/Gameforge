@@ -118,12 +118,12 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 92. Add creature, night-survival, Wraith, crafting, and building milestones.
 - [x] 93. Track actual player travel distance.
 - [x] 94. Add 500, 2,500, and 10,000 world-unit exploration milestones.
-- [ ] 95. Add a quest journal with active, completed, and abandoned states.
-- [ ] 96. Add tutorial objectives that teach core systems.
-- [ ] 97. Add named landmarks and discovery notifications.
-- [ ] 98. Add a map with explored-area fog.
-- [ ] 99. Add collectible lore and world-story entries.
-- [ ] 100. Add a multi-stage main quest with clear completion conditions.
+- [x] 95. Add a quest journal with active, completed, and abandoned states.
+- [x] 96. Add tutorial objectives that teach core systems.
+- [x] 97. Add named landmarks and discovery notifications.
+- [x] 98. Add a map with explored-area fog.
+- [x] 99. Add collectible lore and world-story entries.
+- [x] 100. Add a multi-stage main quest with clear completion conditions.
 
 ## K. Interface, audio, and accessibility
 - [x] 101. Add a main menu, pause menu, and settings panel.
@@ -154,7 +154,9 @@ This is the execution tracker for the next development stages. A checked item me
 - Achievement expansion: 12 milestones.
 - Exploration tracking: distance is accumulated from actual player movement and saved per world.
 - Achievement expansion: 15 milestones total, including Wanderer, Pathfinder, and World Roamer.
-- Quest journal: eight automatically progressing objectives, completion alerts, progress bars, and per-world persistence. Step 104 is source-verified; step 95 remains open because active/abandoned quest states are not implemented yet.
+- Quest journal: nine automatically progressing objectives, active/completed/abandoned states, reactivation, completion alerts, progress bars, and per-world persistence.
+- Exploration: 30×30 fog-of-war map grid, five discoverable named landmarks, discovery alerts, and lore entries saved per world.
+- Progression: four field tutorial objectives and a four-stage main story with sequential completion conditions.
 
 ## Verification policy
 Source-level syntax and structural checks are not substitutes for playing the game. Browser, mobile, performance, and save-migration tests remain open until actually run on target devices.
