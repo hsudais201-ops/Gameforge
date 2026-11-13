@@ -1218,7 +1218,7 @@ function wildEscapeDirection(c,awayX,awayZ){
 }
 function spawnWild(fsp,fx,fz){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0};
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
 }
 function addStructure(kind,x,z){
@@ -1861,6 +1861,27 @@ function update(dt){
       if(fd<avoidR){var push=(avoidR-fd)/avoidR;fireX+=fdx/fd*push*2.4;fireZ+=fdz/fd*push*2.4;}
     }
     targetX+=fireX;targetZ+=fireZ;
+    // Periodic terrain sensing keeps wildlife off cliffs and steep slopes without costly per-frame scans.
+    c.terrainT=Math.max(0,(c.terrainT||0)-dt);
+    if(c.terrainT<=0){
+      var slopeStep=3.2,terrainDirs=[[1,0],[-1,0],[0,1],[0,-1]];
+      var lowest=Infinity,highest=-Infinity,lowIndex=0;
+      for(var ti=0;ti<4;ti++){
+        var th=heightAt(c.x+terrainDirs[ti][0]*slopeStep,c.z+terrainDirs[ti][1]*slopeStep);
+        if(th<lowest){lowest=th;lowIndex=ti}if(th>highest)highest=th;
+      }
+      var slopeRange=highest-lowest;
+      c.terrainX=0;c.terrainZ=0;
+      var slopeLimit=[2.6,2.8,2.5,4.2,3.1,2.9,3.4,3.2][c.sp]||2.8;
+      if(slopeRange>slopeLimit){
+        // Rocko is naturally more sure-footed; fleeing creatures retain more route freedom.
+        var steer=clamp((slopeRange-slopeLimit)/3,0,1)*(c.flee>0?1.0:1.8);
+        c.terrainX=terrainDirs[lowIndex][0]*steer;
+        c.terrainZ=terrainDirs[lowIndex][1]*steer;
+      }
+      c.terrainT=rand(0.75,1.15);
+    }
+    targetX+=c.terrainX||0;targetZ+=c.terrainZ||0;
     var accel=c.flee>0?Math.min(1,dt*5.5):Math.min(1,dt*2.6);
     c.vx+=(targetX-c.vx)*accel;c.vz+=(targetZ-c.vz)*accel;
     c.aiT=Math.max(0,(c.aiT||0)-dt);
