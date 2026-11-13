@@ -12,8 +12,8 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 04. Add local save snapshots and a backup save.
 - [x] 05. Recover from a corrupt primary save using the backup.
 - [x] 06. Preserve compatibility with older inventory layouts.
-- [ ] 07. Add automated smoke tests for startup, menu, and world entry.
-- [ ] 08. Add a deterministic test seed for reproducible bug reports.
+- [x] 07. Add automated smoke tests for startup, menu, and world entry.
+- [x] 08. Add a deterministic test seed for reproducible bug reports.
 - [x] 09. Add structured runtime diagnostics and an exportable error report.
 - [ ] 10. Add a versioned save migration test suite.
 
@@ -150,6 +150,8 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
 ## Current verified implementation batch
+- Deterministic world seeds: each world now stores a seed; new worlds accept an optional numeric or text seed, and `?seed=12345` overrides the selected world for reproducible test sessions. Procedural randomness now uses the seeded generator; the seed is included in saves and diagnostic exports.
+- QA foundation: added Node.js smoke tests for script syntax, startup/menu wiring, seeded RNG repeatability, seed override wiring, and legacy save compatibility; GitHub Actions runs them on pushes and pull requests to the prototype branch.
 - Companion commands: Follow / Hold / Defend, saved per world.
 - Achievement expansion: 12 milestones.
 - Exploration tracking: distance is accumulated from actual player movement and saved per world.
