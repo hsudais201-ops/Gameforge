@@ -1192,9 +1192,9 @@ function splitSelectedStack(){if(moveFrom<0||!slots[moveFrom]||slots[moveFrom].n
 function equipSelectedArmor(){if(moveFrom<0||!slots[moveFrom])return;var id=slots[moveFrom].id;if(id!=='ironarmor'&&id!=='copperarmor')return;var prev=equippedArmor;slots[moveFrom]=null;moveFrom=-1;if(prev===id){equippedArmor=null;addItem(id,1);renderInv(true);say('Armor unequipped.');return;}equippedArmor=id;if(prev&&!addItem(prev,1)){equippedArmor=prev;addItem(id,1);say('No room to swap armor.');return;}renderInv(true);say((id==='ironarmor'?'Iron':'Copper')+' armor equipped.');}
 function renderBench(){var h='',counts={},i;for(i=0;i<4;i++){var c=benchCells[i];h+='<button type="button" data-benchcell="'+i+'">'+(c?(ICON[c.id]||ICON.stone)+'<small>'+c.n+'</small>':'+')+'</button>';if(c)counts[c.id]=(counts[c.id]||0)+c.n;}$('benchGrid').innerHTML=h;benchResult=null;for(var key in RECIPES){var req=RECIPES[key],match=true,keys=Object.keys(req);if(keys.length>4)continue;for(i=0;i<keys.length;i++)if((counts[keys[i]]||0)!==req[keys[i]])match=false;for(var have in counts)if(!req[have])match=false;if(match){benchResult=key;break;}}var out=$('benchOutput');out.disabled=!benchResult;out.innerHTML=benchResult?(ICON[benchResult]||'✦'):'◇';$('benchHint').textContent=benchResult?'Ready: '+NAMES[benchResult]+' ×'+(OUT[benchResult]||1)+'. Tap the result to craft.':'Select an item, then tap a grid cell to add one unit. Tap a filled cell to return it.';}
 function benchCellClick(i){var c=benchCells[i];if(moveFrom>=0&&slots[moveFrom]){var src=slots[moveFrom];if(c&&c.id!==src.id){say('This crafting cell already holds another item.');return;}if(benchCells.some(function(v,j){return j!==i&&v&&v.id!==src.id;})){say('The grid can contain up to four different item types.');return;}if(c&&c.n>=ITEMS[src.id].max){say('That crafting cell is full.');return;}src.n--;if(c)c.n++;else benchCells[i]={id:src.id,n:1};if(src.n<=0)slots[moveFrom]=null;moveFrom=-1;renderInv(true);return;}if(c){if(!canAdd(c.id,c.n)){say('Not enough backpack space to return materials.');return;}addItem(c.id,c.n);benchCells[i]=null;renderInv(true);return;}say('Select an item stack first.');}
-function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]||1;if(!canAdd(key,n)){say('Your backpack is full.');return;}addItem(key,n);benchCells=[null,null,null,null];renderInv(true);say('Crafted '+NAMES[key]+'.');}
+function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]||1;if(!canAdd(key,n)){say('Your backpack is full.');return;}addItem(key,n);craftedCount++;checkAchievements();benchCells=[null,null,null,null];renderInv(true);say('Crafted '+NAMES[key]+'.');}
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
-var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0;
+var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0,craftedCount=0,achievementIds=[];
 var wild=[],team=[],walls=[],fires=[],beds=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34;
@@ -1302,7 +1302,7 @@ function save(){
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
       beds:beds.map(function(b){return {x:b.x,z:b.z}}),
-      clock:clock,nights:nights,wraithsDefeated:wraithsDefeated
+      clock:clock,nights:nights,wraithsDefeated:wraithsDefeated,craftedCount:craftedCount,achievementIds:achievementIds
     });
     // Keep one verified previous snapshot so a damaged save can be recovered.
     try{
@@ -1352,7 +1352,7 @@ function load(){
     (d.walls||[]).forEach(function(w){addStructure(w.t==='stone'?'stonewall':(w.t==='floor'?'floor':'wall'),w.x,w.z)});
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
-    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;
+    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker'].indexOf(a)>=0}):[];
     if(recovered)setTimeout(function(){say('Recovered your world from its backup save.',5)},500);
     return true;
   }catch(e){return false}
@@ -1796,7 +1796,7 @@ function update(dt){
   envUpdate();
   updateAmbient(dt);
   if(nightF>0.7&&!inNight)inNight=true;
-  if(nightF<0.2&&inNight){inNight=false;nights+=1;say('You survived night '+nights+'.');save()}
+  if(nightF<0.2&&inNight){inNight=false;nights+=1;say('You survived night '+nights+'.');checkAchievements();save()}
 
   var mx=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
   var my=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0)+joy.y;
@@ -2190,7 +2190,7 @@ function update(dt){
     var pulse=s.windup>0?1+Math.sin((0.42-s.windup)*24)*0.1:(s.lunge>0?1.14:1);
     s.g.scale.setScalar((s.baseScale||1)*(s.hit>0?1.12:pulse));
     if(s.hp<=0){
-      wraithsDefeated++;
+      wraithsDefeated++;checkAchievements();
       if(nightF>=0.25)gain('fiber',1,s.x,s.y+2.6,s.z,'#c9a8ff');
       scene.remove(s.g);wraiths.splice(i,1);
     }
@@ -2222,7 +2222,7 @@ function update(dt){
           var rar=RAR[SPECIES[sc.sp].r];
           if(sh.ok){
             wild.splice(wild.indexOf(sc),1);
-            sc.work=rand(4,9);team.push(sc);
+            sc.work=rand(4,9);team.push(sc);checkAchievements();
             burst(sc.x,sc.y+0.6,sc.z,0xffe58a,22);burst(sc.x,sc.y+0.6,sc.z,0xffffff,8);
             pop(sc.x,sc.y+2.6,sc.z,'Gotcha! '+SPECIES[sc.sp].n+' joined',rar.c);
             renderInv(true);save();
@@ -2380,6 +2380,21 @@ function animFires(){
   if(gid){var gp=placePos(gid),gh=heightAt(gp.x,gp.z),gm=ghost[gid];gm.visible=true;gm.position.set(gp.x,gh+GOFF[gid],gp.z);gm.rotation.y=gid==='bed'?P.face:0}
 }
 
+function checkAchievements(){
+  var totalStructures=walls.length+fires.length+beds.length;
+  var tests=[
+    ['first_friend',team.length>=1,'First Friend','Tame your first creature'],
+    ['pack_leader',team.length>=10,'Pack Leader','Tame 10 creatures'],
+    ['first_dawn',nights>=1,'First Dawn','Survive your first night'],
+    ['three_nights',nights>=3,'Night Survivor','Survive three nights'],
+    ['wraith_hunter',wraithsDefeated>=1,'Wraith Hunter','Defeat your first Wraith'],
+    ['wraith_slayer',wraithsDefeated>=10,'Wraith Slayer','Defeat 10 Wraiths'],
+    ['maker',craftedCount>=10,'Master Maker','Craft 10 items']
+  ];
+  for(var ai=0;ai<tests.length;ai++){
+    var a=tests[ai];if(a[1]&&achievementIds.indexOf(a[0])<0){achievementIds.push(a[0]);say('ACHIEVEMENT UNLOCKED: '+a[2]+' — '+a[3],5);save();}
+  }
+}
 function updateHud(){
   $('hp').style.width=clamp(P.hp,0,100)+'%';
   $('food').style.width=clamp(P.food,0,100)+'%';
@@ -2389,7 +2404,8 @@ function updateHud(){
   var phase=nightF>0.6?'Night':(nightF>0.15?(Math.cos(t*Math.PI*2+0.65)>0?'Dusk':'Dawn'):'Day');
   $('time').textContent='Day '+(Math.floor(clock/DAY)+1)+' · '+phase;
   renderInv(false);
-  $('goal').textContent='Goal: tame 10 creatures ('+team.length+'/10), survive 3 nights ('+nights+'/3) · Wraiths defeated: '+wraithsDefeated;
+  checkAchievements();
+  $('goal').textContent='Goals: tame 10 ('+team.length+'/10) · nights 3 ('+nights+'/3) · Wraiths '+wraithsDefeated+' · crafts '+craftedCount+' · achievements '+achievementIds.length+'/7';
   var tc=nearestOf(wild,P.x,P.z,12,function(o){return !o.held}),te=$('target');
   if(tc){
     var TS=SPECIES[tc.sp],TR=RAR[TS.r],bid=ballForCatch();
