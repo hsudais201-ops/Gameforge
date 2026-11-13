@@ -978,12 +978,12 @@ function renderInv(force){
     var mv=moveFrom>=0?slots[moveFrom]:null;
     $('bagInfo').textContent=mv?'Moving '+ITEMS[mv.id].n+'. Tap another slot to place or stack it.':'Tap an item, then tap a slot to move or stack it. The first 9 slots are your hotbar. Tap an item, then tap another slot to move, swap or stack it.';
     $('bagDiscard').style.display=mv?'':'none';
-    var preview=mv||cur;
+    var preview=mv;
     $('itemTitle').textContent=preview?ITEMS[preview.id].n:'Nothing selected';
     $('itemCount').textContent=preview?'Stack size: '+preview.n+' · '+(preview.n===1?'item':'items'):'Select an item to inspect its stack';
     $('itemPreview').querySelector('.previewIcon').innerHTML=preview?(ICON[preview.id]||ICON.stone):'◇';
-    $('quickMove').disabled=!preview;
-    $('quickDiscard').disabled=!preview;
+    $('quickMove').disabled=!mv;
+    $('quickDiscard').disabled=!mv;
     var cnt={},tn=0;
     team.forEach(function(t){cnt[t.sp]=(cnt[t.sp]||0)+1;tn++});
     var th='<strong>Creature log</strong> <small>'+tn+'/12 tamed</small><div class="chips">';
@@ -1154,8 +1154,8 @@ $('bag').addEventListener('click',function(e){
   if(c){craft(c.getAttribute('data-craft'));return}
   if(e.target.closest('#bagClose')){toggleBag();return}
   if(e.target.closest('#bagDiscard')&&moveFrom>=0){slots[moveFrom]=null;moveFrom=-1;renderInv(true)}
-  if(e.target.closest('#quickMove')&&moveFrom>=0){var q=moveFrom;moveFrom=-1;renderInv(true);say('Select a destination slot.');window._invMoveArmed=q}
-  if(e.target.closest('#quickDiscard')){var qd=moveFrom>=0?moveFrom:(hotSel>=0?hotSel:-1);if(qd>=0&&slots[qd]){slots[qd]=null;moveFrom=-1;renderInv(true);say('Stack discarded.')}}
+  if(e.target.closest('#quickMove')&&moveFrom>=0){say('Tap any other inventory slot to move, swap or combine this stack.');}
+  if(e.target.closest('#quickDiscard')){var qd=moveFrom;if(qd>=0&&slots[qd]){slots[qd]=null;moveFrom=-1;renderInv(true);say('Stack discarded.')}}
 });
 
 /* ---------- helpers ---------- */
