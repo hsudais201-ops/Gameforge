@@ -22,7 +22,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 12. Support keyboard movement and mobile joystick movement.
 - [x] 13. Add sprint stamina drain and regeneration.
 - [x] 14. Add camera-relative movement.
-- [ ] 15. Add remappable keyboard controls.
+- [x] 15. Add remappable keyboard controls.
 - [x] 16. Add configurable joystick dead-zone and sensitivity.
 - [x] 17. Add camera sensitivity and inversion settings.
 - [ ] 18. Add optional aim assist for touch combat.
@@ -150,6 +150,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
 ## Current verified implementation batch
+- Keyboard accessibility: added four remappable movement bindings with reserved-key and duplicate checks; bindings persist locally.
 - Survival presets: added persistent Explorer/Easy, Survivor/Normal, and Wilderness/Hard difficulty choices that scale incoming damage and hunger drain.
 - Player condition HUD: added accessible live status labels for critical health, starvation, hunger, exhaustion, and active dodge windows.
 - Controls and combat: persisted joystick dead-zone, camera sensitivity and vertical inversion settings; added keyboard/touch dodge with stamina cost, movement burst, and brief damage immunity.
