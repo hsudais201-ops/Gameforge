@@ -120,7 +120,7 @@ function heightAt(x,z){
 
 /* ---------- renderer / scene ---------- */
 var cv=$('c');
-var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!isMobile&&!lowMemoryDevice,powerPreference:'high-performance'});
+var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
@@ -347,7 +347,7 @@ function updateWorldStreaming(force){
   }
   for(var ri=0;ri<res.length;ri++){
     var r=res[ri],onR=active(r.x,r.z);
-    if(r.streamOn!==onR){r.streamOn=onR;if(r.dead<=0)setInst(r,0,!onR);if(r.si!==undefined)stumpIM&&setStump(r,!onR&&r.dead<=0);}
+    if(r.streamOn!==onR){r.streamOn=onR;if(r.dead<=0)setInst(r,0,!onR);if(r.si!==undefined)setStump(r,onR&&r.dead>0);}
   }
   for(var wi=0;wi<wild.length;wi++){var w=wild[wi];w.m.g.visible=active(w.x,w.z);}
   $('worldStatus').textContent='Active area: '+areaRadii[areaLevel]+' m · '+streamedMeshes.length+' streamed detail groups';
@@ -1246,7 +1246,7 @@ function update(dt){
   for(i=0;i<res.length;i++){
     var r=res[i];
     if(r.hit>0){r.hit-=dt;if(r.dead<=0)setInst(r,r.hit>0?Math.sin(r.hit*60)*0.05:0,false)}
-    if(r.dead>0){r.dead-=dt;if(r.dead<=0){r.hp=r.max;setInst(r,0,false);if(r.si!==undefined)setStump(r,false)}}
+    if(r.dead>0){r.dead-=dt;if(r.dead<=0){r.hp=r.max;setInst(r,0,!r.streamOn);if(r.si!==undefined)setStump(r,false)}}
   }
 
   for(i=0;i<wild.length;i++){
