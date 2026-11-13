@@ -110,6 +110,11 @@
   #craftList button{min-width:0;min-height:44px;padding:7px!important;border-radius:6px!important;background:linear-gradient(145deg,#354d3d,#203329)!important;border-color:#829b82!important;font-size:10px!important;line-height:1.25}
   #craftList button small{display:block;margin:4px 0 0;font-size:8px;line-height:1.25}
   #craftList button.no{opacity:.42}
+  #craftList button.selected{outline:2px solid #e8d58a;background:#52653c!important}
+  .bagCraft{position:absolute;right:12px;top:54px;bottom:12px;width:250px;overflow-y:auto;padding:9px;background:#17231ddd;border:1px solid #ffffff24;border-radius:6px;box-sizing:border-box}
+  #bag> :not(.bagCraft){max-width:calc(100% - 265px)}
+  #recipeDetails{padding:8px;background:#111b16;border:1px solid #829b82;border-radius:6px;display:flex;flex-direction:column;gap:6px}#recipeSelected{color:#f1e4b5;font-size:13px}#recipeIngredients,#craftTotal{font-size:10px;line-height:1.5}#craftAmount{width:100%;box-sizing:border-box;background:#202b24;color:white;border:1px solid #879989;border-radius:4px;padding:8px;font-size:16px}#craftSelected{width:100%;text-align:center!important;background:linear-gradient(#a17b3e,#6d5129)!important}#craftSelected:disabled{opacity:.4}
+  @media(max-width:650px){.bagCraft{position:static;width:auto;max-height:none;overflow:visible}#bag> :not(.bagCraft){max-width:none}}
   @media(max-width:380px){#bag{padding:9px;gap:7px}.invMain{gap:6px}.invSide,.invRight{padding:6px}.playerPaper,.itemPreview{height:112px;min-height:112px}.paperAvatar{font-size:48px}.armorSlots{grid-template-columns:repeat(2,30px)}.armorSlot{height:30px}.invHelp{font-size:8px}}
   @media(max-height:650px){#bag{max-height:94dvh;padding:8px;gap:6px}.playerPaper,.itemPreview{height:88px;min-height:88px}.paperAvatar{font-size:42px}.armorSlot{height:28px}.invLabel{margin:1px 0 3px}}
 
@@ -174,7 +179,7 @@
   <div class="invLabel">Hotbar · 9 slots</div>
   <div id="bagHotbar"></div>
   <div id="bagTeam"></div>
-  <div class="bagCraft"><strong>2×2 Crafting grid</strong><div class="craftBench"><div id="benchGrid" class="craftGrid"><button data-benchcell="0">+</button><button data-benchcell="1">+</button><button data-benchcell="2">+</button><button data-benchcell="3">+</button></div><span class="craftArrow">→</span><button id="benchOutput" class="craftOutput" type="button" disabled>◇</button></div><div id="benchHint" class="craftCaption">Select an item, then tap a grid cell to add one unit. Tap a filled cell to return it.</div><strong>Recipe book</strong><div id="craftList"></div></div>
+  <div class="bagCraft"><strong>2×2 Crafting grid</strong><div class="craftBench"><div id="benchGrid" class="craftGrid"><button data-benchcell="0">+</button><button data-benchcell="1">+</button><button data-benchcell="2">+</button><button data-benchcell="3">+</button></div><span class="craftArrow">→</span><button id="benchOutput" class="craftOutput" type="button" disabled>◇</button></div><div id="benchHint" class="craftCaption">Select an item, then tap a grid cell to add one unit. Tap a filled cell to return it.</div><strong>Crafting recipes</strong><div id="craftList"></div><div id="recipeDetails"><b id="recipeSelected">Select a recipe</b><div id="recipeIngredients"></div><label for="craftAmount">Amount to craft</label><input id="craftAmount" type="number" min="1" max="99" value="1" inputmode="numeric"><div id="craftTotal"></div><button id="craftSelected" type="button" disabled>Craft selected recipe</button></div></div>
 </div>
 <div id="joy"><div id="stick"></div></div>
 <div id="btns">
@@ -1007,8 +1012,9 @@ function renderInv(force){
     for(i=0;i<cbs.length;i++){
       var ck=cbs[i].getAttribute('data-craft'),r=RECIPES[ck],ok=!(['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(ck)>=0&&countOf(ck)>0);
       for(var k in r){if(countOf(k)<r[k])ok=false}
-      cbs[i].className=ok?'':'no';
+      cbs[i].className=(ok?'':'no')+(ck===selectedRecipe?' selected':'');
     }
+    updateRecipePanel();
   }
 }
 function slotClick(i){
@@ -1163,6 +1169,7 @@ bindBtn('bCatch',function(){doCatch()});
 bindBtn('bPlace',function(){doUse()});
 bindBtn('bBag',function(){toggleBag()});
 $('hotbar').addEventListener('click',function(e){var b=e.target.closest('[data-slot]');if(b)slotClick(+b.getAttribute('data-slot'))});
+$('craftAmount').addEventListener('input',updateRecipePanel);
 $('bag').addEventListener('dragstart',function(e){var el=e.target.closest('[data-slot]');if(!el||!slots[+el.getAttribute('data-slot')]){e.preventDefault();return;}e.dataTransfer.setData('text/plain',el.getAttribute('data-slot'));});
 $('bag').addEventListener('dragover',function(e){if(e.target.closest('[data-slot]'))e.preventDefault();});
 $('bag').addEventListener('drop',function(e){var el=e.target.closest('[data-slot]');if(!el)return;e.preventDefault();var from=+e.dataTransfer.getData('text/plain'),to=+el.getAttribute('data-slot');if(from!==to){moveFrom=from;slotClick(to);}});
@@ -1174,7 +1181,8 @@ $('bag').addEventListener('click',function(e){
   var b=e.target.closest('[data-slot]');
   if(b){slotClick(+b.getAttribute('data-slot'));return}
   var c=e.target.closest('[data-craft]');
-  if(c){craft(c.getAttribute('data-craft'));return}
+  if(c){selectedRecipe=c.getAttribute('data-craft');updateRecipePanel();return}
+  if(e.target.closest('#craftSelected')){craft(selectedRecipe,$('craftAmount').value);updateRecipePanel();return}
   if(e.target.closest('#bagClose')){toggleBag();return}
   if(e.target.closest('#bagDiscard')&&moveFrom>=0){slots[moveFrom]=null;moveFrom=-1;renderInv(true)}
   if(e.target.closest('#quickMove')&&moveFrom>=0){var qm=moveFrom,empty=-1;for(var qi=HOT;qi<NSLOTS;qi++)if(!slots[qi]){empty=qi;break;}if(empty<0)for(qi=0;qi<HOT;qi++)if(!slots[qi]){empty=qi;break;}if(empty<0)say('No empty inventory slot available.');else{slots[empty]=slots[qm];slots[qm]=null;moveFrom=-1;renderInv(true);say('Stack moved to an empty slot.');}}
@@ -1316,6 +1324,8 @@ var RECIPES={
 var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,copperarmor:1,ironarmor:1,tonic:1,salve:1,jam:1,torch:2,wall:1,stonewall:1,floor:2,fire:1,bed:1};
 var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',tonic:'Vitality Tonic'};
 var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword']],['Armor',['copperarmor','ironarmor']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','tonic','jam','torch']],['Building',['wall','stonewall','floor','fire','bed']]];
+var selectedRecipe=null;
+function updateRecipePanel(){var k=selectedRecipe,a=Math.max(1,Math.min(99,parseInt($('craftAmount').value,10)||1));$('craftAmount').value=a;if(!k){$('craftSelected').disabled=true;return;}var r=RECIPES[k],lines=[],ok=true;for(var id in r){var need=r[id]*a,have=countOf(id);lines.push((ITEMS[id]?ITEMS[id].n:id)+': '+have+' / '+need);if(have<need)ok=false;}$('recipeSelected').textContent=NAMES[k]+' ×'+((OUT[k]||1)*a);$('recipeIngredients').innerHTML=lines.join('<br>');var unique=['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(k)>=0;if(unique&&(countOf(k)>0||a>1))ok=false;if(!canAdd(k,(OUT[k]||1)*a))ok=false;$('craftTotal').textContent=ok?'Ready to craft.':'Insufficient ingredients, space, or item already owned.';$('craftSelected').disabled=!ok;var bs=$('craftList').querySelectorAll('[data-craft]');for(var j=0;j<bs.length;j++)bs[j].classList.toggle('selected',bs[j].getAttribute('data-craft')===k);}
 function buildCraftUI(){
   var h='';
   CATS.forEach(function(c){
@@ -1325,17 +1335,19 @@ function buildCraftUI(){
       h+='<button data-craft="'+k+'">'+NAMES[k]+(OUT[k]>1?' ×'+OUT[k]:'')+'<small>'+cost+'</small></button>';
     });
   });
-  $('craftList').innerHTML=h;
+  $('craftList').innerHTML=h;if(!selectedRecipe)selectedRecipe=Object.keys(RECIPES)[0];updateRecipePanel();
 }
 buildCraftUI();
 function rateNow(sp,id){var r0=catchRate(sp,id);return r0>=1?1:Math.min(0.95,r0+(P.lure?0.2:0))}
-function craft(k){
+function craft(k,amount){
+  var qty=Math.max(1,Math.min(99,parseInt(amount,10)||1)),output=(OUT[k]||1)*qty;
+  if(['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(k)>=0&&qty>1){say('Equipment can only be crafted one at a time.');return}
   var r=RECIPES[k],i;
   if((['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(k)>=0)&&countOf(k)>0){say('You already have a '+NAMES[k]+'. It works while it is in your bag.');return}
-  for(i in r){if(countOf(i)<r[i]){say('Not enough materials for '+NAMES[k]+'.');return}}
-  for(i in r)takeItem(i,r[i]);
-  if(!canAdd(k,OUT[k])){for(i in r)addItem(i,r[i]);say('Your bag is full.');renderInv(true);return}
-  addItem(k,OUT[k]);pop(P.x,P.y+2.6,P.z,'+'+OUT[k]+' '+NAMES[k],'#9be3b8');
+  for(i in r){if(countOf(i)<r[i]*qty){say('Not enough materials for '+NAMES[k]+'.');return}}
+  for(i in r)takeItem(i,r[i]*qty);
+  if(!canAdd(k,output)){for(i in r)addItem(i,r[i]);say('Your bag is full.');renderInv(true);return}
+  addItem(k,output);pop(P.x,P.y+2.6,P.z,'+'+output+' '+NAMES[k],'#9be3b8');
   if(['axe','pick','copperpick','ironpick'].indexOf(k)>=0)say(NAMES[k]+' ready. Mining power improves automatically while it is in your bag.');
   else if(k==='coppersword'||k==='ironsword')say(NAMES[k]+' ready. Your attacks against night creatures are stronger while carried.');
   else if(k==='copperarmor'||k==='ironarmor')say(NAMES[k]+' equipped automatically from your bag. Incoming night-creature damage is reduced.');
