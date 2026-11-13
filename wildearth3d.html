@@ -175,6 +175,10 @@
   .settingRow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px}
   .settingRow select,.settingRow button{background:#1d3a2a;color:#fff;border:1px solid #ffffff44;border-radius:8px;padding:8px;font:inherit;max-width:155px}
   #settingsPanel .settingNote{font-size:11px;opacity:.7;line-height:1.4}
+  body.largeUI{font-size:17px}body.largeUI #hud{font-size:14px}body.largeUI #hotname,body.largeUI #target{font-size:15px}body.largeUI button,body.largeUI select{font-size:1.08em}
+  body.highContrast #hud .pill,body.highContrast #hotname,body.highContrast #target{background:#000;color:#fff;border:1px solid #fff}
+  body.highContrast #hint{background:#000;color:#fff;border:2px solid #fff}
+  body.highContrast #settingsPanel,body.highContrast .questCard,body.highContrast .mapCard{background:#000;border:2px solid #fff;color:#fff}
 
   #pausePanel{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(3,10,7,.78);backdrop-filter:blur(7px)}
   #pausePanel[hidden]{display:none}
@@ -224,7 +228,7 @@
 <div id="deathPanel" hidden role="dialog" aria-modal="true" aria-labelledby="deathTitle"><div class="deathCard"><div class="deathIcon">✦</div><div class="deathTitle" id="deathTitle">YOU FELL</div><p>Your journey is not over. Choose where to recover and return to the wild.</p><label for="deathSpawn">Respawn location</label><select id="deathSpawn"></select><div id="deathCountdown" aria-live="polite">Respawning in 5 seconds…</div><button id="respawnNow" type="button">Respawn Now</button><p>Penalty: lose half of your carried wood, stone and fiber.</p></div></div>
 <div id="hint"></div>
 <button id="settingsBtn" type="button">⚙ Settings</button>
-<div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
+<div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
 <div id="bag" hidden>
   <div class="bagTop"><strong>Inventory</strong><span class="invSub">WILDEARTH survival pack</span><button id="bagClose">✕</button></div>
@@ -395,6 +399,33 @@ $('saveWorldBtn').addEventListener('click',function(){var ok=save();var status=$
 $('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});if(pauseOpen)$('pausePanel').hidden=false;
 $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this.value);say('Graphics set to '+renderProfiles[renderLevel].name,2)});
 $('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
+var ACCESS_KEY='mfwilds3d_accessibility_v1',accessPrefs={size:'normal',contrast:false};
+try{var ap=JSON.parse(localStorage.getItem(ACCESS_KEY)||'{}');if(ap.size==='large')accessPrefs.size='large';accessPrefs.contrast=!!ap.contrast}catch(e){}
+function applyAccessibility(){
+  document.body.classList.toggle('largeUI',accessPrefs.size==='large');
+  document.body.classList.toggle('highContrast',accessPrefs.contrast);
+  $('uiSizeSelect').value=accessPrefs.size;$('contrastToggle').checked=accessPrefs.contrast;
+}
+function saveAccessibility(){try{localStorage.setItem(ACCESS_KEY,JSON.stringify(accessPrefs))}catch(e){}applyAccessibility()}
+$('uiSizeSelect').addEventListener('change',function(){accessPrefs.size=this.value==='large'?'large':'normal';saveAccessibility()});
+$('contrastToggle').addEventListener('change',function(){accessPrefs.contrast=!!this.checked;saveAccessibility()});
+applyAccessibility();
+
+var runtimeDiagnostics=[];
+function addDiagnostic(type,message,stack){
+  runtimeDiagnostics.push({time:new Date().toISOString(),type:String(type),message:String(message||''),stack:String(stack||'').slice(0,4000)});
+  if(runtimeDiagnostics.length>100)runtimeDiagnostics.shift();
+}
+window.addEventListener('error',function(e){addDiagnostic('error',e.message,(e.error&&e.error.stack)||e.filename+':'+e.lineno)});
+window.addEventListener('unhandledrejection',function(e){addDiagnostic('unhandledrejection',e.reason&&e.reason.message||e.reason,e.reason&&e.reason.stack)});
+$('exportDiagnostics').addEventListener('click',function(){
+  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},world:{id:selectedWorldId,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:team.length,structures:walls.length+fires.length+beds.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
+  try{
+    var blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
+    link.href=url;link.download='wildearth-diagnostics-'+Date.now()+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000);
+    $('diagnosticStatus').textContent='Diagnostic report exported. Review it before sharing; it includes browser and world status.';
+  }catch(err){$('diagnosticStatus').textContent='Could not export diagnostics: '+err.message;addDiagnostic('export-error',err.message,err.stack)}
+});
 applyRenderProfile(renderLevel);
 var moon=new THREE.DirectionalLight(0x8aa4ff,0);scene.add(moon);
 var playerLight=new THREE.PointLight(0xffd9a0,0,14,2);scene.add(playerLight);
