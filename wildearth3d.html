@@ -73,7 +73,7 @@
 
 
   /* Refined survival-game inventory skin */
-  #bag{width:min(96vw,520px);max-height:min(92dvh,760px);padding:14px;gap:10px;border:1px solid #9baf9c;border-radius:12px;background:linear-gradient(155deg,rgba(36,49,43,.99),rgba(15,24,21,.99));box-shadow:0 24px 70px #000c,inset 0 1px #ffffff20}
+  #bag{width:min(98vw,780px);max-height:min(92dvh,760px);padding:14px;gap:10px;border:1px solid #9baf9c;border-radius:12px;background:linear-gradient(155deg,rgba(36,49,43,.99),rgba(15,24,21,.99));box-shadow:0 24px 70px #000c,inset 0 1px #ffffff20}
   #bag:before{content:"";position:fixed;inset:0;z-index:-1;background:rgba(0,0,0,.28);pointer-events:none}
   .bagTop{padding-bottom:8px;border-bottom:1px solid #ffffff24}
   .bagTop strong{font-size:16px;letter-spacing:.04em;color:#f0f3e9}
@@ -115,8 +115,8 @@
   #bag> :not(.bagCraft){max-width:calc(100% - 265px)}
   #recipeDetails{padding:8px;background:#111b16;border:1px solid #829b82;border-radius:6px;display:flex;flex-direction:column;gap:6px}#recipeSelected{color:#f1e4b5;font-size:13px}#recipeIngredients,#craftTotal{font-size:10px;line-height:1.5}#craftAmount{width:100%;box-sizing:border-box;background:#202b24;color:white;border:1px solid #879989;border-radius:4px;padding:8px;font-size:16px}#craftSelected{width:100%;text-align:center!important;background:linear-gradient(#a17b3e,#6d5129)!important}#craftSelected:disabled{opacity:.4}
   @media(max-width:650px){.bagCraft{position:static;width:auto;max-height:none;overflow:visible}#bag> :not(.bagCraft){max-width:none}}
-  @media(max-width:380px){#bag{padding:9px;gap:7px}.invMain{gap:6px}.invSide,.invRight{padding:6px}.playerPaper,.itemPreview{height:112px;min-height:112px}.paperAvatar{font-size:48px}.armorSlots{grid-template-columns:repeat(2,30px)}.armorSlot{height:30px}.invHelp{font-size:8px}}
-  @media(max-height:650px){#bag{max-height:94dvh;padding:8px;gap:6px}.playerPaper,.itemPreview{height:88px;min-height:88px}.paperAvatar{font-size:42px}.armorSlot{height:28px}.invLabel{margin:1px 0 3px}}
+  @media(max-width:380px){#bag{padding:9px;gap:7px}.invMain{gap:6px}.invSide,.invRight{padding:6px}.playerPaper{height:112px;min-height:112px}.paperAvatar{font-size:48px}.armorSlots{grid-template-columns:repeat(2,30px)}.armorSlot{height:30px}.invHelp{font-size:8px}}
+  @media(max-height:650px){#bag{max-height:94dvh;padding:8px;gap:6px}.playerPaper{height:88px;min-height:88px}.paperAvatar{font-size:42px}.armorSlot{height:28px}.invLabel{margin:1px 0 3px}}
 
   #bag button{background:linear-gradient(#59665d,#354239);color:#fff;border:1px solid #aab5ac;border-radius:4px;padding:8px 10px;font:12px system-ui,sans-serif;text-align:left}
   #bag button:active{background:#2f6f4f}
@@ -167,8 +167,6 @@
       <button id="bagDiscard" style="display:none">Discard selected stack</button>
     </section>
     <section class="invRight">
-      <div class="invLabel">Selected item</div>
-      <div id="itemPreview" class="itemPreview"><div class="previewIcon">◇</div><strong id="itemTitle">Nothing selected</strong><span id="itemCount">Choose an item from your inventory</span></div>
       <div class="invLabel">Quick actions</div>
       <div class="quickActions"><button id="quickMove" type="button" disabled>Move / swap</button><button id="splitStack" type="button" disabled>Split stack</button><button id="quickDiscard" type="button" disabled>Discard</button></div>
       <p class="invHelp">Tap an item, then tap another slot to move it. Matching stacks combine automatically.</p>
