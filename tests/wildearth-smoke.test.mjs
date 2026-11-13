@@ -69,3 +69,12 @@ test('crafting recipe search and category filters are wired', () => {
   assert.ok(gameScript.includes('function applyRecipeFilters'));
   assert.ok(gameScript.includes('data-craft-category'));
 });
+
+test('control preferences and dodge action are wired', () => {
+  for (const id of ['joyDeadzone', 'cameraSensitivity', 'invertCamera', 'bDodge']) {
+    assert.match(html, new RegExp('id="' + id + '"'));
+  }
+  for (const marker of ['mfwilds3d_controls_v1', 'function startDodge', "e.code==='KeyV'", 'P.invulnerable>0', 'Math.max(deadzone,0.001)']) {
+    assert.ok(gameScript.includes(marker), 'missing control/dodge marker: ' + marker);
+  }
+});
