@@ -99,3 +99,10 @@ test('notification duration is user-configurable and persisted', () => {
   assert.ok(gameScript.includes('mfwilds3d_notify_v1'));
   assert.ok(gameScript.includes('hintT=secs||notificationSeconds'));
 });
+
+test('movement keys can be remapped and persisted without collisions', () => {
+  for (const id of ['bindForward', 'bindBackward', 'bindLeft', 'bindRight']) assert.match(html, new RegExp('id="' + id + '"'));
+  for (const marker of ['mfwilds3d_keybindings_v1', 'function saveKeyBindings()', 'waitingBinding', 'duplicate', 'keys[keyBindings.right]', 'keys[keyBindings.forward]']) {
+    assert.ok(gameScript.includes(marker), 'missing key remapping marker: ' + marker);
+  }
+});
