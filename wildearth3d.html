@@ -1218,7 +1218,7 @@ function wildEscapeDirection(c,awayX,awayZ){
 }
 function spawnWild(fsp,fx,fz){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
 }
 function addStructure(kind,x,z){
@@ -1857,6 +1857,59 @@ function update(dt){
         }
       }
     }
+    // Cached environmental interests: wildlife notices food plants, woodland and shorelines.
+    // Scans are staggered per creature and never consume player resources.
+    c.envT=Math.max(0,(c.envT||0)-dt);
+    if(c.envT<=0){
+      c.envX=0;c.envZ=0;
+      if(c.flee<=0&&pdist>12){
+        var bestPlant=null,bestPlantScore=0;
+        var likesBush=c.sp===0||c.sp===2||c.sp===6||c.sp===7;
+        var likesTree=c.sp===1||c.sp===4||c.sp===5;
+        if(likesBush||likesTree){
+          for(var ei=0;ei<res.length;ei++){
+            var er=res[ei];
+            if(er.dead>0||(!er.streamOn&&er.streamOn!==undefined))continue;
+            if((likesBush&&er.kind!=='bush')||(likesTree&&er.kind!=='tree'))continue;
+            var ex=er.x-c.x,ez=er.z-c.z,ed=Math.hypot(ex,ez);
+            if(ed<3.2||ed>14)continue;
+            var score=(14-ed)/(14-3.2);
+            if(score>bestPlantScore){bestPlantScore=score;bestPlant=er;}
+          }
+        }
+        if(bestPlant){
+          var bl=Math.hypot(bestPlant.x-c.x,bestPlant.z-c.z)||1;
+          c.envX+=(bestPlant.x-c.x)/bl*bestPlantScore*0.72;
+          c.envZ+=(bestPlant.z-c.z)/bl*bestPlantScore*0.72;
+          if(bl<5&&c.state==='idle'&&Math.random()<0.18){c.state='graze';c.t=rand(1.8,3.2);}
+        }
+        // Aquo explores the shoreline, but its destination is always checked as dry land.
+        if(c.sp===2){
+          var shoreScore=0,shoreX=0,shoreZ=0;
+          for(var si=0;si<8;si++){
+            var sa=si*Math.PI/4,sx=Math.cos(sa),sz=Math.sin(sa);
+            var lx=c.x+sx*7.5,lz=c.z+sz*7.5,ox=lx+sx*4.2,oz=lz+sz*4.2;
+            var lh=heightAt(lx,lz),oh=heightAt(ox,oz);
+            if(lh>WATER+0.35&&oh<WATER+0.15){
+              var sc=1/(1+Math.abs(lh-(WATER+0.8)));
+              if(sc>shoreScore){shoreScore=sc;shoreX=sx;shoreZ=sz;}
+            }
+          }
+          if(shoreScore>0){c.envX+=shoreX*0.9*shoreScore;c.envZ+=shoreZ*0.9*shoreScore;}
+        }
+        // Curious species investigate a camp from a distance, but the fire safety radius wins.
+        if(c.sp===4||c.sp===6||c.sp===7){
+          var campX=0,campZ=0,campN=0;
+          for(var ci=0;ci<fires.length;ci++){
+            var cf=fires[ci],cx=cf.x-c.x,cz=cf.z-c.z,cd=Math.hypot(cx,cz)||1;
+            if(cd>7&&cd<16){campX+=cx/cd*(16-cd)/9;campZ+=cz/cd*(16-cd)/9;campN++;}
+          }
+          if(campN){c.envX+=campX*0.22;c.envZ+=campZ*0.22;}
+        }
+      }
+      c.envT=rand(1.0,1.6);
+    }
+    if(c.flee<=0){targetX+=c.envX||0;targetZ+=c.envZ||0;}
     // Wildlife of different temperaments gives campfires a wide berth.
     var fireX=0,fireZ=0;
     for(var fi=0;fi<fires.length;fi++){
