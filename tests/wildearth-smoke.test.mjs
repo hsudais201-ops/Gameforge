@@ -86,3 +86,10 @@ test('player condition states are exposed through an accessible HUD indicator', 
   assert.ok(gameScript.includes("statuses.push('EXHAUSTED')"));
   assert.ok(gameScript.includes("statuses.push('DODGING')"));
 });
+
+test('survival difficulty presets persist and scale incoming damage and hunger', () => {
+  assert.match(html, /id="difficultySelect"/);
+  for (const marker of ["mfwilds3d_difficulty_v1", "function difficultyScale()", "function hungerScale()", "P.food-0.3*dt*hungerScale()", "P.hp-amount*difficultyScale()"]) {
+    assert.ok(gameScript.includes(marker), 'missing difficulty marker: ' + marker);
+  }
+});
