@@ -912,7 +912,7 @@ function landSpot(minFromPlayer){
 }
 function spawnWild(fsp,fx,fz){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,flee:0,yaw:Math.random()*6.283,walk:Math.random()*6,speed:0,hp:3,maxHp:3,damageHits:0,hitTimer:0};
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
 }
 function addStructure(kind,x,z){
@@ -1103,6 +1103,8 @@ function doGather(){
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5);
   if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));w.hp-=weaponLevel;w.hit=0.25;pop(w.x,w.y+2.6,w.z,'hit','#c9a8ff');return}
+  var mob=nearestOf(wild,P.x,P.z,4.6,function(o){if(o.held)return false;var dx=o.x-P.x,dz=o.z-P.z,l=Math.hypot(dx,dz)||1;return (dx*fx+dz*fz)/l>0.05||l<2.0;});
+  if(mob){var mobDamage=countOf('ironsword')>0?3:(countOf('coppersword')>0?2:(axe?1.5:1));mob.hp-=mobDamage;mob.damageHits=Math.min(3,(mob.damageHits||0)+1);mob.hitTimer=0.32;mob.flee=2.2;mob.vx=Math.sin(P.face)*-4;mob.vz=Math.cos(P.face)*-4;pop(mob.x,mob.y+2.8,mob.hp>0?'-'+mobDamage+' HP · catch chance up':'Defeated!','#ff9b88');burst(mob.x,mob.y+1,mob.z,0xff806c,9);if(mob.hp<=0){var mi=wild.indexOf(mob);if(mi>=0)wild.splice(mi,1);scene.remove(mob.m.g);gain('fiber',2,mob.x,mob.y+1.5,mob.z,'#a9d37a');gain('berry',1,mob.x,mob.y+2.2,mob.z,'#f19ab0');pop(mob.x,mob.y+3,mob.z,'Mob defeated · resources dropped','#ffd36a');}return;}
   var r=nearestOf(res,P.x,P.z,4.6,function(o){
     if(o.dead>0)return false;
     var dx=o.x-P.x,dz=o.z-P.z,l=Math.hypot(dx,dz)||1;
@@ -1155,7 +1157,7 @@ function doCatch(){
   var id=ballForCatch();
   if(!id){say('You need a Capture Ball. Open the Bag to craft some.');return}
   if(team.length+shots.length>=12){say('Your team is full (12).');return}
-  var ok=Math.random()<rateNow(c.sp,id);P.lure=false;
+  var ok=Math.random()<rateNow(c.sp,id,c);P.lure=false;
   takeItem(id,1);renderInv(true);
   P.face=Math.atan2(c.x-P.x,c.z-P.z);P.swing=0.45;
   c.held=true;c.vx=0;c.vz=0;c.speed=0;
@@ -1187,7 +1189,7 @@ function buildCraftUI(){
   $('craftList').innerHTML=h;
 }
 buildCraftUI();
-function rateNow(sp,id){var r0=catchRate(sp,id);return r0>=1?1:Math.min(0.95,r0+(P.lure?0.2:0))}
+function rateNow(sp,id,target){var r0=catchRate(sp,id),wound=target?Math.min(0.35,(target.damageHits||0)*0.12):0;return r0>=1?1:Math.min(0.95,r0+(P.lure?0.2:0)+wound)}
 function craft(k){
   var r=RECIPES[k],i;
   if((['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(k)>=0)&&countOf(k)>0){say('You already have a '+NAMES[k]+'. It works while it is in your bag.');return}
@@ -1382,6 +1384,7 @@ function update(dt){
     c.speed=moving?Math.hypot(c.vx,c.vz)/7+0.25:0;
     if(moving){var ty=Math.atan2(c.vx,c.vz),dy=ty-c.yaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));c.yaw+=dy*Math.min(1,dt*6)}
     c.y+=(heightAt(c.x,c.z)-c.y)*Math.min(1,dt*10);
+    c.hitTimer=Math.max(0,(c.hitTimer||0)-dt);
     animCreature(c,dt);
   }
   wildT-=dt;
@@ -1513,6 +1516,7 @@ function animCreature(c,dt){
   m.g.position.set(c.x,c.y,c.z);m.g.rotation.y=c.yaw;
   for(var i=0;i<4;i++)m.legs[i].rotation.x=Math.sin(c.walk*1.6+(i===0||i===3?0:Math.PI))*amp;
   m.g.position.y+=Math.abs(Math.sin(c.walk*1.6))*0.06*c.speed;
+  m.g.scale.setScalar(c.hitTimer>0?1.08:1);
   m.tail.rotation.y=Math.sin(clock*3+c.walk)*0.35;
   m.head.rotation.x=Math.sin(clock*1.7+c.x)*0.06;
 }
@@ -1578,7 +1582,7 @@ function updateHud(){
   if(tc){
     var TS=SPECIES[tc.sp],TR=RAR[TS.r],bid=ballForCatch();
     te.hidden=false;te.style.color=TR.c;
-    te.textContent=TS.n+' · '+TR.n+(bid?' · '+Math.round(rateNow(tc.sp,bid)*100)+'% with '+ITEMS[bid].n:' · you have no balls');
+    te.textContent=TS.n+' · '+TR.n+' · HP '+Math.max(0,Math.ceil(tc.hp||3))+'/'+(tc.maxHp||3)+(tc.damageHits?' · catch bonus +'+Math.round(Math.min(0.35,tc.damageHits*0.12)*100)+'%':'')+(bid?' · '+Math.round(rateNow(tc.sp,bid,tc)*100)+'% with '+ITEMS[bid].n:' · you have no balls');
   }else te.hidden=true;
 }
 
