@@ -1,4 +1,4 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js";
 (() => {
 "use strict";
 const $=id=>document.getElementById(id),canvas=$("world3d");
@@ -18,12 +18,12 @@ function makeWolf(x,z){const g=new THREE.Group();const body=new THREE.Mesh(new T
 function buildWorld(){
 scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc4c2);scene.fog=new THREE.Fog(0x9bc4c2,75,230);
 camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,600);
-renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"low-power"});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"low-power"});renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;
 scene.add(new THREE.HemisphereLight(0xc9e7ff,0x34432c,2.1));const sun=new THREE.DirectionalLight(0xffedcf,2.3);sun.position.set(-70,110,40);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
-const geo=new THREE.PlaneGeometry(world.size,world.size,100,100);geo.rotateX(-Math.PI/2);const pos=geo.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,terrainHeight(x,z));}geo.computeVertexNormals();const ground=new THREE.Mesh(geo,materials.grass);ground.receiveShadow=true;scene.add(ground);
+const geo=new THREE.PlaneGeometry(world.size,world.size,64,64);geo.rotateX(-Math.PI/2);const pos=geo.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,terrainHeight(x,z));}geo.computeVertexNormals();const ground=new THREE.Mesh(geo,materials.grass);ground.receiveShadow=true;scene.add(ground);
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(1000,1000),mat(0x263c2a));floor.rotation.x=-Math.PI/2;floor.position.y=-2;scene.add(floor);
-for(let i=0;i<145;i++){const x=(Math.random()-.5)*world.size*.9,z=(Math.random()-.5)*world.size*.9;if(Math.hypot(x,z)<17)continue;makeTree(x,z);}
-for(let i=0;i<55;i++){const x=(Math.random()-.5)*world.size*.85,z=(Math.random()-.5)*world.size*.85;if(Math.hypot(x,z)>18)makeRock(x,z);}
+for(let i=0;i<95;i++){const x=(Math.random()-.5)*world.size*.9,z=(Math.random()-.5)*world.size*.9;if(Math.hypot(x,z)<17)continue;makeTree(x,z);}
+for(let i=0;i<34;i++){const x=(Math.random()-.5)*world.size*.85,z=(Math.random()-.5)*world.size*.85;if(Math.hypot(x,z)>18)makeRock(x,z);}
 for(let i=0;i<24;i++){const x=(Math.random()-.5)*world.size*.8,z=(Math.random()-.5)*world.size*.8;if(Math.hypot(x,z)>16)makeBerry(x,z);}
 for(let i=0;i<4;i++)makePond((Math.random()-.5)*280,(Math.random()-.5)*280);
 for(let i=0;i<6;i++)makeWolf((Math.random()-.5)*150,(Math.random()-.5)*150);
