@@ -224,7 +224,7 @@
     <span class="pill">Health<span class="bar"><i id="hp" style="background:#e8574f"></i></span></span>
     <span class="pill">Food<span class="bar"><i id="food" style="background:#e9b44c"></i></span></span>
     <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
-    <span class="pill" id="time"></span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
+    <span class="pill" id="time"></span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
   </div>
   <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div>
 </div>
@@ -353,6 +353,26 @@ function heightAt(x,z){
   y=y*f+2.2*(1-f);
   var e=clamp((d-HALF*0.78)/(HALF*0.2),0,1);
   return y-e*e*22;
+}
+var BIOMES=[
+  {id:'meadow',name:'Sunlit Meadow',temp:0.62,moisture:0.42,ground:0x6d9b3e,accent:0x477a31},
+  {id:'forest',name:'Mosswood Forest',temp:0.55,moisture:0.72,ground:0x416d3b,accent:0x294f32},
+  {id:'highland',name:'Windscar Highlands',temp:0.28,moisture:0.25,ground:0x858b83,accent:0x626d70},
+  {id:'marsh',name:'Whispering Marsh',temp:0.72,moisture:0.94,ground:0x657c4b,accent:0x3e6048},
+  {id:'frost',name:'Frostfall Ridge',temp:0.08,moisture:0.38,ground:0xb8c6c5,accent:0x82989b}
+];
+function biomeAt(x,z){
+  var elevation=heightAt(x,z),moisture=fbm(x*0.009+173,z*0.009-91),heat=fbm(x*0.006-47,z*0.006+211);
+  if(elevation>11.5||heat<0.24)return BIOMES[4];
+  if(elevation>7.2)return BIOMES[2];
+  if(moisture>0.63&&elevation<5.2)return BIOMES[3];
+  if(moisture>0.48)return BIOMES[1];
+  return BIOMES[0];
+}
+function biomeTemperature(x,z){var b=biomeAt(x,z);return clamp(b.temp-(heightAt(x,z)>8?0.18:0)+(nightF||0)*-0.22,-0.2,1);}
+function habitatWeight(sp,b){
+  var prefs=[['meadow','forest'],['forest','meadow'],['highland','frost'],['marsh','forest'],['frost','highland'],['meadow','marsh'],['highland','forest'],['frost','highland']];
+  return prefs[sp]&&prefs[sp].indexOf(b.id)>=0?2.4:0.72;
 }
 
 /* ---------- renderer / scene ---------- */
@@ -552,7 +572,8 @@ tgeo.rotateX(-Math.PI/2);
     var x=tp.getX(i),z=tp.getZ(i),y=tp.getY(i);
     var sl=Math.abs(heightAt(x+1.6,z)-y)+Math.abs(heightAt(x,z+1.6)-y);
     var nz=vnoise(x*0.12+9,z*0.12+9),fine=vnoise(x*0.9,z*0.9);
-    c.copy(cG1).lerp(cG2,nz);
+    var biome=biomeAt(x,z),baseBiome=new THREE.Color(biome.ground),accentBiome=new THREE.Color(biome.accent);
+    c.copy(baseBiome).lerp(accentBiome,nz*0.48);
     if(y>8)c.lerp(cHi,clamp((y-8)/6,0,0.7));
     if(sl>1.5)c.lerp(cDirt,clamp((sl-1.5)/1.2,0,1));
     if(sl>2.6)c.lerp(cRock,clamp((sl-2.6)/1.4,0,1));
@@ -632,8 +653,10 @@ function scatter(kind,type,count,minS,maxS,rad,hp){
     tries++;
     var x=(R()-0.5)*(WORLD-30),z=(R()-0.5)*(WORLD-30);
     if(Math.hypot(x,z)<12)continue;
-    var y=heightAt(x,z);
+    var y=heightAt(x,z),biome=biomeAt(x,z);
     if(y<WATER+0.5||y>14)continue;
+    var habitatChance=kind==='pine'?(biome.id==='forest'?0.88:0.24):kind==='oak'?(biome.id==='meadow'||biome.id==='marsh'?0.82:0.22):kind==='birch'?(biome.id==='frost'||biome.id==='highland'?0.8:0.18):kind==='bush'?(biome.id==='meadow'||biome.id==='marsh'?0.86:0.38):(biome.id==='highland'||biome.id==='frost'?0.78:0.34);
+    if(R()>habitatChance)continue;
     if((kind==='rock'||kind==='copperOre'||kind==='ironOre'||kind==='crystalOre'||kind==='tinOre'||kind==='goldOre')?false:(Math.abs(heightAt(x+2,z)-y)+Math.abs(heightAt(x,z+2)-y)>3.2))continue;
     var s=minS+R()*(maxS-minS);
     res.push({type:type,kind:kind,mesh:null,idx:meshSpecs[kind].n++,x:x,y:y-0.05,z:z,ry:R()*6.283,s:s,rad:rad*s,hp:hp,max:hp,dead:0,hit:0});
@@ -1022,11 +1045,11 @@ var RAR={
   uncommon:{n:'Uncommon',rate:0.45,w:3,c:'#7ec8ff'},
   rare:{n:'Rare',rate:0.25,w:1,c:'#ffd36a'}
 };
-function pickSpecies(){
-  var tot=0,i;
-  for(i=0;i<SPECIES.length;i++)tot+=RAR[SPECIES[i].r].w;
+function pickSpecies(x,z){
+  var b=biomeAt(x===undefined?P.x:x,z===undefined?P.z:z),tot=0,i,weights=[];
+  for(i=0;i<SPECIES.length;i++){weights[i]=RAR[SPECIES[i].r].w*habitatWeight(i,b);tot+=weights[i];}
   var r=random()*tot;
-  for(i=0;i<SPECIES.length;i++){r-=RAR[SPECIES[i].r].w;if(r<=0)return i}
+  for(i=0;i<SPECIES.length;i++){r-=weights[i];if(r<=0)return i}
   return 0;
 }
 function catchRate(sp,id){if(location.hash==='#sure')return 1;return clamp(RAR[SPECIES[sp].r].rate*(id==='great'?1.5:1),0.05,0.95)}
@@ -1184,7 +1207,7 @@ function makeBed(){
 }
 
 /* ---------- state ---------- */
-var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0};
+var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
 var NSLOTS=36,HOT=9,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
 var activeChest=null,selectedChestSlot=0;
 var ITEMS={
@@ -1427,7 +1450,7 @@ function wildEscapeDirection(c,awayX,awayZ){
   return {x:bestX/len,z:bestZ/len};
 }
 function spawnWild(fsp,fx,fz,isJuvenile,parent){
-  var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies():fsp,m=makeCreature(sp);
+  var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies(s.x,s.z):fsp,m=makeCreature(sp);
   var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,hp:sp===4||sp===7?72:(sp===3?110:90),maxHp:sp===4||sp===7?72:(sp===3?110:90),hitTimer:0,flee:0,yaw:random()*6.283,walk:random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,ageSeconds:0,growthScale:isJuvenile?0.72:1,parent:parent||null,young:null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0};
   if(c.isJuvenile)m.g.scale.setScalar(0.72);
   c.hp=c.maxHp*(c.isJuvenile?0.72:1);
@@ -1458,7 +1481,7 @@ function save(){
   var snapshot;
   try{
     snapshot=JSON.stringify({
-      version:4,worldSeed:worldSeed,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
+      version:5,worldSeed:worldSeed,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
@@ -1499,7 +1522,7 @@ function load(){
     }
     if(!d)d=validSave(localStorage.getItem(OLD_KEY));
     if(!d)return false;
-    P.x=d.P.x;P.z=d.P.z;companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.y=heightAt(P.x,P.z);
+    P.x=d.P.x;P.z=d.P.z;companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
       var oldLayout=d.slots.length===30;
       for(var q=0;q<NSLOTS;q++){var oldIndex=oldLayout&&q>=HOT?q-3:q;var it=d.slots[oldIndex];if(it&&it.id==='cage')it={id:'ball',n:it.n};slots[q]=(it&&ITEMS[it.id]&&typeof it.n==='number'&&it.n>0)?{id:it.id,n:Math.min(it.n,ITEMS[it.id].max)}:null}
@@ -2046,14 +2069,13 @@ function update(dt){
   if(P.sprinting){P.stamina=Math.max(0,P.stamina-24*dt);if(P.stamina===0&&!sprintEmptyNotified){say('You are exhausted. Rest to recover stamina.',3);sprintEmptyNotified=true;}}
   else{P.stamina=Math.min(100,P.stamina+17*dt);if(P.stamina>25)sprintEmptyNotified=false;}
   $('bSprint').style.opacity=P.sprinting?'1':(P.stamina<5?'0.55':'0.85');
-  var spd=6*(P.dodge>0?2.35:(P.sprinting?1.6:1));
+  var spd=6*(P.dodge>0?2.35:(P.sprinting?1.6:1))*(P.swimming?0.58:1);
   P.speed=0;
   if(ml>0.08){
     var nx=P.x+wx*spd*dt,nz=P.z+wz*spd*dt,step=Math.hypot(wx,wz)*spd*dt||0.001;
     var tries=[[nx,nz],[nx,P.z],[P.x,nz]];
     for(var ti=0;ti<3;ti++){
       var h2=heightAt(tries[ti][0],tries[ti][1]);
-      if(h2<WATER-0.2)continue;
       if((h2-P.y)/step>1.6)continue;
       P.x=tries[ti][0];P.z=tries[ti][1];break;
     }
@@ -2062,7 +2084,22 @@ function update(dt){
   P.x=clamp(P.x,-HALF+6,HALF-6);P.z=clamp(P.z,-HALF+6,HALF-6);
   pushOutBoxes(P,0.5);
   explorationDistance+=Math.hypot(P.x-travelStartX,P.z-travelStartZ);
-  P.y+=(heightAt(P.x,P.z)-P.y)*Math.min(1,dt*14);
+  var groundY=heightAt(P.x,P.z),waterDepth=WATER-groundY;
+  P.swimming=waterDepth>0.55;
+  if(P.swimming){
+    P.y+=(WATER-0.45-P.y)*Math.min(1,dt*3.5);
+    P.oxygen=Math.max(0,P.oxygen-dt*8);
+    P.stamina=Math.max(0,P.stamina-dt*2.2);
+    if(P.oxygen<=0)playerDamage(4*dt,'Drowning');
+  }else{
+    P.y+=(groundY-P.y)*Math.min(1,dt*14);
+    P.oxygen=Math.min(100,P.oxygen+dt*22);
+  }
+  var baseTemp=biomeTemperature(P.x,P.z);
+  P.temperature=clamp(baseTemp-(P.wetness/100)*0.32-(rainLevel*0.1),-0.2,1);
+  if(rainLevel>0.12)P.wetness=Math.min(100,P.wetness+rainLevel*dt*7);
+  else P.wetness=Math.max(0,P.wetness-dt*(P.swimming?0.15:2.2));
+  if(P.temperature<0.08&&P.wetness>30)playerDamage(0.45*dt,'Cold exposure');
   P.cool-=dt;if(P.swing>0)P.swing-=dt;
   if(held.gather)doGather();
 
@@ -2765,11 +2802,15 @@ function updateHud(){
   if(P.food<=0)statuses.push('STARVING');else if(P.food<20)statuses.push('HUNGRY');
   if(P.stamina<=0.5)statuses.push('EXHAUSTED');
   if(P.dodge>0)statuses.push('DODGING');
+  if(P.swimming)statuses.push('SWIMMING · O₂ '+Math.ceil(P.oxygen)+'%');
+  if(P.wetness>35)statuses.push('WET '+Math.ceil(P.wetness)+'%');
+  if(P.temperature<0.08)statuses.push('FREEZING');
   var statusEl=$('statusEffects');statusEl.textContent=statuses.join(' · ');statusEl.hidden=statuses.length===0;
   statusEl.style.border=statuses.length?'1px solid #e6a34e88':'';
   var t=(clock/DAY)%1,e=Math.sin(t*Math.PI*2+0.65);
   var phase=nightF>0.6?'Night':(nightF>0.15?(Math.cos(t*Math.PI*2+0.65)>0?'Dusk':'Dawn'):'Day');
   $('time').textContent='Day '+(Math.floor(clock/DAY)+1)+' · '+phase;
+  $('biomeStatus').textContent=biomeAt(P.x,P.z).name;
   renderInv(false);
   checkAchievements();
   updateExplorationMap();
