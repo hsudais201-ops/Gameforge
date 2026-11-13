@@ -27,7 +27,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 17. Add camera sensitivity and inversion settings.
 - [ ] 18. Add optional aim assist for touch combat.
 - [ ] 19. Add swimming movement and underwater camera handling.
-- [ ] 20. Add player status effects with clear HUD indicators.
+- [x] 20. Add player status effects with clear HUD indicators.
 
 ## C. Character and customization
 - [x] 21. Keep the detailed character mesh rather than replacing it with a simplified placeholder.
@@ -150,6 +150,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
 ## Current verified implementation batch
+- Player condition HUD: added accessible live status labels for critical health, starvation, hunger, exhaustion, and active dodge windows.
 - Controls and combat: persisted joystick dead-zone, camera sensitivity and vertical inversion settings; added keyboard/touch dodge with stamina cost, movement burst, and brief damage immunity.
 - Crafting UX: added recipe text search across names and ingredients, plus category filtering with empty-category headings hidden.
 - Inventory convenience: added storage-only sorting that preserves the hotbar, plus quick chest deposit/withdraw controls with stack limits and partial-transfer handling.
