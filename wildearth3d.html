@@ -1608,12 +1608,36 @@ $('createWorldToggle').addEventListener('click',function(){$('createWorldForm').
 $('createWorld').addEventListener('click',function(){var name=$('newWorldName').value.trim().slice(0,28)||'New World '+(worldList.length+1);var seedText=$('newWorldSeed').value.trim(),id='world-'+Date.now().toString(36)+'-'+random().toString(36).slice(2,7);var newSeed=seedText===''?((Date.now()^Math.floor(random()*4294967295))>>>0):(/^\\d+$/.test(seedText)?(Number(seedText)>>>0):seedFromString(seedText));if(!newSeed)newSeed=seedFromString(seedText||id);worldList.push({id:id,name:name,created:Date.now(),seed:newSeed});selectedWorldId=id;persistWorldList();try{localStorage.removeItem('mfwilds3d_v2');}catch(e){}location.reload();});
 
 /* ---------- input ---------- */
-var keys={},held={gather:false,sprint:false},joy={x:0,y:0};
+var keys={},held={gather:false,sprint:false},joy={x:0,y:0},gamepadMove={x:0,y:0,connected:false},gamepadButtons=[];
 var cam={yaw:0,pitch:0.45,dist:9};
+function readGamepad(dt){
+  gamepadMove.x=0;gamepadMove.y=0;gamepadMove.connected=false;
+  if(!navigator.getGamepads||menuOpen||bagOpen||!$('settingsPanel').hidden)return;
+  var pads=navigator.getGamepads(),gp=null;
+  for(var pi=0;pi<pads.length;pi++)if(pads[pi]){gp=pads[pi];break;}
+  if(!gp)return;
+  gamepadMove.connected=true;
+  function axis(i){var v=gp.axes&&isFinite(gp.axes[i])?gp.axes[i]:0;return Math.abs(v)<0.16?0:Math.sign(v)*(Math.abs(v)-0.16)/0.84;}
+  function pressed(i){return !!(gp.buttons&&gp.buttons[i]&&(gp.buttons[i].pressed||gp.buttons[i].value>0.65));}
+  var current=[];for(var bi=0;bi<gp.buttons.length;bi++)current[bi]=pressed(bi);
+  if(current[0]&&!gamepadButtons[0])doGather();
+  if(current[1]&&!gamepadButtons[1])startDodge();
+  if(current[2]&&!gamepadButtons[2])doUse();
+  if(current[3]&&!gamepadButtons[3])doCatch();
+  if(current[4]&&!gamepadButtons[4]){hotSel=(hotSel+HOT-1)%HOT;renderInv(true);}
+  if(current[5]&&!gamepadButtons[5]){hotSel=(hotSel+1)%HOT;renderInv(true);}
+  if(current[12]&&!gamepadButtons[12]){hotSel=(hotSel+HOT-1)%HOT;renderInv(true);}
+  if(current[13]&&!gamepadButtons[13]){hotSel=(hotSel+1)%HOT;renderInv(true);}
+  gamepadButtons=current;
+  gamepadMove.x=axis(0);gamepadMove.y=axis(1);
+  cam.yaw-=axis(2)*dt*2.4;cam.pitch=clamp(cam.pitch+axis(3)*dt*1.7,-0.08,1.12);
+}
+window.addEventListener('gamepadconnected',function(){say('Controller connected. Left stick moves; right stick looks. A gathers, B dodges, X uses, Y catches.',5);});
+window.addEventListener('gamepaddisconnected',function(){gamepadMove.connected=false;gamepadMove.x=gamepadMove.y=0;gamepadButtons=[];say('Controller disconnected.',3);});
 function startDodge(){
   if(dead||P.dodge>0.02||P.stamina<22||menuOpen||bagOpen||!$('settingsPanel').hidden)return;
-  var mx=(keys[keyBindings.right]?1:0)-(keys[keyBindings.left]?1:0)+joy.x;
-  var my=(keys[keyBindings.backward]?1:0)-(keys[keyBindings.forward]?1:0)+joy.y;
+  var mx=(keys[keyBindings.right]?1:0)-(keys[keyBindings.left]?1:0)+joy.x+gamepadMove.x;
+  var my=(keys[keyBindings.backward]?1:0)-(keys[keyBindings.forward]?1:0)+joy.y+gamepadMove.y;
   var len=Math.hypot(mx,my);
   if(len<0.08){mx=0;my=-1;len=1;}
   mx/=len;my/=len;
@@ -2085,12 +2109,13 @@ function update(dt){
   streamTimer+=dt;if(streamDirty||streamTimer>0.65){streamTimer=0;updateWorldStreaming(false);}
   envUpdate();
   updateAmbient(dt);
+  readGamepad(dt);
   if(nightF>0.7&&!inNight)inNight=true;
   if(nightF<0.2&&inNight){inNight=false;nights+=1;say('You survived night '+nights+'.');checkAchievements();save()}
 
   var travelStartX=P.x,travelStartZ=P.z;
-  var mx=(keys[keyBindings.right]?1:0)-(keys[keyBindings.left]?1:0)+joy.x;
-  var my=(keys[keyBindings.backward]?1:0)-(keys[keyBindings.forward]?1:0)+joy.y;
+  var mx=(keys[keyBindings.right]?1:0)-(keys[keyBindings.left]?1:0)+joy.x+gamepadMove.x;
+  var my=(keys[keyBindings.backward]?1:0)-(keys[keyBindings.forward]?1:0)+joy.y+gamepadMove.y;
   var ml=Math.hypot(mx,my);if(ml>1){mx/=ml;my/=ml;ml=1}
   var sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);
   var fdx=-sy,fdz=-cy,rdx=cy,rdz=-sy;
