@@ -675,28 +675,61 @@ function limb(len,r,color,endColor){
   return g;
 }
 function makePlayer(){
-  var g=new THREE.Group(),skinMat=stdMat(0xc98f68,0.78),cloth=stdMat(0x263f46,0.92),cloth2=stdMat(0x365e60,0.88),leather=stdMat(0x69452d,0.96),metal=stdMat(0x89979a,0.34,{metalness:0.55}),dark=stdMat(0x211c19,0.95);
+  // Clean, centered humanoid rig: every limb rotates around its real joint.
+  var g=new THREE.Group();
+  var skinMat=stdMat(0xc98f68,0.82),cloth=stdMat(0x263f46,0.94),cloth2=stdMat(0x365e60,0.9);
+  var leather=stdMat(0x69452d,0.98),metal=stdMat(0x89979a,0.38,{metalness:0.45}),dark=stdMat(0x211c19,0.98);
   var hips=new THREE.Group();hips.position.y=0.98;g.add(hips);
-  var torso=mesh(new THREE.CylinderGeometry(0.28,0.33,0.72,14),cloth,0,0.48,0,1,1,0.82);hips.add(torso);
-  hips.add(mesh(new THREE.SphereGeometry(0.29,14,10),cloth2,0,0.79,0,1,0.5,0.82));
-  hips.add(mesh(new THREE.BoxGeometry(0.46,0.12,0.48),leather,0,0.12,0,1,1,0.78));
-  hips.add(mesh(new THREE.BoxGeometry(0.13,0.13,0.05),metal,0,0.12,0.22));
-  function makeLeg(side){var leg=new THREE.Group();leg.position.set(side*0.17,0.12,0);hips.add(leg);leg.add(mesh(new THREE.CylinderGeometry(0.135,0.105,0.78,10),cloth,0,-0.39,0));leg.add(mesh(new THREE.SphereGeometry(0.14,10,8),cloth2,0,-0.36,0,1,0.65,1));leg.add(mesh(new THREE.BoxGeometry(0.23,0.17,0.075),leather,0,-0.59,0.105));leg.add(mesh(new THREE.BoxGeometry(0.29,0.18,0.39),dark,0,-0.82,0.075));leg.add(mesh(new THREE.BoxGeometry(0.30,0.07,0.41),leather,0,-0.73,0.08));leg.add(mesh(new THREE.BoxGeometry(0.09,0.055,0.025),metal,0,-0.59,0.15));return leg;}
+  // Waist and torso remain centered on the body axis.
+  hips.add(mesh(new THREE.BoxGeometry(0.48,0.18,0.30),leather,0,0.12,0));
+  hips.add(mesh(new THREE.BoxGeometry(0.58,0.66,0.32),cloth,0,0.53,0));
+  hips.add(mesh(new THREE.BoxGeometry(0.60,0.13,0.34),cloth2,0,0.82,0));
+  hips.add(mesh(new THREE.BoxGeometry(0.12,0.10,0.025),metal,0,0.12,0.17));
+  function makeLeg(side){
+    var leg=new THREE.Group();leg.position.set(side*0.16,0.08,0);hips.add(leg);
+    leg.add(mesh(new THREE.BoxGeometry(0.23,0.72,0.25),cloth,0,-0.36,0));
+    leg.add(mesh(new THREE.BoxGeometry(0.25,0.18,0.27),leather,0,-0.58,0.015));
+    leg.add(mesh(new THREE.BoxGeometry(0.29,0.18,0.40),dark,0,-0.78,0.07));
+    leg.add(mesh(new THREE.BoxGeometry(0.30,0.06,0.40),leather,0,-0.68,0.07));
+    return leg;
+  }
   var legL=makeLeg(-1),legR=makeLeg(1);
-  hips.add(mesh(new THREE.CylinderGeometry(0.085,0.095,0.16,10),skinMat,0,0.91,0));
+  hips.add(mesh(new THREE.CylinderGeometry(0.095,0.10,0.16,10),skinMat,0,0.91,0));
   var head=new THREE.Group();head.position.set(0,1.12,0);hips.add(head);
-  head.add(mesh(new THREE.SphereGeometry(0.225,18,14),skinMat,0,0.02,0));
-  var hairCap=mesh(new THREE.SphereGeometry(0.17,14,9,0,Math.PI*2,0,Math.PI*0.52),dark,0,0.09,-0.005,1,0.82,1);head.add(hairCap);var hairLongL=mesh(new THREE.BoxGeometry(0.055,0.2,0.09),dark,-0.18,-0.055,0.07),hairLongR=mesh(new THREE.BoxGeometry(0.055,0.2,0.09),dark,0.18,-0.055,0.07);head.add(hairLongL);head.add(hairLongR);var hood=mesh(new THREE.SphereGeometry(0.245,14,10,0,Math.PI*2,0,Math.PI*0.55),stdMat(0x35483f),0,0.07,-0.015,1,1.05,1);head.add(hood);hairLongL.visible=false;hairLongR.visible=false;hood.visible=false;
-  head.add(mesh(new THREE.SphereGeometry(0.11,12,8),stdMat(0x30251e),0,-0.005,0.15,1.35,0.55,0.72));
-  head.add(mesh(new THREE.SphereGeometry(0.038,8,6),skinMat,0,-0.035,0.205,0.8,0.8,0.8));
-  [-1,1].forEach(function(side){head.add(mesh(new THREE.SphereGeometry(0.035,8,6),skinMat,side*0.22,0,0));head.add(mesh(new THREE.SphereGeometry(0.018,8,6),dark,side*0.078,0.035,0.205));head.add(mesh(new THREE.BoxGeometry(0.075,0.018,0.025),dark,side*0.078,0.078,0.205));});
-  function makeArm(side){var arm=new THREE.Group();arm.position.set(side*0.39,0.78,0);hips.add(arm);arm.add(mesh(new THREE.SphereGeometry(0.15,10,8),cloth,0,0,0,1,0.9,1));arm.add(mesh(new THREE.CylinderGeometry(0.105,0.085,0.43,10),cloth2,0,-0.27,0));arm.add(mesh(new THREE.CylinderGeometry(0.088,0.095,0.19,10),leather,0,-0.55,0));arm.add(mesh(new THREE.SphereGeometry(0.09,10,8),dark,0,-0.68,0.02));arm.add(mesh(new THREE.BoxGeometry(0.17,0.17,0.12),leather,0,-0.51,0.015));arm.add(mesh(new THREE.BoxGeometry(0.11,0.06,0.035),metal,0,-0.5,0.09));return arm;}
+  head.add(mesh(new THREE.BoxGeometry(0.39,0.43,0.36),skinMat,0,0.02,0));
+  var hairCap=mesh(new THREE.BoxGeometry(0.41,0.12,0.38),dark,0,0.245,-0.005);
+  var hairLongL=mesh(new THREE.BoxGeometry(0.07,0.24,0.37),dark,-0.19,0.08,0);
+  var hairLongR=mesh(new THREE.BoxGeometry(0.07,0.24,0.37),dark,0.19,0.08,0);
+  var hood=mesh(new THREE.BoxGeometry(0.48,0.49,0.43),stdMat(0x35483f),0,0.045,-0.025);
+  head.add(hairCap);head.add(hairLongL);head.add(hairLongR);head.add(hood);
+  hairLongL.visible=false;hairLongR.visible=false;hood.visible=false;
+  // Face points forward (+Z).
+  head.add(mesh(new THREE.BoxGeometry(0.25,0.10,0.035),stdMat(0x30251e),0,-0.075,0.19));
+  [-1,1].forEach(function(side){
+    head.add(mesh(new THREE.BoxGeometry(0.045,0.045,0.025),dark,side*0.085,0.055,0.19));
+    head.add(mesh(new THREE.BoxGeometry(0.07,0.018,0.025),dark,side*0.085,0.105,0.19));
+  });
+  function makeArm(side){
+    var arm=new THREE.Group();arm.position.set(side*0.37,0.79,0);hips.add(arm);
+    arm.add(mesh(new THREE.BoxGeometry(0.21,0.32,0.25),cloth,0,-0.15,0));
+    arm.add(mesh(new THREE.BoxGeometry(0.17,0.32,0.20),cloth2,0,-0.46,0));
+    arm.add(mesh(new THREE.BoxGeometry(0.18,0.14,0.20),skinMat,0,-0.68,0.015));
+    arm.add(mesh(new THREE.BoxGeometry(0.23,0.12,0.25),leather,0,-0.52,0));
+    arm.add(mesh(new THREE.BoxGeometry(0.11,0.06,0.025),metal,0,-0.52,0.13));
+    return arm;
+  }
   var armL=makeArm(-1),armR=makeArm(1);
-  var pack=new THREE.Group();pack.position.set(0,0.52,-0.29);hips.add(pack);pack.add(mesh(new THREE.BoxGeometry(0.42,0.52,0.2),leather,0,0,0));pack.add(mesh(new THREE.BoxGeometry(0.32,0.14,0.22),stdMat(0x806044),0,0.32,-0.01));pack.add(mesh(new THREE.CylinderGeometry(0.075,0.075,0.4,9),stdMat(0x9b7650),0,0.39,-0.02,1,1,0.8));
-  var scarfTail=mesh(new THREE.BoxGeometry(0.1,0.3,0.035),stdMat(0xb56a3c),-0.12,0.73,-0.2);scarfTail.rotation.x=-0.25;hips.add(scarfTail);
-  var axe=new THREE.Group();axe.position.set(0,-0.67,0.04);armR.add(axe);axe.add(mesh(new THREE.CylinderGeometry(0.022,0.03,0.76,8),stdMat(0x78502f),0,0.31,0));axe.add(mesh(new THREE.BoxGeometry(0.09,0.2,0.29),metal,0,0.62,0.09));axe.rotation.x=1.05;
-  g.userData.customMaterials={skin:skinMat,cloth:cloth,cloth2:cloth2,leather:leather,hair:dark};g.userData.hairStyles={short:hairCap,longL:hairLongL,longR:hairLongR,hood:hood};
-  return {g:g,hips:hips,legL:legL,legR:legR,armL:armL,armR:armR,head:head,torso:torso,pack:pack,scarfTail:scarfTail,axe:axe};
+  var pack=new THREE.Group();pack.position.set(0,0.52,-0.22);hips.add(pack);
+  pack.add(mesh(new THREE.BoxGeometry(0.40,0.48,0.20),leather,0,0,0));
+  pack.add(mesh(new THREE.BoxGeometry(0.30,0.13,0.22),stdMat(0x806044),0,0.29,-0.01));
+  pack.add(mesh(new THREE.CylinderGeometry(0.055,0.055,0.34,8),stdMat(0x9b7650),0,0.38,-0.02));
+  var scarfTail=mesh(new THREE.BoxGeometry(0.09,0.28,0.035),stdMat(0xb56a3c),-0.12,0.73,-0.19);scarfTail.rotation.x=-0.25;hips.add(scarfTail);
+  var axe=new THREE.Group();axe.position.set(0,-0.67,0.04);armR.add(axe);
+  axe.add(mesh(new THREE.CylinderGeometry(0.022,0.03,0.70,8),stdMat(0x78502f),0,0.30,0));
+  axe.add(mesh(new THREE.BoxGeometry(0.09,0.20,0.27),metal,0,0.58,0.09));axe.rotation.x=1.05;
+  g.userData.customMaterials={skin:skinMat,cloth:cloth,cloth2:cloth2,leather:leather,hair:dark};
+  g.userData.hairStyles={short:hairCap,longL:hairLongL,longR:hairLongR,hood:hood};
+  return {g:g,hips:hips,legL:legL,legR:legR,armL:armL,armR:armR,head:head,torso:hips.children[2],pack:pack,scarfTail:scarfTail,axe:axe};
 }
 var player=makePlayer();scene.add(player.g);
 var characterStyles=[0x527b70,0x8a633e,0x52658e,0x8b4c4c],selectedCharacter=0;
