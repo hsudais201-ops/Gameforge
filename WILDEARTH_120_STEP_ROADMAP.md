@@ -51,7 +51,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 37. Add biome-specific resource distribution.
 - [ ] 38. Add caves with entrances, interior lighting, and exit paths.
 - [ ] 39. Add rivers, ponds, and connected water flow.
-- [ ] 40. Add world seed entry and seed display.
+- [x] 40. Add world seed entry and seed display.
 
 ## E. Ecology and creatures
 - [x] 41. Spawn multiple wildlife species.
@@ -105,7 +105,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 81. Add placeable walls, floors, fires, torches, and beds.
 - [x] 82. Add placement preview and collision-aware placement.
 - [x] 83. Add bedroll respawn and safe spawn validation.
-- [ ] 84. Add snap points and grid-aligned building.
+- [x] 84. Add snap points and grid-aligned building.
 - [ ] 85. Add doors, gates, and roof pieces.
 - [ ] 86. Add structural integrity and support rules.
 - [ ] 87. Add storage, workbench, and cooking stations.
@@ -150,6 +150,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
 ## Current verified implementation batch
+- World/build foundations: added optional world-seed entry and reproducibility display; building pieces already snap to a consistent 3-metre grid and are now covered by smoke tests.
 - Keyboard accessibility: added four remappable movement bindings with reserved-key and duplicate checks; bindings persist locally.
 - Survival presets: added persistent Explorer/Easy, Survivor/Normal, and Wilderness/Hard difficulty choices that scale incoming damage and hunger drain.
 - Player condition HUD: added accessible live status labels for critical health, starvation, hunger, exhaustion, and active dodge windows.
