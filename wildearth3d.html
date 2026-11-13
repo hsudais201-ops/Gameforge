@@ -224,7 +224,7 @@
     <span class="pill">Health<span class="bar"><i id="hp" style="background:#e8574f"></i></span></span>
     <span class="pill">Food<span class="bar"><i id="food" style="background:#e9b44c"></i></span></span>
     <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
-    <span class="pill" id="time"></span>
+    <span class="pill" id="time"></span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
   </div>
   <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div>
 </div>
@@ -2719,6 +2719,13 @@ function updateHud(){
   $('food').style.width=clamp(P.food,0,100)+'%';
   $('stamina').style.width=clamp(P.stamina,0,100)+'%';
   $('stamina').style.background=P.stamina<25?'#e6a34e':'#61d6a0';
+  var statuses=[];
+  if(P.hp<=25)statuses.push('CRITICAL HEALTH');
+  if(P.food<=0)statuses.push('STARVING');else if(P.food<20)statuses.push('HUNGRY');
+  if(P.stamina<=0.5)statuses.push('EXHAUSTED');
+  if(P.dodge>0)statuses.push('DODGING');
+  var statusEl=$('statusEffects');statusEl.textContent=statuses.join(' · ');statusEl.hidden=statuses.length===0;
+  statusEl.style.border=statuses.length?'1px solid #e6a34e88':'';
   var t=(clock/DAY)%1,e=Math.sin(t*Math.PI*2+0.65);
   var phase=nightF>0.6?'Night':(nightF>0.15?(Math.cos(t*Math.PI*2+0.65)>0?'Dusk':'Dawn'):'Day');
   $('time').textContent='Day '+(Math.floor(clock/DAY)+1)+' · '+phase;
