@@ -528,7 +528,9 @@ function makePlayer(){
     leg.add(mesh(new THREE.BoxGeometry(0.12,0.08,0.035),metal,0,-0.62,0.17));
   });
   // Anatomical torso with layered shirt, chest panel and shoulder silhouette.
-  var torso=mesh(new THREE.CapsuleGeometry(0.29,0.55,5,12),cloth,0,0.5,0,1,1,0.78);hips.add(torso);
+  var torso=mesh(new THREE.CylinderGeometry(0.29,0.33,0.72,14),cloth,0,0.52,0,1,1,0.78);hips.add(torso);
+  hips.add(mesh(new THREE.SphereGeometry(0.29,14,10),cloth,0,0.88,0,1,0.58,0.78));
+  hips.add(mesh(new THREE.SphereGeometry(0.29,14,10),cloth,0,0.17,0,1,0.55,0.78));
   hips.add(mesh(new THREE.SphereGeometry(0.31,14,12),cloth2,0,0.84,0,1.03,0.58,0.82));
   hips.add(mesh(new THREE.BoxGeometry(0.43,0.43,0.055),leather,0,0.53,0.255));
   hips.add(mesh(new THREE.BoxGeometry(0.32,0.31,0.035),cloth2,0,0.56,0.29));
