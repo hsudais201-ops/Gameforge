@@ -47,6 +47,12 @@
   .cat{font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;margin-top:6px}
   #craftList{display:flex;flex-direction:column;gap:6px}
   #err{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;background:#0b1410;font-size:15px;line-height:1.5}
+  #settingsBtn{position:fixed;right:12px;top:max(12px,env(safe-area-inset-top));z-index:12;border:1px solid #ffffff55;border-radius:10px;padding:9px 12px;background:#10251ddd;color:#fff;font:600 12px system-ui;touch-action:manipulation}
+  #settingsPanel{position:fixed;z-index:30;left:50%;top:50%;transform:translate(-50%,-50%);width:min(90vw,360px);box-sizing:border-box;padding:16px;border:1px solid #ffffff35;border-radius:16px;background:rgba(7,17,13,.97);box-shadow:0 18px 60px #0009;display:flex;flex-direction:column;gap:12px}
+  #settingsPanel[hidden]{display:none}
+  .settingRow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px}
+  .settingRow select,.settingRow button{background:#1d3a2a;color:#fff;border:1px solid #ffffff44;border-radius:8px;padding:8px;font:inherit;max-width:155px}
+  #settingsPanel .settingNote{font-size:11px;opacity:.7;line-height:1.4}
 </style>
 </head>
 <body>
@@ -60,6 +66,8 @@
   <div class="row"><span class="pill" id="goal"></span></div>
 </div>
 <div id="hint"></div>
+<button id="settingsBtn" type="button">⚙ Settings</button>
+<div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
 <div id="bag" hidden>
   <div class="bagTop"><strong>Backpack</strong><button id="bagClose">Close</button></div>
@@ -85,9 +93,6 @@ var $=function(id){return document.getElementById(id)};
 if(typeof THREE==='undefined'){$('err').style.display='flex';return}
 
 var isMobile=window.matchMedia('(pointer:coarse)').matches;
-var deviceMemory=navigator.deviceMemory||4;
-var cpuCores=navigator.hardwareConcurrency||4;
-var lowMemoryDevice=deviceMemory<=4||cpuCores<=4;
 var WORLD=300,HALF=WORLD/2,WATER=-1.2,DAY=240,SAVE_KEY='mfwilds3d_v2',OLD_KEY='mfwilds3d_v1';
 var vw=window.innerWidth,vh=window.innerHeight;
 
@@ -116,7 +121,7 @@ function heightAt(x,z){
 /* ---------- renderer / scene ---------- */
 var cv=$('c');
 var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!isMobile&&!lowMemoryDevice,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,lowMemoryDevice?1:isMobile?1.25:1.75));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
 renderer.shadowMap.enabled=true;
@@ -140,42 +145,38 @@ sun.shadow.camera.near=10;sun.shadow.camera.far=150;
 sun.shadow.bias=-0.0005;sun.shadow.normalBias=0.06;
 scene.add(sun);scene.add(sun.target);
 
-/* ---------- adaptive rendering system ---------- */
+/* ---------- manual graphics settings (resolution stays fixed) ---------- */
 var renderProfiles=[
-  {name:'LOW',pixelRatio:0.75,shadows:false,shadowSize:0},
-  {name:'BALANCED',pixelRatio:1,shadows:!isMobile,shadowSize:512},
-  {name:'HIGH',pixelRatio:Math.min(window.devicePixelRatio||1,1.5),shadows:true,shadowSize:1024}
+  {name:'Low',shadows:false,fogFar:175},
+  {name:'Balanced',shadows:true,fogFar:230},
+  {name:'High',shadows:true,fogFar:280}
 ];
-var renderLevel=lowMemoryDevice?0:(isMobile?1:2);
-var renderStats={frames:0,elapsed:0,slowTime:0,fastTime:0,lastChange:0};
+var renderLevel=1,areaLevel=1,areaRadii=[55,85,125];
 function applyRenderProfile(level){
-  renderLevel=clamp(level,0,renderProfiles.length-1);
+  renderLevel=clamp(level|0,0,2);
   var profile=renderProfiles[renderLevel];
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,profile.pixelRatio));
-  renderer.setSize(vw,vh,false);
   renderer.shadowMap.enabled=profile.shadows;
   sun.castShadow=profile.shadows;
   if(profile.shadows){
-    if(sun.shadow.mapSize.x!==profile.shadowSize||sun.shadow.mapSize.y!==profile.shadowSize){
-      sun.shadow.mapSize.set(profile.shadowSize,profile.shadowSize);
+    var shadowSize=renderLevel===2?1024:512;
+    if(sun.shadow.mapSize.x!==shadowSize||sun.shadow.mapSize.y!==shadowSize){
+      sun.shadow.mapSize.set(shadowSize,shadowSize);
       sun.shadow.map=null;
     }
   }else if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
   renderer.shadowMap.needsUpdate=true;
-  renderStats.lastChange=performance.now();
+  scene.fog.far=profile.fogFar;
+  $('qualitySelect').value=String(renderLevel);
 }
-function sampleRenderPerformance(dt){
-  renderStats.frames++;renderStats.elapsed+=dt;
-  if(renderStats.elapsed<2.5)return;
-  var fps=renderStats.frames/renderStats.elapsed;
-  renderStats.frames=0;renderStats.elapsed=0;
-  if(fps<38){renderStats.slowTime+=2.5;renderStats.fastTime=0;}
-  else if(fps>56){renderStats.fastTime+=2.5;renderStats.slowTime=0;}
-  else{renderStats.slowTime=Math.max(0,renderStats.slowTime-2.5);renderStats.fastTime=0;}
-  var now=performance.now();
-  if(renderStats.slowTime>=5&&renderLevel>0&&now-renderStats.lastChange>5000){applyRenderProfile(renderLevel-1);renderStats.slowTime=0;}
-  else if(renderStats.fastTime>=12&&renderLevel<2&&!lowMemoryDevice&&now-renderStats.lastChange>12000){applyRenderProfile(renderLevel+1);renderStats.fastTime=0;}
+function applyAreaLevel(level){
+  areaLevel=clamp(level|0,0,2);
+  $('areaSelect').value=String(areaLevel);
+  streamDirty=true;
 }
+$('settingsBtn').addEventListener('click',function(){$('settingsPanel').hidden=false});
+$('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});
+$('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this.value);say('Graphics set to '+renderProfiles[renderLevel].name,2)});
+$('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
 applyRenderProfile(renderLevel);
 var moon=new THREE.DirectionalLight(0x8aa4ff,0);scene.add(moon);
 var playerLight=new THREE.PointLight(0xffd9a0,0,14,2);scene.add(playerLight);
@@ -327,6 +328,32 @@ scatter('rock','rock',(isMobile?70:110),0.8,2.0,1.1,4);
 scatter('bush','bush',(isMobile?70:110),0.8,1.3,0,1);
 
 var _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_p=new THREE.Vector3(),_s=new THREE.Vector3();
+var streamedMeshes=[],streamDirty=true,streamTimer=0;
+function registerStreamMesh(im,positions,baseMatrices){im.userData.streamPositions=positions;im.userData.baseMatrices=baseMatrices;im.userData.streamVisible=[];streamedMeshes.push(im);}
+function updateWorldStreaming(force){
+  var radius=areaRadii[areaLevel],radius2=radius*radius,chunkSize=32,changed=0;
+  function active(x,z){var cx=Math.floor(x/chunkSize)*chunkSize+chunkSize/2,cz=Math.floor(z/chunkSize)*chunkSize+chunkSize/2;var dx=cx-P.x,dz=cz-P.z;return dx*dx+dz*dz<=(radius+chunkSize*0.72)*(radius+chunkSize*0.72)}
+  for(var m=0;m<streamedMeshes.length;m++){
+    var im=streamedMeshes[m],pos=im.userData.streamPositions,base=im.userData.baseMatrices,vis=im.userData.streamVisible;
+    for(var n=0;n<pos.length;n++){
+      var on=active(pos[n].x,pos[n].z);
+      if(force||vis[n]!==on){
+        _m.fromArray(base[n]);
+        if(!on){_m.elements[0]*=0.0001;_m.elements[1]*=0.0001;_m.elements[2]*=0.0001;_m.elements[4]*=0.0001;_m.elements[5]*=0.0001;_m.elements[6]*=0.0001;_m.elements[8]*=0.0001;_m.elements[9]*=0.0001;_m.elements[10]*=0.0001;}
+        im.setMatrixAt(n,_m);vis[n]=on;changed++;
+      }
+    }
+    if(changed)im.instanceMatrix.needsUpdate=true;
+  }
+  for(var ri=0;ri<res.length;ri++){
+    var r=res[ri],onR=active(r.x,r.z);
+    if(r.streamOn!==onR){r.streamOn=onR;if(r.dead<=0)setInst(r,0,!onR);if(r.si!==undefined)stumpIM&&setStump(r,!onR&&r.dead<=0);}
+  }
+  for(var wi=0;wi<wild.length;wi++){var w=wild[wi];w.m.g.visible=active(w.x,w.z);}
+  $('worldStatus').textContent='Active area: '+areaRadii[areaLevel]+' m · '+streamedMeshes.length+' streamed detail groups';
+  streamDirty=false;
+}
+
 function setInst(r,shake,hidden){
   _e.set(shake||0,r.ry,0,'YXZ');_q.setFromEuler(_e);
   _p.set(r.x,r.y,r.z);
@@ -364,6 +391,7 @@ scene.add(stumpIM);
     _m.compose(_p,_q,_s);im.setMatrixAt(k++,_m);
   }
   im.count=k;im.frustumCulled=false;im.receiveShadow=false;scene.add(im);
+  var gp=[],gb=[];for(var gi=0;gi<k;gi++){var gm=new THREE.Matrix4();im.getMatrixAt(gi,gm);gb.push(gm.toArray());gp.push({x:gm.elements[12],z:gm.elements[14]});}registerStreamMesh(im,gp,gb);
 })();
 
 /* ---------- world detail: birch, stumps, flowers, mushrooms, ferns, pebbles, reeds, logs ---------- */
@@ -441,16 +469,16 @@ function buildLog(){
   ]);
 }
 function placeInstanced(geo,count,ok,sMin,sMax,castSh,yFix){
-  var im=new THREE.InstancedMesh(geo,matVC,count),k=0,tries=0;
+  var im=new THREE.InstancedMesh(geo,matVC,count),k=0,tries=0,positions=[],baseMatrices=[];
   while(k<count&&tries<count*30){
     tries++;
     var x=(R()-0.5)*(WORLD-20),z=(R()-0.5)*(WORLD-20),y=heightAt(x,z);
     if(!ok(x,z,y))continue;
     var sc=sMin+R()*(sMax-sMin);
     _e.set(0,R()*6.283,0);_q.setFromEuler(_e);_p.set(x,yFix===undefined?y:yFix,z);_s.set(sc,sc,sc);
-    _m.compose(_p,_q,_s);im.setMatrixAt(k++,_m);
+    _m.compose(_p,_q,_s);im.setMatrixAt(k,_m);positions.push({x:x,z:z});baseMatrices.push(_m.toArray());k++;
   }
-  im.count=k;im.frustumCulled=false;im.castShadow=!!castSh;im.receiveShadow=false;scene.add(im);
+  im.count=k;im.frustumCulled=false;im.castShadow=!!castSh;im.receiveShadow=false;scene.add(im);registerStreamMesh(im,positions,baseMatrices);
   return im;
 }
 (function(){
@@ -853,6 +881,7 @@ if(location.hash==='#chop'){
 }
 if(location.hash==='#craft'||location.hash==='#chop')window.__dbg=Object.assign(window.__dbg||{},{falls:falls,P:P,slots:slots,walls:walls,fires:fires,beds:beds});
 for(var wi=0;wi<(isMobile?28:40);wi++)spawnWild();
+updateWorldStreaming(true);
 
 /* ---------- input ---------- */
 var keys={},held={gather:false},joy={x:0,y:0};
@@ -1177,6 +1206,7 @@ function updateAmbient(dt){
 var hudT=0,saveT=0,flick=0;
 function update(dt){
   clock+=dt;flick+=dt;
+  streamTimer+=dt;if(streamDirty||streamTimer>0.65){streamTimer=0;updateWorldStreaming(false);}
   envUpdate();
   updateAmbient(dt);
   if(nightF>0.7&&!inNight)inNight=true;
@@ -1450,7 +1480,6 @@ function frame(now){
   var dt=Math.min(0.05,(now-last)/1000);last=now;
   update(dt);updateCamera();updateFloats(dt);
   renderer.render(scene,camera);
-  sampleRenderPerformance(dt);
   requestAnimationFrame(frame);
 }
 document.addEventListener('visibilitychange',function(){
@@ -1458,7 +1487,7 @@ document.addEventListener('visibilitychange',function(){
   if(pageActive){last=performance.now();requestAnimationFrame(frame);}
 });
 cv.addEventListener('webglcontextlost',function(e){e.preventDefault();pageActive=false;$('hint').textContent='Graphics paused. Reload the game if the display does not recover.';$('hint').style.opacity='1';});
-cv.addEventListener('webglcontextrestored',function(){pageActive=true;applyRenderProfile(renderLevel);last=performance.now();requestAnimationFrame(frame);});
+cv.addEventListener('webglcontextrestored',function(){pageActive=true;applyRenderProfile(renderLevel);streamDirty=true;last=performance.now();requestAnimationFrame(frame);});
 window.addEventListener('beforeunload',save);
 updateHud();
 say(loaded?'Welcome back. Your base was saved.':'Left stick moves. Drag the right side to look. Hold Gather near trees, rocks and bushes. You start with 5 Capture Balls: get near a wild creature and tap Catch to throw one. Open the Bag to craft more.',7);
