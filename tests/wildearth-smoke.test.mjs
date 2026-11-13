@@ -159,3 +159,16 @@ test('creatures have food preferences, hunger needs, and trust-based catch bonus
   }
   assert.match(gameScript, /Trust '\+Math\.round\(c\.trust\*100\)/);
 });
+
+
+test('melee attacks require a valid forward-facing hit arc and show hit confirmation', () => {
+  for (const marker of ['function inWeaponArc(o,range,threshold)', 'inWeaponArc(o,5,0.25)', 'inWeaponArc(o,3.4,0.35)', 'burst(w.x,w.y+1.2,w.z,0xc9a8ff,6)', 'dealt.toFixed(1)']) {
+    assert.ok(gameScript.includes(marker), 'missing melee validation marker: ' + marker);
+  }
+});
+
+test('Wraith variants have distinct resistance and vulnerability profiles', () => {
+  for (const marker of ['damageTaken:0.68', 'damageTaken:1.3', 'damageTaken:profile.damageTaken', 'w.damageTaken||1']) {
+    assert.ok(gameScript.includes(marker), 'missing enemy resistance marker: ' + marker);
+  }
+});
