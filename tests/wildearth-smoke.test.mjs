@@ -21,7 +21,7 @@ test('startup and menu entry points remain present', () => {
 
 test('seeded random generator reproduces the same sequence', () => {
   const rngStart = gameScript.indexOf('function rng(a){');
-  const rngEnd = gameScript.indexOf('\\nvar R=', rngStart);
+  const rngEnd = gameScript.indexOf('var R=', rngStart);
   const declaration = rngStart >= 0 && rngEnd > rngStart ? gameScript.slice(rngStart, rngEnd) : '';
   assert.ok(declaration, 'seeded RNG declaration must exist');
   const rng = new Function(declaration + '; return rng;')();
