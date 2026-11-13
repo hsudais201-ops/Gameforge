@@ -1569,7 +1569,7 @@ function joyMove(e){
   var dx=(e.clientX-cx)/(r.width/2),dy=(e.clientY-cy)/(r.height/2),l=Math.hypot(dx,dy);
   if(l>1){dx/=l;dy/=l}
   var deadzone=controlPrefs.deadzone;
-  if(l<deadzone){dx=0;dy=0;}else{var scaled=(l-deadzone)/(1-deadzone);dx=dx/l*scaled;dy=dy/l*scaled;}
+  if(l<Math.max(deadzone,0.001)){dx=0;dy=0;}else{var scaled=(l-deadzone)/(1-deadzone);dx=dx/l*scaled;dy=dy/l*scaled;}
   joy.x=dx;joy.y=dy;
   stickEl.style.transform='translate('+(dx*34)+'px,'+(dy*34)+'px)';
 }
