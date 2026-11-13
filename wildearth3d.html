@@ -1760,14 +1760,19 @@ function startFall(r){
   else if(r.type==='rock'||r.type==='ore')burst(r.x,r.y+0.8,r.z,r.kind==='copperOre'?0xc87942:(r.kind==='ironOre'?0xaebbc4:(r.kind==='crystalOre'?0x72d9ef:0xb4bac0)),12);
   else burst(r.x,r.y+0.7,r.z,LEAF.bush,8);
 }
+function inWeaponArc(o,range,threshold){
+  if(!o||Math.hypot(o.x-P.x,o.z-P.z)>range)return false;
+  var dx=o.x-P.x,dz=o.z-P.z,l=Math.hypot(dx,dz)||1;
+  return (dx*Math.sin(P.face)+dz*Math.cos(P.face))/l>=(threshold===undefined?0.25:threshold);
+}
 function doGather(){
   if(P.cool>0)return;
   var axe=countOf('axe')>0,pickLevel=countOf('ironpick')>0?3:(countOf('copperpick')>0?2:(countOf('pick')>0?1:0)),pick=pickLevel>0;
   P.cool=axe?0.42:0.55;P.swing=0.45;
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
-  var w=nearestOf(wraiths,P.x,P.z,5);
-  if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));w.hp-=weaponLevel;w.hit=0.25;pop(w.x,w.y+2.6,w.z,'-'+weaponLevel,'#c9a8ff');return}
-  var prey=nearestOf(wild,P.x,P.z,3.4,function(o){if(o.held)return false;var dx=o.x-P.x,dz=o.z-P.z,l=Math.hypot(dx,dz)||1;return (dx*fx+dz*fz)/l>0.35;});
+  var w=nearestOf(wraiths,P.x,P.z,5,function(o){return inWeaponArc(o,5,0.25)});
+  if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var dealt=Math.max(1,weaponLevel*(w.damageTaken||1));w.hp-=dealt;w.hit=0.25;burst(w.x,w.y+1.2,w.z,0xc9a8ff,6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),'#c9a8ff');return}
+  var prey=nearestOf(wild,P.x,P.z,3.4,function(o){return !o.held&&inWeaponArc(o,3.4,0.35)});
   if(prey){var huntWeapon=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var preyDamage=12+huntWeapon*7;prey.hp=Math.max(0,prey.hp-preyDamage);prey.hitTimer=0.22;prey.attackAnim=0.38;prey.flee=Math.max(prey.flee,2.6);prey.state='flee';prey.alertT=1.2;P.face=Math.atan2(prey.x-P.x,prey.z-P.z);burst(prey.x,prey.y+1.1,prey.z,SPECIES[prey.sp].c,5);pop(prey.x,prey.y+2.1,prey.z,'-'+preyDamage,'#ffd08a');
     if(prey.hp<=0){var preyIndex=wild.indexOf(prey);if(prey.parent)prey.parent.young=null;if(prey.secondParent)prey.secondParent.young=null;if(prey.young){prey.young.parent=null;prey.young.secondParent=null;}scene.remove(prey.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[prey.sp].w,prey.sp===3?3:2,prey.x,prey.y+1.2,prey.z,'#d8c6a1');say(SPECIES[prey.sp].n+' has been defeated.');}
     return;
@@ -2419,9 +2424,9 @@ function update(dt){
     var kind='shade',roll=random();
     if(nights>=5&&roll<0.2)kind='brute';
     else if(nights>=3&&roll<(nights>=5?0.52:0.34))kind='stalker';
-    var profile=kind==='brute'?{hp:3.5,speed:3.8,damage:1.28,lunge:3.6,scale:1.22}:(kind==='stalker'?{hp:1.5,speed:7.2,damage:0.82,lunge:5.5,scale:0.86}:{hp:2,speed:5.1,damage:1,lunge:4.5,scale:1});
+    var profile=kind==='brute'?{hp:3.5,speed:3.8,damage:1.28,lunge:3.6,scale:1.22,damageTaken:0.68}:(kind==='stalker'?{hp:1.5,speed:7.2,damage:0.82,lunge:5.5,scale:0.86,damageTaken:1.3}:{hp:2,speed:5.1,damage:1,lunge:4.5,scale:1,damageTaken:1});
     var wg=makeWraith(kind);wg.scale.setScalar(profile.scale);wg.position.set(wxp,heightAt(wxp,wzp),wzp);scene.add(wg);
-    wraiths.push({g:wg,kind:kind,moveSpeed:profile.speed,damageScale:profile.damage,lungeSpeed:profile.lunge,baseScale:profile.scale,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:profile.hp,hit:0,ph:random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
+    wraiths.push({g:wg,kind:kind,moveSpeed:profile.speed,damageScale:profile.damage,lungeSpeed:profile.lunge,baseScale:profile.scale,damageTaken:profile.damageTaken,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:profile.hp,hit:0,ph:random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
   }
   var safe=nearFire(P.x,P.z,13);
   for(i=wraiths.length-1;i>=0;i--){
