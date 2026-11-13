@@ -151,7 +151,9 @@ var renderProfiles=[
   {name:'Balanced',shadows:true,fogFar:230},
   {name:'High',shadows:true,fogFar:280}
 ];
-var renderLevel=1,areaLevel=1,areaRadii=[55,85,125];
+var renderLevel=1,areaLevel=1,areaRadii=[55,85,125],SETTINGS_KEY='mfwilds3d_settings_v1';
+try{var savedGraphics=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');if(savedGraphics.quality!==undefined)renderLevel=clamp(savedGraphics.quality|0,0,2);if(savedGraphics.area!==undefined)areaLevel=clamp(savedGraphics.area|0,0,2);}catch(e){}
+function saveGraphicsSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({quality:renderLevel,area:areaLevel}));}catch(e){}}
 function applyRenderProfile(level){
   renderLevel=clamp(level|0,0,2);
   var profile=renderProfiles[renderLevel];
@@ -167,11 +169,13 @@ function applyRenderProfile(level){
   renderer.shadowMap.needsUpdate=true;
   scene.fog.far=profile.fogFar;
   $('qualitySelect').value=String(renderLevel);
+  saveGraphicsSettings();
 }
 function applyAreaLevel(level){
   areaLevel=clamp(level|0,0,2);
   $('areaSelect').value=String(areaLevel);
   streamDirty=true;
+  saveGraphicsSettings();
 }
 $('settingsBtn').addEventListener('click',function(){$('settingsPanel').hidden=false});
 $('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});
