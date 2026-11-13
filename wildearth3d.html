@@ -241,6 +241,11 @@
 <label class="settingRow">Notification duration <input id="notificationDuration" type="range" min="1" max="8" step="0.5" value="3.5"></label>
 <label class="settingRow">Joystick dead zone <input id="joyDeadzone" type="range" min="0" max="40" step="5" value="10"></label>
 <label class="settingRow">Camera sensitivity <input id="cameraSensitivity" type="range" min="50" max="200" step="10" value="100"></label>
+<div class="settingNote">Movement keys — choose a button, then press a new key.</div>
+<div class="settingRow">Forward <button id="bindForward" type="button">W</button></div>
+<div class="settingRow">Backward <button id="bindBackward" type="button">S</button></div>
+<div class="settingRow">Left <button id="bindLeft" type="button">A</button></div>
+<div class="settingRow">Right <button id="bindRight" type="button">D</button></div>
 <label class="settingRow">Invert camera vertical <input id="invertCamera" type="checkbox"></label><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
 <div id="bag" hidden>
@@ -422,6 +427,13 @@ $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this
 $('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
 var ACCESS_KEY='mfwilds3d_accessibility_v1',accessPrefs={size:'normal',contrast:false};
 var CONTROL_KEY='mfwilds3d_controls_v1',controlPrefs={deadzone:0.10,sensitivity:1,invertY:false};
+var keyBindings={forward:'KeyW',backward:'KeyS',left:'KeyA',right:'KeyD'},waitingBinding=null;
+var KEY_BINDINGS_KEY='mfwilds3d_keybindings_v1';
+try{var kb=JSON.parse(localStorage.getItem(KEY_BINDINGS_KEY)||'{}');['forward','backward','left','right'].forEach(function(k){if(typeof kb[k]==='string'&&/^(Key[A-Z]|Arrow(Up|Down|Left|Right))$/.test(kb[k]))keyBindings[k]=kb[k];});}catch(e){}
+function keyLabel(code){return code.indexOf('Key')===0?code.slice(3):code.replace('Arrow','');}
+function saveKeyBindings(){try{localStorage.setItem(KEY_BINDINGS_KEY,JSON.stringify(keyBindings))}catch(e){}}
+function renderKeyBindings(){['forward','backward','left','right'].forEach(function(k){$('bind'+k.charAt(0).toUpperCase()+k.slice(1)).textContent=waitingBinding===k?'Press key…':keyLabel(keyBindings[k]);});}
+['forward','backward','left','right'].forEach(function(k){$('bind'+k.charAt(0).toUpperCase()+k.slice(1)).addEventListener('click',function(){waitingBinding=k;renderKeyBindings();});});
 var DIFFICULTY_KEY='mfwilds3d_difficulty_v1',survivalDifficulty='normal';
 var NOTIFY_KEY='mfwilds3d_notify_v1',notificationSeconds=3.5;
 try{var ns=+localStorage.getItem(NOTIFY_KEY);if(isFinite(ns)&&ns>=1&&ns<=8)notificationSeconds=ns}catch(e){}
@@ -452,6 +464,7 @@ $('notificationDuration').value=notificationSeconds;
 $('notificationDuration').addEventListener('input',function(){notificationSeconds=clamp(+this.value,1,8);try{localStorage.setItem(NOTIFY_KEY,String(notificationSeconds))}catch(e){}});
 $('difficultySelect').addEventListener('change',function(){survivalDifficulty=['easy','normal','hard'].indexOf(this.value)>=0?this.value:'normal';try{localStorage.setItem(DIFFICULTY_KEY,survivalDifficulty)}catch(e){}say('Survival difficulty: '+this.options[this.selectedIndex].text,3);});
 applyControlPrefs();
+renderKeyBindings();
 applyAccessibility();
 
 var runtimeDiagnostics=[];
@@ -1549,8 +1562,8 @@ var keys={},held={gather:false,sprint:false},joy={x:0,y:0};
 var cam={yaw:0,pitch:0.45,dist:9};
 function startDodge(){
   if(dead||P.dodge>0.02||P.stamina<22||menuOpen||bagOpen||!$('settingsPanel').hidden)return;
-  var mx=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
-  var my=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0)+joy.y;
+  var mx=(keys[keyBindings.right]?1:0)-(keys[keyBindings.left]?1:0)+joy.x;
+  var my=(keys[keyBindings.backward]?1:0)-(keys[keyBindings.forward]?1:0)+joy.y;
   var len=Math.hypot(mx,my);
   if(len<0.08){mx=0;my=-1;len=1;}
   mx/=len;my/=len;
@@ -1561,6 +1574,13 @@ function startDodge(){
   P.face=Math.atan2(P.dodgeX,P.dodgeZ);say('Dodge!',1);
 }
 window.addEventListener('keydown',function(e){
+  if(waitingBinding){
+    e.preventDefault();
+    var reserved=['Space','Tab','Escape','KeyE','KeyF','KeyQ','KeyI','KeyC','KeyV','ShiftLeft','ShiftRight'];
+    var duplicate=Object.keys(keyBindings).some(function(k){return k!==waitingBinding&&keyBindings[k]===e.code;});
+    if(reserved.indexOf(e.code)>=0||duplicate){say('That key is reserved or already assigned.',2);return;}
+    keyBindings[waitingBinding]=e.code;waitingBinding=null;saveKeyBindings();renderKeyBindings();say('Movement key updated.',2);return;
+  }
   if(['Space','Tab','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code)>=0)e.preventDefault();
   if(keys[e.code])return;
   keys[e.code]=true;
@@ -2004,8 +2024,8 @@ function update(dt){
   if(nightF<0.2&&inNight){inNight=false;nights+=1;say('You survived night '+nights+'.');checkAchievements();save()}
 
   var travelStartX=P.x,travelStartZ=P.z;
-  var mx=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
-  var my=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0)+joy.y;
+  var mx=(keys[keyBindings.right]?1:0)-(keys[keyBindings.left]?1:0)+joy.x;
+  var my=(keys[keyBindings.backward]?1:0)-(keys[keyBindings.forward]?1:0)+joy.y;
   var ml=Math.hypot(mx,my);if(ml>1){mx/=ml;my/=ml;ml=1}
   var sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);
   var fdx=-sy,fdz=-cy,rdx=cy,rdz=-sy;
