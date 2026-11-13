@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101a14">
+  <meta name="description" content="WILDEARTH — a playable open-world survival prototype by GameForge Studio.">
+  <title>WILDEARTH — Survival Prototype</title>
+  <link rel="stylesheet" href="./wildearth.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="game-topbar">
+      <a class="back-link" href="./index.html">← GameForge Studio</a>
+      <div class="game-brand"><span class="brand-mark">W</span><span>WILDEARTH<small> SURVIVAL PROTOTYPE</small></span></div>
+      <button id="pause-button" class="icon-button" type="button" aria-label="Pause game">Ⅱ</button>
+    </header>
+    <section class="game-layout">
+      <div class="world-column">
+        <div class="world-frame">
+          <canvas id="world" width="960" height="600" aria-label="WILDEARTH game world"></canvas>
+          <div class="world-vignette"></div>
+          <div class="hud-top">
+            <div class="day-pill"><span id="weather-icon">☀</span><span id="day-label">DAY 1 · MORNING</span></div>
+            <div class="objective" id="objective">Gather wood and stone to build a campfire</div>
+          </div>
+          <div class="toast" id="toast" role="status"></div>
+          <div class="pause-overlay hidden" id="pause-overlay"><div><span class="eyebrow">WILDEARTH</span><h2>Journey paused</h2><p>Your world is safe. Take a breath, survivor.</p><button id="resume-button" class="primary-button">Resume journey</button></div></div>
+          <div class="gameover-overlay hidden" id="gameover-overlay"><div><span class="eyebrow">THE WILD REMAINS</span><h2 id="end-title">You survived</h2><p id="end-copy">Your first journey has ended.</p><button id="restart-button" class="primary-button">Start a new journey</button></div></div>
+        </div>
+        <div class="controls-bar">
+          <div class="desktop-hint"><kbd>W A S D</kbd> Move <kbd>E</kbd> Gather / interact <kbd>Q</kbd> Eat berry <kbd>F</kbd> Build fire</div>
+          <div class="mobile-controls" aria-label="Touch movement controls">
+            <div class="dpad">
+              <button data-move="up" aria-label="Move up">▲</button>
+              <div><button data-move="left" aria-label="Move left">◀</button><button data-move="down" aria-label="Move down">▼</button><button data-move="right" aria-label="Move right">▶</button></div>
+            </div>
+            <div class="touch-actions"><button data-action="interact">GATHER</button><button data-action="eat">EAT</button></div>
+          </div>
+        </div>
+      </div>
+      <aside class="survival-panel">
+        <section class="survivor-card">
+          <div class="panel-kicker">SURVIVOR STATUS</div>
+          <div class="survivor-name"><span class="avatar">✦</span><div><strong>Wanderer</strong><small>Day-one survivor</small></div></div>
+          <div class="stat-row"><div><span>❤</span> Health</div><strong id="health-value">100</strong></div><div class="meter"><i id="health-meter" class="health"></i></div>
+          <div class="stat-row"><div><span>◒</span> Hunger</div><strong id="hunger-value">100</strong></div><div class="meter"><i id="hunger-meter" class="hunger"></i></div>
+          <div class="stat-row"><div><span>◉</span> Thirst</div><strong id="thirst-value">100</strong></div><div class="meter"><i id="thirst-meter" class="thirst"></i></div>
+          <div class="stat-row"><div><span>ϟ</span> Stamina</div><strong id="stamina-value">100</strong></div><div class="meter"><i id="stamina-meter" class="stamina"></i></div>
+        </section>
+        <section class="inventory-card">
+          <div class="panel-kicker">BACKPACK <span id="weight-label">0 / 30</span></div>
+          <div class="inventory-grid">
+            <div class="resource"><span>🪵</span><div><strong id="wood-count">0</strong><small>Wood</small></div></div>
+            <div class="resource"><span>🪨</span><div><strong id="stone-count">0</strong><small>Stone</small></div></div>
+            <div class="resource"><span>🫐</span><div><strong id="berry-count">0</strong><small>Berries</small></div></div>
+            <div class="resource"><span>💧</span><div><strong id="water-count">0</strong><small>Water</small></div></div>
+          </div>
+          <div class="craft-box"><div class="craft-heading"><span>FIELD CRAFTING</span><span class="craft-tag">BASIC</span></div><div class="craft-recipe"><span class="recipe-icon">🔥</span><div><strong>Campfire</strong><small>5 wood · 3 stone</small></div><button id="craft-button" class="craft-button">BUILD</button></div><p id="craft-note">A safe place to rest and recover at night.</p></div>
+        </section>
+        <section class="discovery-card"><div class="panel-kicker">FIELD NOTES</div><p id="field-note">The forest is quiet. Find resources before nightfall.</p><div class="discovery-progress"><span id="progress-text">0 / 1 campfire built</span><div class="progress-track"><i id="progress-meter"></i></div></div></section>
+        <div class="panel-footer">WILDEARTH · PROTOTYPE 0.1</div>
+      </aside>
+    </section>
+    <footer class="game-footer"><span>EARLY GAMEPLAY BUILD</span><span>Progress saves automatically on this device</span></footer>
+  </main>
+  <script src="./wildearth.js"></script>
+</body>
+</html>
