@@ -98,7 +98,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 76. Add item durability and repair.
 - [ ] 77. Add tool tiers with gathering-speed differences.
 - [x] 78. Add storage chests with persistent contents.
-- [ ] 79. Add item sorting and quick-transfer controls.
+- [x] 79. Add item sorting and quick-transfer controls.
 - [ ] 80. Add crafting category filters and recipe search.
 
 ## I. Building and player base
@@ -150,6 +150,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
 ## Current verified implementation batch
+- Inventory convenience: added storage-only sorting that preserves the hotbar, plus quick chest deposit/withdraw controls with stack limits and partial-transfer handling.
 - Storage system foundation: added a craftable 18-slot storage chest, nearby interaction UI, stack deposit/withdraw with capacity checks, and per-world chest-content save/load.
 - Deterministic world seeds: each world now stores a seed; new worlds accept an optional numeric or text seed, and `?seed=12345` overrides the selected world for reproducible test sessions. Procedural randomness now uses the seeded generator; the seed is included in saves and diagnostic exports.
 - QA foundation: added Node.js smoke tests for script syntax, startup/menu wiring, seeded RNG repeatability, seed override wiring, and legacy save compatibility; GitHub Actions runs them on pushes and pull requests to the prototype branch.
