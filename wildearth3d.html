@@ -1934,8 +1934,10 @@ function frame(now){
 }
 document.addEventListener('visibilitychange',function(){
   pageActive=!document.hidden;
+  if(!pageActive)save();
   if(pageActive){last=performance.now();requestAnimationFrame(frame);}
 });
+window.addEventListener('pagehide',function(){save()});
 cv.addEventListener('webglcontextlost',function(e){e.preventDefault();pageActive=false;showGameError('The browser lost the WebGL graphics context. Close other tabs, then reload.');});
 cv.addEventListener('webglcontextrestored',function(){pageActive=true;applyRenderProfile(renderLevel);streamDirty=true;last=performance.now();requestAnimationFrame(frame);});
 window.addEventListener('beforeunload',save);
