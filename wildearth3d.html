@@ -1795,9 +1795,8 @@ function update(dt){
     pushOutBoxes(c,0.55);
     var wallPushX=c.x-beforeX,wallPushZ=c.z-beforeZ,wallPush=Math.hypot(wallPushX,wallPushZ);
     if(wallPush>0.22){
-      var slideX=-c.vz,slideZ=c.vx,slideLen=Math.hypot(slideX,slideZ)||1;
-      c.vx=slideX/slideLen*Math.max(1.2,Math.hypot(c.vx,c.vz)*0.72);
-      c.vz=slideZ/slideLen*Math.max(1.2,Math.hypot(c.vx,c.vz)*0.72);
+      var slideX=-c.vz,slideZ=c.vx,slideLen=Math.hypot(slideX,slideZ)||1,slideSpeed=Math.max(1.2,slideLen*0.72);
+      c.vx=slideX/slideLen*slideSpeed;c.vz=slideZ/slideLen*slideSpeed;
       c.t=Math.max(c.t,0.65);c.state=c.flee>0?'flee':'wander';
     }
     moving=Math.hypot(c.vx,c.vz)>0.1;
