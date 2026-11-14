@@ -107,11 +107,11 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 83. Add bedroll respawn and safe spawn validation.
 - [x] 84. Add snap points and grid-aligned building.
 - [x] 85. Add doors, gates, and roof pieces.
-- [ ] 86. Add structural integrity and support rules.
-- [ ] 87. Add storage, workbench, and cooking stations.
-- [ ] 88. Add base comfort and protection ratings.
+- [x] 86. Add structural integrity and support rules.
+- [x] 87. Add storage, workbench, and cooking stations.
+- [x] 88. Add base comfort and protection ratings.
 - [ ] 89. Add build-piece upgrade and dismantle interactions.
-- [ ] 90. Add base save validation and structure limits.
+- [x] 90. Add base save validation and structure limits.
 
 ## J. Progression, quests, and exploration
 - [x] 91. Add achievement tracking and persistent unlocks.
@@ -175,6 +175,9 @@ This is the execution tracker for the next development stages. A checked item me
 - Memory safeguards: capped transient spark meshes at 500, retained the 60-node floating-text cap, and explicitly dispose unique capture-projectile geometries/materials when projectiles leave the scene. Shared instanced world geometry remains reused rather than recreated for streamed chunks.
 
 - Building pieces: added craftable wooden doors, gates, and pitched roof sections. Doors/gates toggle open and closed, update collision behavior, and preserve open state in world saves.
+
+- Base stations: added craftable Workbench and Cooking Pot. The workbench opens inventory crafting; the cooking pot converts berries and fiber into jam.
+- Structural rules and base ratings: roofs require nearby wall/door/gate support, structure placement is capped at 120 pieces, corrupted/oversized structure arrays are rejected during save validation, and nearby base comfort/protection ratings appear in the HUD.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
