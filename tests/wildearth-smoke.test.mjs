@@ -1104,3 +1104,27 @@ test('companions resolve movement against world obstacles and avoid invalid wate
   assert.ok(gameScript.includes('else{t.speed=0;}'));
 });
 
+
+
+test('WILDEARTH beds support safe night-only sleep through to dawn with recovery and persistence', () => {
+  assert.ok(gameScript.includes('function sleepAtBed(bed)'));
+  assert.ok(gameScript.includes('if(nightF<0.55)'));
+  assert.ok(gameScript.includes('clock=nextDawn;nights+=1;inNight=false'));
+  assert.ok(gameScript.includes('P.hp=Math.min(P.maxHp||100,P.hp+40);P.stamina=100;P.food=Math.max(0,P.food-8)'));
+  assert.ok(gameScript.includes("nearestOf(beds,P.x,P.z,4.8)"));
+  assert.ok(html.includes('id="sleepPrompt"'));
+  assert.ok(gameScript.includes("$('sleepAction').addEventListener('click'"));
+  assert.ok(gameScript.includes("if(nearbyBed){sleepAtBed(nearbyBed);return;}"));
+});
+
+test('winter weather produces visible drifting snow while storms retain rain and lightning behavior', () => {
+  assert.ok(gameScript.includes("weatherSeason.id==='winter'&&localCold&&rainLevel>0.02"));
+  assert.ok(gameScript.includes("rainMat.color.setHex(snowing?0xeaf6ff:0xb9d9ed)"));
+  assert.ok(gameScript.includes("rainPositions[k+1]-=dt*(snowing?4.5+rainLevel*2:17+rainLevel*5)"));
+  assert.ok(gameScript.includes("if(!snowing&&stormLevel>0.62&&lightningCooldown<=0)"));
+  assert.ok(html.includes('id="weatherStatus"'));
+});
+
+test('all composed 3D model meshes receive scene lighting and cast and receive shadows', () => {
+  assert.ok(gameScript.includes('o.castShadow=true;o.receiveShadow=true;return o'));
+});
