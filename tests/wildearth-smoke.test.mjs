@@ -969,3 +969,19 @@ test('inventory uses a responsive Palworld-inspired field layout with item previ
   assert.ok(html.includes('@media(max-width:480px)'));
   assert.ok(gameScript.includes("$('itemPreviewName').textContent=preview?ITEMS[preview.id].n:'Select an item';"));
 });
+
+test('Palworld-inspired inventory includes working category filters and a companion party list', () => {
+  assert.ok(html.includes('data-inv-filter="all"'));
+  assert.ok(html.includes('data-inv-filter="gear"'));
+  assert.ok(html.includes('data-inv-filter="materials"'));
+  assert.ok(html.includes('data-inv-filter="food"'));
+  assert.ok(html.includes('data-inv-filter="capture"'));
+  assert.ok(html.includes('data-inv-filter="building"'));
+  assert.ok(html.includes('id="itemPreviewMeta"'));
+  assert.ok(gameScript.includes('function inventoryCategory(id)'));
+  assert.ok(gameScript.includes('function setInventoryFilter(filter)'));
+  assert.ok(gameScript.includes("var filterButtons=$('bag').querySelectorAll('[data-inv-filter]')"));
+  assert.ok(gameScript.includes('var th=\'<div class="partyHead"><strong>Party</strong>'));
+  assert.ok(gameScript.includes('team.forEach(function(t,ti)'));
+  assert.ok(html.includes('.partyCard'));
+});
