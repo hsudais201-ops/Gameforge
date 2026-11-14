@@ -243,7 +243,7 @@
 <button id="settingsBtn" type="button">⚙ Settings</button>
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label>
 <label class="settingRow">Survival difficulty<select id="difficultySelect"><option value="easy">Explorer · Easy</option><option value="normal" selected>Survivor · Normal</option><option value="hard">Wilderness · Hard</option></select></label>
-<label class="settingRow">Notification duration <input id="notificationDuration" type="range" min="1" max="8" step="0.5" value="3.5"></label>
+<label class="settingRow">Interface language<select id="gameLanguage"><option value="en">English</option><option value="ur">Urdu</option></select></label><label class="settingRow">Notification duration <input id="notificationDuration" type="range" min="1" max="8" step="0.5" value="3.5"></label>
 <label class="settingRow">Sound captions / subtitles <input id="subtitlesToggle" type="checkbox" checked></label><label class="settingRow">Caption language <select id="captionLanguage"><option value="en">English</option><option value="ur">Urdu</option></select></label>\n<label class="settingRow">Ambient music volume <input id="musicVolume" type="range" min="0" max="0.3" step="0.01" value="0.08"></label>
 <label class="settingRow">Sound effects volume <input id="effectsVolume" type="range" min="0" max="0.8" step="0.02" value="0.35"></label>
 <label class="settingRow">Joystick dead zone <input id="joyDeadzone" type="range" min="0" max="40" step="5" value="10"></label>
@@ -467,6 +467,18 @@ function keyLabel(code){return code.indexOf('Key')===0?code.slice(3):code.replac
 function saveKeyBindings(){try{localStorage.setItem(KEY_BINDINGS_KEY,JSON.stringify(keyBindings))}catch(e){}}
 function renderKeyBindings(){['forward','backward','left','right'].forEach(function(k){$('bind'+k.charAt(0).toUpperCase()+k.slice(1)).textContent=waitingBinding===k?'Press key…':keyLabel(keyBindings[k]);});}
 ['forward','backward','left','right'].forEach(function(k){$('bind'+k.charAt(0).toUpperCase()+k.slice(1)).addEventListener('click',function(){waitingBinding=k;renderKeyBindings();});});
+var GAME_LANGUAGE_KEY='mfwilds3d_language_v1',gameLanguage='en';
+try{gameLanguage=localStorage.getItem(GAME_LANGUAGE_KEY)==='ur'?'ur':'en'}catch(e){}
+var GAME_TEXT={
+  en:{play:'Play Selected',create:'Create New World',settings:'Settings',quests:'QUEST JOURNAL',map:'MAP',save:'Save World',mainMenu:'Main Menu',resume:'Resume Game',day:'Day',night:'Night',dusk:'Dusk',dawn:'Dawn',baseComfort:'Base comfort',protection:'protection'},
+  ur:{play:'منتخب دنیا کھیلیں',create:'نئی دنیا بنائیں',settings:'ترتیبات',quests:'مشن ڈائری',map:'نقشہ',save:'دنیا محفوظ کریں',mainMenu:'مرکزی مینو',resume:'کھیل جاری رکھیں',day:'دن',night:'رات',dusk:'شام',dawn:'صبح',baseComfort:'بیس کا آرام',protection:'حفاظت'}
+};
+function gameText(key){var table=GAME_TEXT[gameLanguage]||GAME_TEXT.en;return table[key]||GAME_TEXT.en[key]||key;}
+function applyGameLanguage(){
+  var labels={playSelected:'play',createWorldToggle:'create',settingsBtn:'settings',questOpen:'quests',mapOpen:'map',saveWorldBtn:'save',settingsMenu:'mainMenu',pauseResume:'resume'};
+  Object.keys(labels).forEach(function(id){var el=$(id);if(el)el.textContent=gameText(labels[id]);});
+  $('gameLanguage').value=gameLanguage;
+}
 var DIFFICULTY_KEY='mfwilds3d_difficulty_v1',survivalDifficulty='normal';
 var NOTIFY_KEY='mfwilds3d_notify_v1',notificationSeconds=3.5;
 try{var ns=+localStorage.getItem(NOTIFY_KEY);if(isFinite(ns)&&ns>=1&&ns<=8)notificationSeconds=ns}catch(e){}
@@ -496,6 +508,8 @@ $('difficultySelect').value=survivalDifficulty;
 $('notificationDuration').value=notificationSeconds;
 $('notificationDuration').addEventListener('input',function(){notificationSeconds=clamp(+this.value,1,8);try{localStorage.setItem(NOTIFY_KEY,String(notificationSeconds))}catch(e){}});
 $('difficultySelect').addEventListener('change',function(){survivalDifficulty=['easy','normal','hard'].indexOf(this.value)>=0?this.value:'normal';try{localStorage.setItem(DIFFICULTY_KEY,survivalDifficulty)}catch(e){}say('Survival difficulty: '+this.options[this.selectedIndex].text,3);});
+$('gameLanguage').addEventListener('change',function(){gameLanguage=this.value==='ur'?'ur':'en';try{localStorage.setItem(GAME_LANGUAGE_KEY,gameLanguage)}catch(e){}applyGameLanguage();});
+applyGameLanguage();
 applyControlPrefs();
 renderKeyBindings();
 applyAccessibility();
@@ -3026,9 +3040,9 @@ function updateHud(){
   statusEl.style.border=statuses.length?'1px solid #e6a34e88':'';
   var t=(clock/DAY)%1,e=Math.sin(t*Math.PI*2+0.65);
   var phase=nightF>0.6?'Night':(nightF>0.15?(Math.cos(t*Math.PI*2+0.65)>0?'Dusk':'Dawn'):'Day');
-  $('time').textContent='Day '+(Math.floor(clock/DAY)+1)+' · '+phase+' · '+seasonInfo().name;
+  $('time').textContent=gameText('day')+' '+(Math.floor(clock/DAY)+1)+' · '+gameText(phase.toLowerCase())+' · '+seasonInfo().name;
   $('biomeStatus').textContent=biomeAt(P.x,P.z).name;
-  var base=baseRatings();$('baseRating').textContent='Base comfort '+base.comfort+' · protection '+base.protection;updateBaseActions();
+  var base=baseRatings();$('baseRating').textContent=gameText('baseComfort')+' '+base.comfort+' · '+gameText('protection')+' '+base.protection;updateBaseActions();
   renderInv(false);
   checkAchievements();
   updateExplorationMap();
