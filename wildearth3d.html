@@ -551,7 +551,7 @@ $('pauseSave').addEventListener('click',function(){var ok=save();$('pauseStatus'
 $('pauseSettings').addEventListener('click',function(){$('pausePanel').hidden=true;$('settingsPanel').hidden=false;});
 $('pauseMainMenu').addEventListener('click',function(){save();pauseOpen=false;$('pausePanel').hidden=true;mainMenu.hidden=false;menuOpen=true;});
 
-$('saveWorldBtn').addEventListener('click',function(){var ok=save();var status=$('saveStatus');status.textContent=ok?'World saved successfully.':'Could not save. Check available device storage.';say(ok?'World saved.':'Save failed — device storage may be full.',3)});
+$('saveWorldBtn').addEventListener('click',function(){var ok=save();autosaveElapsed=0;var status=$('saveStatus');status.textContent=ok?'World saved successfully · autosave active every 10 seconds':'Could not save. Check available device storage.';say(ok?'World saved.':'Save failed — device storage may be full.',3)});
 $('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});if(pauseOpen)$('pausePanel').hidden=false;
 $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this.value);say('Graphics set to '+renderProfiles[renderLevel].name,2)});
 $('musicVolume').value=String(audioPrefs.music);$('effectsVolume').value=String(audioPrefs.effects);$('subtitlesToggle').checked=audioPrefs.subtitles!==false;$('subtitlesToggle').addEventListener('change',function(){audioPrefs.subtitles=!!this.checked;if(!audioPrefs.subtitles)$('subtitleLine').textContent='';saveAudioPrefs();});
@@ -1612,6 +1612,7 @@ function renderBench(){var h='',counts={},i;for(i=0;i<4;i++){var c=benchCells[i]
 function benchCellClick(i){var c=benchCells[i];if(moveFrom>=0&&slots[moveFrom]){var src=slots[moveFrom];if(c&&c.id!==src.id){say('This crafting cell already holds another item.');return;}if(benchCells.some(function(v,j){return j!==i&&v&&v.id!==src.id;})){say('The grid can contain up to four different item types.');return;}if(c&&c.n>=ITEMS[src.id].max){say('That crafting cell is full.');return;}src.n--;if(c)c.n++;else benchCells[i]={id:src.id,n:1};if(src.n<=0)slots[moveFrom]=null;moveFrom=-1;renderInv(true);return;}if(c){if(!canAdd(c.id,c.n)){say('Not enough backpack space to return materials.');return;}addItem(c.id,c.n);benchCells[i]=null;renderInv(true);return;}say('Select an item stack first.');}
 function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]||1;if(!canAdd(key,n)){say('Your backpack is full.');return;}addItem(key,n);craftedCount++;awardXP(8,'craft');checkAchievements();benchCells=[null,null,null,null];renderInv(true);say('Crafted '+NAMES[key]+'.');}
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
+var autosaveElapsed=0;
 var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0,craftedCount=0,achievementIds=[];
 var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[],bossDefeated=false,rareEvent=null,rareEventClaimed=false,cosmeticUnlockIds=[],caveEntrances=[],caveMode=false,activeCave=null;
 var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
@@ -2519,6 +2520,12 @@ function applyWraithStatus(mob){
 function update(dt){
   if(dead){respawnTimer=Math.max(0,respawnTimer-dt);var secs=Math.ceil(respawnTimer);$("deathCountdown").textContent=respawnTimer>0?"Respawning in "+secs+" second"+(secs===1?"":"s")+"…":"Ready to return";if(respawnTimer<=0)finishRespawn();return;}
   clock+=dt;flick+=dt;
+  autosaveElapsed+=dt;
+  if(autosaveElapsed>=10){
+    autosaveElapsed%=10;
+    var autosaveOk=save();
+    $('saveStatus').textContent=autosaveOk?'Autosaved just now · every 10 seconds':'Autosave failed · check device storage';
+  }
   frostSlowTimer=Math.max(0,frostSlowTimer-dt);
   if(emberBurnTimer>0){emberBurnTimer=Math.max(0,emberBurnTimer-dt);emberBurnTick-=dt;if(emberBurnTick<=0){playerDamage(1.1,'Burning');emberBurnTick=0.55;}}
   riverUpdateAccumulator+=dt;
