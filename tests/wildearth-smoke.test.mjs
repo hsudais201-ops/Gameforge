@@ -761,3 +761,20 @@ test('each hostile mob drops its own guaranteed signature loot, including the Ni
   assert.ok(gameScript.includes("gain('crystal',12,s.x,s.y+2.6,s.z"));
   assert.ok(gameScript.includes("gain('goldOre',6,s.x,s.y+2.2,s.z"));
 });
+
+test('mob signature drops unlock legendary Nightfall Blade and Wraithguard recipes with real combat bonuses', () => {
+  const recipesStart=gameScript.indexOf('var RECIPES=');
+  const recipesEnd=gameScript.indexOf('var OUT=',recipesStart);
+  const recipes=gameScript.slice(recipesStart,recipesEnd);
+  assert.ok(recipes.includes("heraldblade:{ironbar:2,shadowFang:2,wraithEssence:2,heraldSigil:1}"));
+  assert.ok(recipes.includes("wraithguard:{ironbar:3,bruteHeart:2,wraithEssence:2,heraldSigil:1}"));
+  for(const id of ['heraldblade','wraithguard']){
+    assert.ok(gameScript.includes(id+":{n:'"),'missing item '+id);
+    assert.ok(gameScript.includes(id+":'<svg"),'missing icon '+id);
+    assert.ok(gameScript.includes(id+':1'),'missing output '+id);
+  }
+  assert.ok(gameScript.includes("countOf('heraldblade')>0?6"));
+  assert.ok(gameScript.includes("equippedArmor==='wraithguard'?0.28"));
+  assert.ok(gameScript.includes("d.equippedArmor==='wraithguard'"));
+  assert.ok(gameScript.includes("id!=='wraithguard'"));
+});
