@@ -329,3 +329,11 @@ test('tool tiers have different mining cooldowns and resource damage values', ()
   assert.ok(gameScript.includes("P.cool=pickLevel===3?0.30:(pickLevel===2?0.38:(pickLevel===1?0.46:0.55))"));
   assert.ok(gameScript.includes("var dmg=(r.type==='tree'&&axe)?2:((r.type==='rock'||r.type==='ore')?Math.max(1,pickLevel):1)"));
 });
+
+
+test('tools and weapons have saved durability, wear on use, and can be repaired with materials', () => {
+  assert.match(html, /id="repairTool"/);
+  for (const marker of ['var TOOL_MAX={axe:80,pick:90,copperpick:140,ironpick:220', 'function toolDurabilityNow(id)', 'function wearTool(id,amount)', 'function repairSelectedTool()', 'toolDurability:toolDurability', "wearTool('axe',1)", "toolDurability[id]=max"]) {
+    assert.ok(gameScript.includes(marker), 'missing durability marker: ' + marker);
+  }
+});
