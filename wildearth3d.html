@@ -389,7 +389,7 @@ if(typeof window.requestAnimationFrame!=='function')window.requestAnimationFrame
 var cv=$('c'),webglAvailable=false;
 try{var glProbe=cv.getContext('webgl2')||cv.getContext('webgl')||cv.getContext('experimental-webgl');webglAvailable=!!glProbe;}catch(webglProbeError){}
 if(!window.THREE||!webglAvailable){$('webglFallback').hidden=false;$('webglFallback').textContent=!window.THREE?'The 3D engine could not load. Check your internet connection and reload.':'WILDEARTH requires WebGL. Enable hardware acceleration or try a supported browser.';throw new Error('WILDEARTH startup requires Three.js and WebGL support.');}
-var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
+var renderer;try{renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});}catch(rendererError){$('webglFallback').hidden=false;$('webglFallback').textContent='This browser could not create a WebGL 2 rendering context. Update your browser and enable hardware acceleration.';throw new Error('WILDEARTH WebGL renderer initialization failed: '+rendererError.message);}
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
