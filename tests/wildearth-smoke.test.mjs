@@ -848,3 +848,36 @@ test('underwater tint follows head-submersion swimming state and swim animation 
   assert.ok(gameScript.includes('P.y+=(swimFloatHeight(waterSurface)-P.y)*Math.min(1,dt*4.2)'));
   assert.ok(gameScript.includes('else if(!caveMode&&waterColumn>0.35)P.wetness=Math.min(100,P.wetness+dt*(P.swimming?18:5))'));
 });
+
+test('elemental weapon and armor recipes are registered, unique, and use mob relics', () => {
+  for (const id of ['frostblade','emberblade','frostarmor','emberarmor']) {
+    assert.ok(gameScript.includes(id+':{n:'), 'missing item definition: '+id);
+    assert.ok(gameScript.includes(id+':\'<svg'), 'missing item icon: '+id);
+    assert.ok(gameScript.includes(id+':1'), 'missing single-item output: '+id);
+    assert.ok(gameScript.includes(id+':'), 'missing item metadata: '+id);
+  }
+  assert.ok(gameScript.includes("frostblade:{ironbar:2,frostShard:3,wraithEssence:1,crystalcore:1}"));
+  assert.ok(gameScript.includes("emberblade:{ironbar:2,emberCore:3,bruteHeart:1,crystalcore:1}"));
+  assert.ok(gameScript.includes("frostarmor:{ironbar:4,frostShard:3,crystalcore:1}"));
+  assert.ok(gameScript.includes("emberarmor:{ironbar:4,emberCore:3,goldbar:1}"));
+  assert.ok(gameScript.includes("'frostblade','emberblade'"));
+  assert.ok(gameScript.includes("'frostarmor','emberarmor'"));
+  assert.ok(gameScript.includes("frostblade:360,emberblade:350"));
+  assert.ok(gameScript.includes("frostarmor','emberarmor'].indexOf(d.equippedArmor)>=0"));
+});
+
+test('elemental weapons deal their own damage and armor reduces incoming damage', () => {
+  const start=gameScript.indexOf('function activeElementalWeapon()');
+  const end=gameScript.indexOf('function doGather()',start);
+  assert.ok(start>=0&&end>start,'elemental combat helpers must exist');
+  const helpers=new Function(gameScript.slice(start,end)+';return {activeElementalWeapon,armorDamageMultiplier};')();
+  assert.equal(helpers.armorDamageMultiplier(null),1,'no armor should leave damage unchanged');
+  assert.equal(helpers.armorDamageMultiplier('frostarmor'),0.68,'Frostguard should reduce incoming damage by 32%');
+  assert.equal(helpers.armorDamageMultiplier('emberarmor'),0.62,'Emberplate should reduce incoming damage by 38%');
+  assert.equal(helpers.armorDamageMultiplier('wraithguard'),0.28,'existing Wraithguard protection must remain intact');
+  assert.ok(gameScript.includes('weaponLevel+weapon.bonus'));
+  assert.ok(gameScript.includes('preyWeapon.damage*7+preyWeapon.bonus*4'));
+  assert.ok(gameScript.includes('amount*difficultyScale()*armorDamageMultiplier(equippedArmor)'));
+  assert.ok(gameScript.includes('function equipSelectedArmor()'));
+  assert.ok(gameScript.includes("id!=='frostarmor'&&id!=='emberarmor'"));
+});
