@@ -1128,3 +1128,23 @@ test('winter weather produces visible drifting snow while storms retain rain and
 test('all composed 3D model meshes receive scene lighting and cast and receive shadows', () => {
   assert.ok(gameScript.includes('o.castShadow=true;o.receiveShadow=true;return o'));
 });
+
+test('creature models receive species-aware face, chest and paw detail geometry', () => {
+  assert.ok(gameScript.includes('var eyeGlint=stdMat(0xffffff,0.18'));
+  assert.ok(gameScript.includes('var chestMark=mesh(new THREE.SphereGeometry'));
+  assert.ok(gameScript.includes('for(var clawSide=-1;clawSide<=1;clawSide+=2)'));
+});
+
+test('hostile wraith models receive spectral ribs, shoulder plates and a glowing core', () => {
+  assert.ok(gameScript.includes('var ribMat=stdMat(p.glow'));
+  assert.ok(gameScript.includes('new THREE.TorusGeometry(0.42+rib*0.11'));
+  assert.ok(gameScript.includes('new THREE.OctahedronGeometry(kind===\'brute\'?0.23:0.16,1)'));
+  assert.ok(gameScript.includes('for(var armorSide=-1;armorSide<=1;armorSide+=2)'));
+});
+
+test('sleeping bed model has a timber frame, mattress, stitched blanket and pillow', () => {
+  assert.ok(gameScript.includes('function makeBed(){'));
+  assert.ok(gameScript.includes('new THREE.BoxGeometry(0.12,0.22,2.15)'));
+  assert.ok(gameScript.includes('for(var stitch=0;stitch<5;stitch++)'));
+  assert.ok(gameScript.includes('new THREE.SphereGeometry(0.24,12,9)'));
+});
