@@ -1179,7 +1179,8 @@ test('creature animation includes breathing, blinking, ear reactions and relaxed
   assert.ok(gameScript.includes("c.state!=='rest'"));
 });
 test('world lighting uses a low-cost sky fill and improved exposure for readable shaded models', () => {
-  assert.ok(gameScript.includes('renderer.toneMappingExposure=0.92'));\n  assert.ok(gameScript.includes('isLowEnd?1.15:1.75'));
+  assert.ok(gameScript.includes('renderer.toneMappingExposure=0.92'));
+  assert.ok(gameScript.includes('isLowEnd?1.15:1.75'));
   assert.ok(gameScript.includes('var skyFill=new THREE.DirectionalLight(0x8299bd,0.12)'));
   assert.ok(gameScript.includes('skyFill.castShadow=false'));
   assert.ok(gameScript.includes('skyFill.intensity=0.025+0.12*dayF'));
@@ -1252,7 +1253,8 @@ test('forest and dry biomes receive distinct ground litter instances', () => {
   assert.match(gameScript,/Math\.round\(230\*mf\)/);
 });
 
-\ntest('visual grading reduces washed-out daylight and increases render edge clarity safely', () => {
+
+test('visual grading reduces washed-out daylight and increases render edge clarity safely', () => {
   assert.ok(gameScript.includes('renderer.toneMappingExposure=0.92'));
   assert.ok(gameScript.includes('isLowEnd?1.15:1.75'));
   assert.ok(gameScript.includes('var hemi=new THREE.HemisphereLight(0xb7c9df,0x393329,0.48)'));
