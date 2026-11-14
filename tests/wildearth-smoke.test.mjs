@@ -1034,3 +1034,30 @@ test('inventory reference behaviors are selectively integrated and every storage
   assert.ok(gameScript.includes("$('bag').addEventListener('drop'"));
   assert.ok(html.includes('touch-action:manipulation'));
 });
+
+test('legacy MF Wilds reference saves merge into WILDEARTH world saves safely', () => {
+  assert.ok(html.includes("SAVE_KEY='mfwilds3d_world_'+selectedWorldId"));
+  assert.ok(gameScript.includes("localStorage.getItem('mfwilds3d_v2')"));
+  assert.ok(gameScript.includes("localStorage.setItem(SAVE_KEY,legacy)"));
+  assert.ok(gameScript.includes('function migrateInventorySlots(oldSlots,itemDefs,slotCount,hotbarCount)'));
+  assert.ok(gameScript.includes("if(item&&item.id==='cage')item={id:'ball',n:item.n}"));
+  assert.ok(gameScript.includes("d=validSave(localStorage.getItem(SAVE_KEY+'_backup'))"));
+  assert.ok(gameScript.includes('version:6,mapVersion:2,worldSeed:worldSeed'));
+  assert.ok(gameScript.includes('toolDurability:toolDurability'));
+  assert.ok(gameScript.includes('chests:chests.map'));
+  assert.ok(gameScript.includes('discoveredLandmarks:discoveredLandmarks'));
+});
+
+test('WILDEARTH keeps the reference survival loop while extending it with advanced world systems', () => {
+  for (const feature of [
+    'function doGather()', 'function doCatch()', 'function craft(k,amount)',
+    'function doPlace(id)', 'function update(dt)', 'function envUpdate()',
+    'function updateWorldStreaming', 'function playerDamage',
+    'function updateRivers', 'function spawnRareEvent'
+  ]) assert.ok(gameScript.includes(feature), 'missing merged game system: ' + feature);
+  assert.ok(html.includes('id="worldSelect"'));
+  assert.ok(html.includes('id="settingsPanel"'));
+  assert.ok(html.includes('id="pausePanel"'));
+  assert.ok(html.includes('id="inventoryScreen"'));
+  assert.ok(html.includes('id="craftingScreen"'));
+});
