@@ -1070,6 +1070,14 @@ test('companions coordinate their attacks on the Night Herald instead of splitti
   assert.ok(gameScript.includes('if(guard&&guardDist<3.1&&t.guardCd<=0)'));
 });
 
+test('hostile attacks show a visible ground telegraph during wind-up and intensify before impact', () => {
+  assert.ok(gameScript.includes('g.userData.attackWarning=warningRing'));
+  assert.ok(gameScript.includes('warningRing.visible=false'));
+  assert.ok(gameScript.includes('attackWarning.visible=s.windup>0'));
+  assert.ok(gameScript.includes('warningProgress=1-clamp(s.windup/'));
+  assert.ok(gameScript.includes('attackWarning.material.opacity=0.45+warningProgress*0.5'));
+});
+
 test('Escape closes the topmost open game menu before attempting to pause', () => {
   assert.ok(gameScript.includes('function closeTopMenu(){'));
   for (const overlay of ["$('chestPanel')", "$('settingsPanel')", "$('mapPanel')", "$('questPanel')", 'bagOpen', 'pauseOpen']) {
