@@ -719,7 +719,7 @@ test('new tundra, jungle, savanna and volcanic biomes have distinct terrain and 
     "if(heat>0.62&&moisture>0.3&&moisture<0.58)return BIOMES[12]",
     "return BIOMES[13]",
     "biome.id==='volcanic'",
-    "biome.id==='jungle'",
+  assert.match(gameScript,/biomeAt\\(x,z\\)\\.id==='jungle'\\|\\|biomeAt\\(x,z\\)\\.id==='marsh'/);
     "biome.id==='savanna'",
     "biome.id==='tundra'"
   ]) assert.ok(gameScript.includes(rule), 'missing biome generation or visual rule '+rule);
