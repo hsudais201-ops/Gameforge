@@ -84,8 +84,8 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 64. Add campfire protection from Wraiths.
 - [x] 65. Add temperature and exposure.
 - [x] 66. Add wetness and drying behavior.
-- [ ] 67. Add storms with wind and lightning.
-- [ ] 68. Add seasonal world-state changes.
+- [x] 67. Add storms with wind and lightning.
+- [x] 68. Add seasonal world-state changes.
 - [ ] 69. Add rare world events and discoverable event rewards.
 - [x] 70. Add survival difficulty presets.
 
@@ -160,6 +160,9 @@ This is the execution tracker for the next development stages. A checked item me
 - Gathering progression: verified existing Stone/Copper/Iron tool tiers use distinct gathering cooldowns and mining damage.
 
 - Tool durability and repair: Stone, Copper, and Iron tools/weapons now wear with use, display durability in slot tooltips, break at zero, and can be repaired with tier-appropriate materials. Durability persists per world save.
+
+- Storms: rain intensity now drives changing wind vectors and timed lightning flashes, with storm warnings and a visible screen flash.
+- Seasons: five-day seasonal cycles alter environmental temperature, water palette, and the HUD season label; the season derives from saved world time.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
