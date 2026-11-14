@@ -828,7 +828,7 @@ test('new wraith types drop their signature materials and existing wraiths can d
 
 
 test('swimming starts only when the water reaches the player head and shallow water remains wadeable', () => {
-  const start=gameScript.indexOf('function isHeadSubmerged(');
+  const start=gameScript.indexOf('var SWIM_HEAD_CLEARANCE=');
   const end=gameScript.indexOf('var P={',start);
   assert.ok(start>=0&&end>start,'head-submersion helpers must be defined');
   const helpers=new Function(gameScript.slice(start,end)+';return {isHeadSubmerged,swimFloatHeight};')();
