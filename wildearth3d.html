@@ -293,13 +293,13 @@
     <span class="pill">Health<span class="bar"><i id="hp" style="background:#e8574f"></i></span></span>
     <span class="pill">Food<span class="bar"><i id="food" style="background:#e9b44c"></i></span></span>
     <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
-    <span class="pill" id="time"></span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="baseRating">Base comfort 0 · protection 0</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
+    <span class="pill" id="levelStatus">LVL 1 · 0/100 XP</span><span class="pill" id="time"></span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="baseRating">Base comfort 0 · protection 0</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
   </div>
   <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div><div id="cavePrompt" hidden><span id="cavePromptText">Cave entrance</span><button id="caveAction" type="button">Enter Cave</button></div><div id="baseActions" hidden><span id="basePieceName">Nearby structure</span><button id="upgradeBasePiece" type="button">Upgrade</button><button id="dismantleBasePiece" type="button">Dismantle</button></div>
 </div>
 <div id="miniMapWrap" aria-label="2D minimap"><canvas id="miniMap" width="232" height="232"></canvas><div id="miniMapLabel">LOCAL MAP</div></div>
 <div id="mapPanel" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle"><div class="mapCard"><button class="mapClose" id="mapClose" type="button">Close ✕</button><strong id="mapTitle">WORLD MAP · 600 × 600 M</strong><p class="questIntro">Explore to reveal terrain. Colors show woodland, forest, desert, gravel, beaches, ocean and highlands.</p><div class="mapLegend"><span>Explored terrain</span><span class="keyLand">Landmark</span><span class="keyPlayer">You</span></div><canvas id="mapCanvas" class="mapCanvas" width="600" height="600" aria-label="Top-down 2D world map"></canvas><div id="landmarkList"></div></div></div>
-<div id="questPanel" hidden role="dialog" aria-modal="true" aria-labelledby="questTitle"><div class="questCard"><div class="questHead"><strong id="questTitle">QUEST JOURNAL</strong><button id="questClose" type="button">Close ✕</button></div><p class="questIntro">Track your journey. Objectives complete automatically as you explore, build, craft and survive. Progress is saved with this world.</p><div id="questList"></div><div id="questSummary" class="questIntro" aria-live="polite"></div><h3 class="questSectionTitle">FIELD TUTORIAL</h3><div id="tutorialList"></div><h3 class="questSectionTitle">MAIN STORY · A NEW DAWN</h3><div id="mainQuest"></div></div></div>
+<div id="questPanel" hidden role="dialog" aria-modal="true" aria-labelledby="questTitle"><div class="questCard"><div class="questHead"><strong id="questTitle">QUEST JOURNAL</strong><button id="questClose" type="button">Close ✕</button></div><p class="questIntro">Track your journey. Objectives complete automatically as you explore, build, craft and survive. Progress is saved with this world.</p><div id="questList"></div><div id="questSummary" class="questIntro" aria-live="polite"></div><h3 class="questSectionTitle">PLAYER PROGRESSION</h3><div id="playerProgress"></div><h3 class="questSectionTitle">CREATURE INDEX</h3><div id="creatureIndex"></div><h3 class="questSectionTitle">FIELD TUTORIAL</h3><div id="tutorialList"></div><h3 class="questSectionTitle">MAIN STORY · A NEW DAWN</h3><div id="mainQuest"></div></div></div>
 <div id="pausePanel" hidden><div class="pauseCard"><div class="pauseBrand">PAUSED</div><p>Your adventure is safely paused.</p><button id="pauseResume" class="pauseAction primary">▶ Resume Game</button><button id="pauseSave" class="pauseAction">Save World</button><button id="pauseSettings" class="pauseAction">⚙ Settings</button><button id="pauseMainMenu" class="pauseAction">Return to Main Menu</button><div id="pauseStatus" role="status" aria-live="polite">Autosave is active.</div></div></div>
 <div id="pauseBtn" aria-label="Pause game"><button id="pauseToggle" type="button">Ⅱ Pause</button></div>
 <div id="deathPanel" hidden role="dialog" aria-modal="true" aria-labelledby="deathTitle"><div class="deathCard"><div class="deathIcon">✦</div><div class="deathTitle" id="deathTitle">YOU FELL</div><p>Your journey is not over. Choose where to recover and return to the wild.</p><label for="deathSpawn">Respawn location</label><select id="deathSpawn"></select><div id="deathCountdown" aria-live="polite">Respawning in 5 seconds…</div><button id="respawnNow" type="button">Respawn Now</button><p>Penalty: lose half of your carried wood, stone and fiber.</p></div></div>
@@ -467,6 +467,7 @@ function biomeAt(x,z){
   if(moisture>0.43)return BIOMES[1];
   return BIOMES[0];
 }
+var CASTLE_SITE=(function(){var best=null,bestScore=-Infinity;for(var cz=-260;cz<=260;cz+=16)for(var cx=-260;cx<=260;cx+=16){var cy=heightAt(cx,cz);if(biomeAt(cx,cz).id!=='desert'||cy<WATER+3||cy>9)continue;var slope=Math.abs(heightAt(cx+2,cz)-cy)+Math.abs(heightAt(cx,cz+2)-cy);if(slope>2.4)continue;var score=Math.hypot(cx,cz)*0.12-slope*8+hash(Math.round(cx),Math.round(cz))*2;if(score>bestScore){bestScore=score;best={x:cx,z:cz,y:cy};}}return best||{x:180,z:150,y:heightAt(180,150)};})();
 var SEASONS=[{id:'spring',name:'Spring',temperature:0.04,water:0x3b8294,sky:0xe0c9a5},{id:'summer',name:'Summer',temperature:0.16,water:0x287c9d,sky:0xffd59b},{id:'autumn',name:'Autumn',temperature:-0.02,water:0x386b78,sky:0xe7a06e},{id:'winter',name:'Winter',temperature:-0.24,water:0x789eaa,sky:0xc4d7e8}];
 function seasonInfo(){var safeClock=Number.isFinite(clock)&&clock>=0?clock:0,seasonLength=Number.isFinite(DAY)&&DAY>0?DAY*5:1200,index=Math.floor(safeClock/seasonLength)%SEASONS.length;return SEASONS[index]||SEASONS[0];}
 function biomeTemperature(x,z){var b=biomeAt(x,z);return clamp(b.temp-(heightAt(x,z)>8?0.18:0)+(nightF||0)*-0.22+seasonInfo().temperature,-0.2,1);}
@@ -781,6 +782,7 @@ function buildBush(){
   for(var j=0;j<bp.length;j++)parts.push({geo:new THREE.SphereGeometry(0.1,6,5),c:0xc9304f,m:T(bp[j][0],bp[j][1],bp[j][2])});
   return merge(parts);
 }
+function buildCactus(){return merge([{geo:new THREE.CylinderGeometry(0.42,0.5,2.6,7),c:0x3f8050,m:T(0,1.3,0),flat:true},{geo:new THREE.CylinderGeometry(0.2,0.24,1.45,7),c:0x4b925b,m:T(-0.62,1.45,0),flat:true},{geo:new THREE.CylinderGeometry(0.18,0.2,1.15,7),c:0x4b925b,m:T(0.58,1.05,0),flat:true},{geo:new THREE.SphereGeometry(0.09,6,5),c:0xe7d49a,m:T(0,2.58,0)}]);}
 function buildGrass(){
   var parts=[];
   for(var i=0;i<6;i++){
@@ -800,6 +802,7 @@ var meshSpecs={
   tinOre:{geo:buildOre('tinOre'),n:0,list:[]},
   goldOre:{geo:buildOre('goldOre'),n:0,list:[]},
   bush:{geo:buildBush(),n:0,list:[]},
+  cactus:{geo:buildCactus(),n:0,list:[]},
   birch:{geo:buildBirch(),n:0,list:[]}
 };
 function scatter(kind,type,count,minS,maxS,rad,hp){
@@ -829,7 +832,9 @@ scatter('crystalOre','ore',(isMobile?5:9),0.85,1.2,1.0,8);
 scatter('tinOre','ore',(isMobile?12:18),0.85,1.2,1.0,5);
 scatter('goldOre','ore',(isMobile?4:7),0.9,1.25,1.0,9);
 scatter('bush','bush',(isMobile?70:110),0.8,1.3,0,1);
+scatter('cactus','bush',(isMobile?22:38),0.85,1.35,0,1);
 
+var castleGroup=new THREE.Group(),castleStone=stdMat(0xb5a17e,0.92),castleTrim=stdMat(0x806b51,0.88),castleRoof=stdMat(0x594b42,0.86),castleFlag=stdMat(0x9a463b,0.75);function castleBox(w,h,d,x,y,z,mat){var o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);o.position.set(x,y,z);o.castShadow=renderProfiles[renderLevel].detailShadows;o.receiveShadow=true;castleGroup.add(o);return o;}function buildDesertCastle(){var x=CASTLE_SITE.x,z=CASTLE_SITE.z,y=heightAt(x,z);castleBox(18,1.2,14,0,y+0.6,0,castleTrim);castleBox(15,7,1.2,0,y+4.1,-6.4,castleStone);castleBox(15,7,1.2,0,y+4.1,6.4,castleStone);castleBox(1.2,7,12,-7,y+4.1,0,castleStone);castleBox(1.2,7,12,7,y+4.1,0,castleStone);castleBox(4.2,5.2,0.8,0,y+3.2,6.95,castleRoof);castleBox(2.3,3.8,0.9,0,y+2.5,7.45,castleTrim);for(var side=-1;side<=1;side+=2){for(var zz=-4;zz<=4;zz+=2)castleBox(1.4,1.1,1.4,side*7.8,y+7.05,zz,castleTrim);for(var xx=-5;xx<=5;xx+=2)castleBox(1.3,1.1,1.3,xx,y+7.05,side*6.7,castleTrim);}for(var tx=-1;tx<=1;tx+=2)for(var tz=-1;tz<=1;tz+=2){var tower=new THREE.Mesh(new THREE.CylinderGeometry(1.65,1.9,10,8),castleStone);tower.position.set(tx*7,y+5,tz*6);castleGroup.add(tower);var cap=new THREE.Mesh(new THREE.ConeGeometry(2.05,3.2,8),castleRoof);cap.position.set(tx*7,y+11.6,tz*6);castleGroup.add(cap);for(var b=0;b<6;b++){var merlon=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.85,0.42),castleTrim);merlon.position.set(tx*7+Math.cos(b*Math.PI/3)*1.45,y+10.1,tz*6+Math.sin(b*Math.PI/3)*1.45);castleGroup.add(merlon);}}var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,5,6),castleTrim);pole.position.set(0,y+10.2,-1);castleGroup.add(pole);var flag=new THREE.Mesh(new THREE.BoxGeometry(2.3,1.25,0.08),castleFlag);flag.position.set(1.1,y+11.4,-1);castleGroup.add(flag);castleGroup.position.set(x,0,z);scene.add(castleGroup);}buildDesertCastle();
 var _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_p=new THREE.Vector3(),_s=new THREE.Vector3();
 var streamedMeshes=[],streamDirty=true,streamTimer=0,lastStreamX=NaN,lastStreamZ=NaN,lastStreamRadius=0;
 function registerStreamMesh(im,positions,baseMatrices){im.userData.streamPositions=positions;im.userData.baseMatrices=baseMatrices;im.userData.streamVisible=[];streamedMeshes.push(im);}
@@ -1202,6 +1207,7 @@ var SPECIES=[
   {n:'Glimmer',c:0x9b6bd6,w:'stone',rough:0.35,r:'rare'}
 ];
 var CREATURE_DIET=['berry','berry','fiber','berry','berry','fiber','berry','crystal'];
+var catchIndex=SPECIES.map(function(){return 0;});
 var RAR={
   common:{n:'Common',rate:0.65,w:5,c:'#b9d6b0'},
   uncommon:{n:'Uncommon',rate:0.45,w:3,c:'#7ec8ff'},
@@ -1388,7 +1394,7 @@ function isHeadSubmerged(waterSurface,groundY,alreadySwimming){
   return waterColumn>=(alreadySwimming?SWIM_EXIT_CLEARANCE:SWIM_HEAD_CLEARANCE);
 }
 function swimFloatHeight(waterSurface){return waterSurface-2.28;}
-var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
+var P={x:0,y:0,z:4,hp:100,maxHp:100,level:1,xp:0,statPoints:0,stats:{vitality:0,power:0,tamer:0},food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
 function saveAudioPrefs(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs));}catch(e){}}
 function initAudio(){
   if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}
@@ -1802,12 +1808,14 @@ function validStructureCounts(parsed){
   }
   return true;
 }
+function awardXP(amount,reason){amount=Math.max(0,Math.floor(Number(amount)||0));if(!amount)return;P.xp=(P.xp||0)+amount;var need=100+(Math.max(1,P.level||1)-1)*60;while(P.xp>=need){P.xp-=need;P.level=(P.level||1)+1;P.statPoints=(P.statPoints||0)+1;need=100+(P.level-1)*60;say('LEVEL UP! Level '+P.level+' · 1 stat point earned',5);playSfx('achievement');}if(reason&&$('levelStatus'))$('levelStatus').textContent='LVL '+P.level+' · '+P.xp+'/'+need+' XP';}
+function upgradePlayerStat(stat){if(P.statPoints<1||!P.stats||['vitality','power','tamer'].indexOf(stat)<0||(P.stats[stat]||0)>=10)return;P.statPoints--;P.stats[stat]=(P.stats[stat]||0)+1;if(stat==='vitality'){P.maxHp=100+P.stats.vitality*10;P.hp=Math.min(P.maxHp,P.hp+10);}say(stat.toUpperCase()+' upgraded · '+P.statPoints+' points left',3.5);save();renderQuestJournal();updateHud();}
 function save(){
   if(dead)return true;
   var snapshot;
   try{
     snapshot=JSON.stringify({
-      version:5,mapVersion:2,worldSeed:worldSeed,bossDefeated:bossDefeated,rareEventClaimed:rareEventClaimed,toolDurability:toolDurability,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
+      version:6,mapVersion:2,worldSeed:worldSeed,progress:{level:P.level,xp:P.xp,statPoints:P.statPoints,stats:P.stats,caught:catchIndex},bossDefeated:bossDefeated,rareEventClaimed:rareEventClaimed,toolDurability:toolDurability,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t,open:!!w.open}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
@@ -1860,7 +1868,7 @@ function load(){
     }
     if(!d)d=validSave(localStorage.getItem(OLD_KEY));
     if(!d)return false;
-    P.x=d.P.x;P.z=d.P.z;bossDefeated=d.bossDefeated===true;rareEventClaimed=d.rareEventClaimed===true;cosmeticUnlockIds=Array.isArray(d.cosmeticUnlockIds)?d.cosmeticUnlockIds.filter(function(id){return ['aurora_hair','wraith_violet','pathfinder_gold'].indexOf(id)>=0}):[];toolDurability={};if(d.toolDurability&&typeof d.toolDurability==='object')Object.keys(TOOL_MAX).forEach(function(id){if(isFinite(d.toolDurability[id]))toolDurability[id]=clamp(d.toolDurability[id],0,TOOL_MAX[id]);});companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
+    P.x=d.P.x;P.z=d.P.z;if(d.progress){P.level=clamp(Math.floor(d.progress.level)||1,1,100);P.xp=Math.max(0,Math.floor(d.progress.xp)||0);P.statPoints=Math.max(0,Math.floor(d.progress.statPoints)||0);P.stats={vitality:clamp(Math.floor(d.progress.stats&&d.progress.stats.vitality)||0,0,10),power:clamp(Math.floor(d.progress.stats&&d.progress.stats.power)||0,0,10),tamer:clamp(Math.floor(d.progress.stats&&d.progress.stats.tamer)||0,0,10)};P.maxHp=100+P.stats.vitality*10;P.hp=Math.min(P.maxHp,P.hp);}if(Array.isArray(d.progress&&d.progress.caught))catchIndex=d.progress.caught.slice(0,SPECIES.length).map(function(v){return Math.max(0,Math.floor(v)||0)});bossDefeated=d.bossDefeated===true;rareEventClaimed=d.rareEventClaimed===true;cosmeticUnlockIds=Array.isArray(d.cosmeticUnlockIds)?d.cosmeticUnlockIds.filter(function(id){return ['aurora_hair','wraith_violet','pathfinder_gold'].indexOf(id)>=0}):[];toolDurability={};if(d.toolDurability&&typeof d.toolDurability==='object')Object.keys(TOOL_MAX).forEach(function(id){if(isFinite(d.toolDurability[id]))toolDurability[id]=clamp(d.toolDurability[id],0,TOOL_MAX[id]);});companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
       slots=migrateInventorySlots(d.slots,ITEMS,NSLOTS,HOT);
       hotSel=clamp(d.hot|0,0,HOT-1);
@@ -1874,7 +1882,7 @@ function load(){
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
     (d.chests||[]).forEach(function(c){addStructure('chest',c.x,c.z);var chest=chests[chests.length-1];if(Array.isArray(c.slots))chest.slots=c.slots.slice(0,18).map(function(it){return it&&ITEMS[it.id]&&typeof it.n==='number'&&Math.floor(it.n)>0?{id:it.id,n:Math.min(ITEMS[it.id].max,Math.floor(it.n))}:null});});
-    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'].indexOf(a)>=0}):[];questCompletedIds=Array.isArray(d.questCompletedIds)?d.questCompletedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];questAbandonedIds=Array.isArray(d.questAbandonedIds)?d.questAbandonedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];discoveredLandmarks=Array.isArray(d.discoveredLandmarks)?d.discoveredLandmarks.filter(function(a){return ['base_camp','whispering_grove','stonefall_ridge','moonwater_pool','old_watch'].indexOf(a)>=0}):[];exploredCells=Array.isArray(d.exploredCells)?d.exploredCells.filter(function(a){return typeof a==='number'&&a>=0&&a<3600}):[];if(d.mapVersion!==2&&Array.isArray(d.exploredCells)&&d.exploredCells.every(function(a){return a<900;})){exploredCells=d.exploredCells.map(function(oldCell){var ox=oldCell%30,oz=Math.floor(oldCell/30),wx=-150+ox*10+5,wz=-150+oz*10+5;return mapCellFor(wx,wz);});}
+    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'].indexOf(a)>=0}):[];questCompletedIds=Array.isArray(d.questCompletedIds)?d.questCompletedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];questAbandonedIds=Array.isArray(d.questAbandonedIds)?d.questAbandonedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];discoveredLandmarks=Array.isArray(d.discoveredLandmarks)?d.discoveredLandmarks.filter(function(a){return ['base_camp','whispering_grove','stonefall_ridge','moonwater_pool','old_watch','sunspire_castle'].indexOf(a)>=0}):[];exploredCells=Array.isArray(d.exploredCells)?d.exploredCells.filter(function(a){return typeof a==='number'&&a>=0&&a<3600}):[];if(d.mapVersion!==2&&Array.isArray(d.exploredCells)&&d.exploredCells.every(function(a){return a<900;})){exploredCells=d.exploredCells.map(function(oldCell){var ox=oldCell%30,oz=Math.floor(oldCell/30),wx=-150+ox*10+5,wz=-150+oz*10+5;return mapCellFor(wx,wz);});}
     if(recovered)setTimeout(function(){say('Recovered your world from its backup save.',5)},500);
     return true;
   }catch(e){return false}
@@ -2162,7 +2170,7 @@ function applyTouchAimAssist(targets,range,cone){
   P.face=Math.atan2(target.x-P.x,target.z-P.z);
   return true;
 }
-function activeElementalWeapon(){if(countOf('frostblade')>0)return {id:'frostblade',damage:8,bonus:2,color:0x8de5ff,textColor:'#a8edff'};if(countOf('emberblade')>0)return {id:'emberblade',damage:7.5,bonus:2.5,color:0xff7138,textColor:'#ffb17c'};if(countOf('heraldblade')>0)return {id:'heraldblade',damage:6,bonus:0,color:0xc9a8ff,textColor:'#c9a8ff'};if(countOf('ironsword')>0)return {id:'ironsword',damage:4,bonus:0,color:0xc5d0d6,textColor:'#e0e9ed'};if(countOf('coppersword')>0)return {id:'coppersword',damage:3,bonus:0,color:0xc87942,textColor:'#e5a06a'};if(countOf('axe')>0)return {id:'axe',damage:2,bonus:0,color:0xa9784a,textColor:'#d9b07a'};return {id:'',damage:1,bonus:0,color:0xc9a8ff,textColor:'#c9a8ff'};}
+function activeElementalWeapon(){var powerBonus=((P.stats&&P.stats.power)||0)*0.75;if(countOf('frostblade')>0)return {id:'frostblade',damage:8,bonus:2+powerBonus,color:0x8de5ff,textColor:'#a8edff'};if(countOf('emberblade')>0)return {id:'emberblade',damage:7.5,bonus:2.5+powerBonus,color:0xff7138,textColor:'#ffb17c'};if(countOf('heraldblade')>0)return {id:'heraldblade',damage:6,bonus:powerBonus,color:0xc9a8ff,textColor:'#c9a8ff'};if(countOf('ironsword')>0)return {id:'ironsword',damage:4,bonus:powerBonus,color:0xc5d0d6,textColor:'#e0e9ed'};if(countOf('coppersword')>0)return {id:'coppersword',damage:3,bonus:powerBonus,color:0xc87942,textColor:'#e5a06a'};if(countOf('axe')>0)return {id:'axe',damage:2,bonus:0,color:0xa9784a,textColor:'#d9b07a'};return {id:'',damage:1,bonus:0,color:0xc9a8ff,textColor:'#c9a8ff'};}
 function armorDamageMultiplier(id){return ({copperarmor:0.7,ironarmor:0.42,wraithguard:0.28,frostarmor:0.68,emberarmor:0.62})[id]||1;}
 function doGather(){
   if(P.cool>0)return;
@@ -2234,7 +2242,7 @@ function doCatch(){
   var id=ballForCatch();
   if(!id){say('You need a Capture Ball. Open the Bag to craft some.');return}
   if(team.length+shots.length>=12){say('Your team is full (12).');return}
-  var ok=random()<rateNow(c.sp,id,c);P.lure=false;playSfx('capture');
+  var ok=random()<Math.min(0.98,rateNow(c.sp,id,c)+((P.stats&&P.stats.tamer)||0)*0.025);P.lure=false;playSfx('capture');
   takeItem(id,1);renderInv(true);
   P.face=Math.atan2(c.x-P.x,c.z-P.z);P.swing=0.45;
   c.held=true;c.vx=0;c.vz=0;c.speed=0;
@@ -2326,15 +2334,15 @@ function doUse(){
   }
   else if(id==='tonic'){
     if(P.hp>=100&&P.food>=90){say('You do not need a tonic right now.');return}
-    takeItem('tonic',1);P.hp=Math.min(100,P.hp+55);P.food=Math.min(100,P.food+18);pop(P.x,P.y+2.6,P.z,'Vitality restored','#8cf0d2');burst(P.x,P.y+1.2,P.z,0x69d8bb,16);renderInv(true);
+    takeItem('tonic',1);P.hp=Math.min(P.maxHp||100,P.hp+55);P.food=Math.min(100,P.food+18);pop(P.x,P.y+2.6,P.z,'Vitality restored','#8cf0d2');burst(P.x,P.y+1.2,P.z,0x69d8bb,16);renderInv(true);
   }
   else if(id==='salve'){
     if(P.hp>=95){say('You are not hurt.');return}
-    takeItem('salve',1);P.hp=Math.min(100,P.hp+40);pop(P.x,P.y+2.6,P.z,'+40 health','#9be3b8');burst(P.x,P.y+1.2,P.z,0x7bc47f,10);renderInv(true);
+    takeItem('salve',1);P.hp=Math.min(P.maxHp||100,P.hp+40);pop(P.x,P.y+2.6,P.z,'+40 health','#9be3b8');burst(P.x,P.y+1.2,P.z,0x7bc47f,10);renderInv(true);
   }
   else if(id==='strongsalve'){
     if(P.hp>=95){say('You are not hurt.');return}
-    takeItem('strongsalve',1);P.hp=Math.min(100,P.hp+75);pop(P.x,P.y+2.6,P.z,'+75 health','#8cf0d2');burst(P.x,P.y+1.2,P.z,0x58c9a8,16);renderInv(true);
+    takeItem('strongsalve',1);P.hp=Math.min(P.maxHp||100,P.hp+75);pop(P.x,P.y+2.6,P.z,'+75 health','#8cf0d2');burst(P.x,P.y+1.2,P.z,0x58c9a8,16);renderInv(true);
   }
   else if(id==='berrypie'){
     if(P.food>=95){say('You are not hungry.');return}
@@ -2342,7 +2350,7 @@ function doUse(){
   }
   else if(id==='heartymeal'){
     if(P.food>=95&&P.hp>=95){say('You are already well fed and healthy.');return}
-    takeItem('heartymeal',1);P.food=Math.min(100,P.food+48);P.hp=Math.min(100,P.hp+22);pop(P.x,P.y+2.6,P.z,'Hearty Meal · restored','#9be3b8');burst(P.x,P.y+1.2,P.z,0x9bcf78,12);renderInv(true);
+    takeItem('heartymeal',1);P.food=Math.min(100,P.food+48);P.hp=Math.min(P.maxHp||100,P.hp+22);pop(P.x,P.y+2.6,P.z,'Hearty Meal · restored','#9be3b8');burst(P.x,P.y+1.2,P.z,0x9bcf78,12);renderInv(true);
   }
   else if(id==='treat'){
     if(P.lure){say('A treat scent is already active.');return}
@@ -2476,7 +2484,7 @@ var clouds=[];
     scene.add(g);clouds.push(g);
   }
 })();
-var FF=isMobile?60:110,ffGeo=new THREE.BufferGeometry(),ffPos=new Float32Array(FF*3),ffBase=[],fireflyUpdateAccumulator=0;
+var FF=isMobile?18:32,ffGeo=new THREE.BufferGeometry(),ffPos=new Float32Array(FF*3),ffBase=[],fireflyUpdateAccumulator=0;
 for(var fi=0;fi<FF;fi++)ffBase.push({x:(R()-0.5)*70,z:(R()-0.5)*70,h:0.5+R()*2.8,ph:R()*6.28,sp:0.5+R()});
 ffGeo.setAttribute('position',new THREE.BufferAttribute(ffPos,3));
 var ffMat=new THREE.PointsMaterial({color:0xd8ff7a,size:4,sizeAttenuation:false,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,fog:false});
@@ -2583,7 +2591,7 @@ function update(dt){
   if(P.food>28)hungerWarned=false;
   eatCool-=dt;
   if(P.food<55&&countOf('berry')>0&&eatCool<=0){takeItem('berry',1);P.food=Math.min(100,P.food+25);eatCool=0.6;pop(P.x,P.y+2.6,P.z,'Ate a berry','#f19ab0')}
-  if(P.food<=0)playerDamage(2*dt,null);else if(P.food>40&&P.hp<100)P.hp=Math.min(100,P.hp+2*dt);
+  if(P.food<=0)playerDamage(2*dt,null);else if(P.food>40&&P.hp<100)P.hp=Math.min(P.maxHp||100,P.hp+2*dt);
 
   var i,j;
   for(i=0;i<res.length;i++){
@@ -2954,7 +2962,7 @@ function update(dt){
     var pulse=s.windup>0?1+Math.sin((0.42-s.windup)*24)*0.1:(s.lunge>0?1.14:1);
     s.g.scale.setScalar((s.baseScale||1)*(s.hit>0?1.12:pulse));
     if(s.hp<=0){
-      dropWraithLoot(s);
+      awardXP(s.boss?150:20,'combat');dropWraithLoot(s);
       if(s.boss){bossDefeated=true;gain('crystal',12,s.x,s.y+2.6,s.z,'#83e8ff');gain('goldOre',6,s.x,s.y+2.2,s.z,'#f6d47a');say('THE NIGHT HERALD HAS FALLEN. The wilds are safer now.',7);save();}
       wraithsDefeated++;checkAchievements();
       if(nightF>=0.25)gain('fiber',1,s.x,s.y+2.6,s.z,'#c9a8ff');
@@ -2988,7 +2996,7 @@ function update(dt){
           var rar=RAR[SPECIES[sc.sp].r];
           if(sh.ok){
             wild.splice(wild.indexOf(sc),1);
-            sc.work=rand(4,9);team.push(sc);checkAchievements();
+            sc.work=rand(4,9);team.push(sc);catchIndex[sc.sp]=(catchIndex[sc.sp]||0)+1;awardXP(25+(SPECIES[sc.sp].r==='rare'?15:SPECIES[sc.sp].r==='uncommon'?8:0),'capture');checkAchievements();
             burst(sc.x,sc.y+0.6,sc.z,0xffe58a,22);burst(sc.x,sc.y+0.6,sc.z,0xffffff,8);
             pop(sc.x,sc.y+2.6,sc.z,'Gotcha! '+SPECIES[sc.sp].n+' joined',rar.c);
             renderInv(true);save();
@@ -3193,7 +3201,8 @@ var LANDMARKS=[
   {id:'whispering_grove',name:'Whispering Grove',x:42,z:38,lore:'Tall trees lean toward one another here. Their leaves carry stories from storms long past.'},
   {id:'stonefall_ridge',name:'Stonefall Ridge',x:-58,z:34,lore:'Broken rock exposes the bones of the land. Ore veins glimmer beneath the weathered surface.'},
   {id:'moonwater_pool',name:'Moonwater Pool',x:28,z:-68,lore:'Still water reflects the night sky. Wildlife gathers here when the forest grows quiet.'},
-  {id:'old_watch',name:'The Old Watch',x:-72,z:-58,lore:'A forgotten lookout faces the distant wilds. Its silent stones hint at a danger once watched from afar.'}
+  {id:'old_watch',name:'The Old Watch',x:-72,z:-58,lore:'A forgotten lookout faces the distant wilds. Its silent stones hint at a danger once watched from afar.'},
+  {id:'sunspire_castle',name:'Sunspire Desert Castle',x:CASTLE_SITE.x,z:CASTLE_SITE.z,lore:'A sandstone fortress rises above the dunes. Its sealed gate bears the crest of an older kingdom.'}
 ];
 var MAP_CELLS=60,MAP_CELL_SIZE=WORLD/MAP_CELLS,miniMapLastDraw=0;
 function mapCellFor(x,z){var cx=clamp(Math.floor((x+HALF)/MAP_CELL_SIZE),0,MAP_CELLS-1),cz=clamp(Math.floor((z+HALF)/MAP_CELL_SIZE),0,MAP_CELLS-1);return cz*MAP_CELLS+cx}
@@ -3203,7 +3212,7 @@ function updateExplorationMap(){
   for(var i=0;i<LANDMARKS.length;i++){
     var l=LANDMARKS[i];
     if(discoveredLandmarks.indexOf(l.id)<0&&Math.hypot(P.x-l.x,P.z-l.z)<11){
-      discoveredLandmarks.push(l.id);changed=true;
+      discoveredLandmarks.push(l.id);changed=true;awardXP(l.id==='sunspire_castle'?60:15,'exploration');
       say('LANDMARK DISCOVERED: '+l.name,5);
       if(!$('mapPanel').hidden)renderWorldMap();
     }
@@ -3267,6 +3276,7 @@ function renderQuestJournal(){
   }
   $('questList').innerHTML=html;
   $('questSummary').textContent=done+' completed · '+active+' active · '+(data.length-done-active)+' abandoned';
+  var levelNeed=100+(Math.max(1,P.level||1)-1)*60,statRows=[['vitality','Vitality','+10 maximum health per rank'],['power','Power','+0.75 weapon damage per rank'],['tamer','Tamer','+2.5% catch chance per rank']],progressHtml='<div class="questItem"><div class="questItemTop"><b>Level '+P.level+'</b><span>'+P.xp+' / '+levelNeed+' XP</span></div><div class="questTrack"><i style="width:'+Math.round(P.xp/levelNeed*100)+'%"></i></div><div class="questMeta"><span>Upgrade points</span><b>'+P.statPoints+'</b></div></div>';for(var si=0;si<statRows.length;si++){var st=statRows[si];progressHtml+='<div class="questItem"><div class="questItemTop"><b>'+st[1]+' · Rank '+P.stats[st[0]]+'/10</b><button data-stat-upgrade="'+st[0]+'" '+(P.statPoints<1||P.stats[st[0]]>=10?'disabled':'')+'>Upgrade</button></div><div class="questDesc">'+st[2]+'</div></div>';}$('playerProgress').innerHTML=progressHtml;var indexHtml='<div class="questItem"><b>Captured species: '+catchIndex.reduce(function(a,b){return a+b;},0)+' / '+SPECIES.length+'</b></div>';for(var ci=0;ci<SPECIES.length;ci++){var sp=SPECIES[ci],caught=catchIndex[ci]>0;indexHtml+='<div class="questItem"><div class="questItemTop"><b>'+(caught?sp.n:'???')+'</b><span>'+(caught?'CAUGHT ×'+catchIndex[ci]:'NOT DISCOVERED')+'</span></div><div class="questDesc">'+(caught?(RAR[sp.r].n+' · Habitat: '+sp.w):'Catch this creature to reveal its field-guide entry.')+'</div></div>';}$('playerProgress').innerHTML=progressHtml;$('creatureIndex').innerHTML=indexHtml;
   var tutorials=[
     {name:'Take your first steps',desc:'Explore at least 10 world units.',value:Math.min(Math.floor(explorationDistance),10),target:10},
     {name:'Gather supplies',desc:'Carry at least 3 wood.',value:Math.min(countOf('wood'),3),target:3},
@@ -3307,6 +3317,7 @@ $('questList').addEventListener('click',function(e){
   if(action==='activate')questAbandonedIds=questAbandonedIds.filter(function(q){return q!==id});
   save();renderQuestJournal();
 });
+$('questPanel').addEventListener('click',function(e){var stat=e.target.closest('button[data-stat-upgrade]');if(stat)upgradePlayerStat(stat.getAttribute('data-stat-upgrade'));});
 $('questOpen').addEventListener('click',function(){renderQuestJournal();$('questPanel').hidden=false;});
 $('questClose').addEventListener('click',function(){$('questPanel').hidden=true;});
 $('questPanel').addEventListener('click',function(e){if(e.target===$('questPanel'))$('questPanel').hidden=true;});
@@ -3335,7 +3346,7 @@ function baseRatings(){
   return {comfort:Math.min(100,Math.round(comfort)),protection:Math.min(100,Math.round(protection))};
 }
 function updateHud(){
-  renderMiniMap();
+  renderMiniMap();var xpNeed=100+(Math.max(1,P.level||1)-1)*60;$('levelStatus').textContent='LVL '+P.level+' · '+P.xp+'/'+xpNeed+' XP';$('levelStatus').title='Unspent upgrade points: '+P.statPoints;
   $('hp').style.width=clamp(P.hp,0,100)+'%';
   $('food').style.width=clamp(P.food,0,100)+'%';
   $('stamina').style.width=clamp(P.stamina,0,100)+'%';
@@ -3404,7 +3415,7 @@ function updateFloats(dt){
 function playerDamage(amount,label){
   if(dead||P.invulnerable>0||!isFinite(amount)||amount<=0)return;
   playSfx('damage');
-  P.hp=clamp(P.hp-amount*difficultyScale()*armorDamageMultiplier(equippedArmor),0,100);
+  P.hp=clamp(P.hp-amount*difficultyScale()*armorDamageMultiplier(equippedArmor),0,P.maxHp||100);
   var flash=$('damageFlash');
   if(flash){flash.classList.remove('hit');void flash.offsetWidth;flash.classList.add('hit');}
   if(label)pop(P.x,P.y+2.1,P.z,label,'#ff9a91');
