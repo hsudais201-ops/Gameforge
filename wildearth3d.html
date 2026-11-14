@@ -388,7 +388,8 @@ function biomeAt(x,z){
   if(moisture>0.48)return BIOMES[1];
   return BIOMES[0];
 }
-function seasonInfo(){var index=Math.floor((typeof clock==='number'?clock:0)/(DAY*5))%4;return [{id:'spring',name:'Spring',temperature:0.04,water:0x3b8294,sky:0xe0c9a5},{id:'summer',name:'Summer',temperature:0.16,water:0x287c9d,sky:0xffd59b},{id:'autumn',name:'Autumn',temperature:-0.02,water:0x386b78,sky:0xe7a06e},{id:'winter',name:'Winter',temperature:-0.24,water:0x789eaa,sky:0xc4d7e8}][index];}
+var SEASONS=[{id:'spring',name:'Spring',temperature:0.04,water:0x3b8294,sky:0xe0c9a5},{id:'summer',name:'Summer',temperature:0.16,water:0x287c9d,sky:0xffd59b},{id:'autumn',name:'Autumn',temperature:-0.02,water:0x386b78,sky:0xe7a06e},{id:'winter',name:'Winter',temperature:-0.24,water:0x789eaa,sky:0xc4d7e8}];
+function seasonInfo(){var safeClock=Number.isFinite(clock)&&clock>=0?clock:0,seasonLength=Number.isFinite(DAY)&&DAY>0?DAY*5:1200,index=Math.floor(safeClock/seasonLength)%SEASONS.length;return SEASONS[index]||SEASONS[0];}
 function biomeTemperature(x,z){var b=biomeAt(x,z);return clamp(b.temp-(heightAt(x,z)>8?0.18:0)+(nightF||0)*-0.22+seasonInfo().temperature,-0.2,1);}
 function habitatWeight(sp,b){
   var prefs=[['meadow','forest'],['forest','meadow'],['highland','frost'],['marsh','forest'],['frost','highland'],['meadow','marsh'],['highland','forest'],['frost','highland']];
@@ -2313,7 +2314,7 @@ function envUpdate(){
   scene.fog.far=140+90*dayF;scene.fog.near=30+30*dayF;
   starMat.opacity=clamp(nightF*1.2-0.2,0,1);
   playerLight.intensity=1.1*nightF;
-  var season=seasonInfo();water.material.color.setHex(season.water);scene.fog.color.lerp(seasonFogColor.setHex(season.sky),0.045);
+  var season=seasonInfo()||SEASONS[0];if(water&&water.material&&water.material.color)water.material.color.setHex(Number.isFinite(season.water)?season.water:SEASONS[0].water);scene.fog.color.lerp(seasonFogColor.setHex(Number.isFinite(season.sky)?season.sky:SEASONS[0].sky),0.045);
 }
 
 /* ---------- ambient: clouds and fireflies ---------- */
