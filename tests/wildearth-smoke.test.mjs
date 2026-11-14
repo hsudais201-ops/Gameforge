@@ -218,7 +218,7 @@ test('procedural biomes drive terrain materials, resource placement, and wildlif
 });
 
 test('swimming has slower movement, buoyancy, oxygen drain, and drowning damage', () => {
-  for (const marker of ['P.swimming=!caveMode&&waterDepth>0.55', 'waterSurface-0.45-P.y', 'P.oxygen=Math.max(0,P.oxygen-dt*8)', "playerDamage(4*dt,'Drowning')", '(P.swimming?0.58:1)']) {
+  for (const marker of ['function isHeadSubmerged(waterSurface,groundY,alreadySwimming)', 'P.swimming=!caveMode&&isHeadSubmerged(waterSurface,groundY,P.swimming)', 'swimFloatHeight(waterSurface)-P.y', 'P.oxygen=Math.max(0,P.oxygen-dt*8)', "playerDamage(4*dt,'Drowning')", '(P.swimming?0.58:1)']) {
     assert.ok(gameScript.includes(marker), 'missing swimming marker: ' + marker);
   }
 });
@@ -536,7 +536,7 @@ test('cave entrance and underground chamber support entry, bounded movement, lig
 
 
 test('river channels and ponds are connected to swimming, oxygen, and surface-water behavior', () => {
-  for (const marker of ['var riverPaths=[', 'function buildRiver(points)', 'function buildPond(x,z,radius)', 'function riverDepthAt(x,z)', 'riverPaths.forEach(buildRiver)', 'buildPond(34,18,4.2)', 'Math.max(WATER-groundY,riverDepth)', 'waterSurface-0.45', 'updateRivers();']) {
+  for (const marker of ['var riverPaths=[', 'function buildRiver(points)', 'function buildPond(x,z,radius)', 'function riverDepthAt(x,z)', 'riverPaths.forEach(buildRiver)', 'buildPond(34,18,4.2)', 'waterSurface=riverDepth>0?groundY+0.3:WATER', 'waterColumn=caveMode?0:Math.max(0,waterSurface-groundY)', 'updateRivers();']) {
     assert.ok(gameScript.includes(marker), 'missing river system marker: '+marker);
   }
 });
