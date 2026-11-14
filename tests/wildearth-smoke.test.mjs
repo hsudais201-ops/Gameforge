@@ -443,3 +443,10 @@ test('cave entrance and underground chamber support entry, bounded movement, lig
     assert.ok(gameScript.includes(marker), 'missing cave system marker: '+marker);
   }
 });
+
+
+test('river channels and ponds are connected to swimming, oxygen, and surface-water behavior', () => {
+  for (const marker of ['var riverPaths=[', 'function buildRiver(points)', 'function buildPond(x,z,radius)', 'function riverDepthAt(x,z)', 'riverPaths.forEach(buildRiver)', 'buildPond(34,18,4.2)', 'Math.max(WATER-groundY,riverDepth)', 'waterSurface-0.45', 'updateRivers();']) {
+    assert.ok(gameScript.includes(marker), 'missing river system marker: '+marker);
+  }
+});
