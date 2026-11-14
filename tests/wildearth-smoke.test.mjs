@@ -930,3 +930,13 @@ test('craft menu safely excludes loot-only relics without recipes', () => {
     assert.match(gameScript, new RegExp(id+':'));
   }
 });
+
+test('world autosaves every ten seconds and reports save status', () => {
+  assert.ok(gameScript.includes('var autosaveElapsed=0;'));
+  assert.ok(gameScript.includes('autosaveElapsed+=dt;'));
+  assert.ok(gameScript.includes('if(autosaveElapsed>=10)'));
+  assert.ok(gameScript.includes("var autosaveOk=save();"));
+  assert.ok(gameScript.includes("'Autosaved just now · every 10 seconds'"));
+  assert.ok(gameScript.includes("autosaveElapsed=0;var status=$('saveStatus')"), 'manual save should restart the autosave countdown');
+  assert.ok(html.includes('Autosave is active · every 10 seconds'));
+});
