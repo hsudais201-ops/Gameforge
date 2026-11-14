@@ -400,3 +400,22 @@ test('doors and gates open/close with collision changes and roofs are buildable 
     assert.ok(gameScript.includes(marker), 'missing building piece marker: ' + marker);
   }
 });
+
+
+test('workbench and cooking pot are craftable, placeable, and usable stations', () => {
+  for (const id of ['workbench', 'cookpot']) assert.match(html, new RegExp('value="' + id + '"|data-craft="' + id + '"'));
+  for (const marker of ['function makeWorkbench()', 'function makeCookpot()', "w.t==='workbench'||w.t==='cookpot'", "nearbyStation.t==='workbench'", "craft('jam',1)", "workbench:{wood:8,stone:3}", "cookpot:{stone:6,ironbar:1}"]) assert.ok(gameScript.includes(marker), 'missing station marker: '+marker);
+});
+
+test('roof support and world structure-count limits are validated before placement and loading', () => {
+  assert.ok(gameScript.includes("id==='roof'&&!walls.some"));
+  assert.ok(gameScript.includes('walls.length+fires.length+beds.length+chests.length>=120'));
+  assert.ok(gameScript.includes("parsed[k].length>120"));
+});
+
+test('base comfort and protection ratings respond to nearby structures', () => {
+  assert.match(html, /id="baseRating"/);
+  assert.ok(gameScript.includes('function baseRatings()'));
+  assert.ok(gameScript.includes("if(w.t==='roof')comfort+=4"));
+  assert.ok(gameScript.includes("if(w.t==='stone'||w.t==='wall')protection"));
+});
