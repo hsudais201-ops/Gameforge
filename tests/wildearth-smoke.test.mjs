@@ -825,3 +825,26 @@ test('new wraith types drop their signature materials and existing wraiths can d
   }
   assert.ok(gameScript.includes("['Relics',['wraithEssence','shadowFang','bruteHeart','heraldSigil','frostShard','emberCore']]"));
 });
+
+
+test('swimming starts only when the water reaches the player head and shallow water remains wadeable', () => {
+  const start=gameScript.indexOf('function isHeadSubmerged(');
+  const end=gameScript.indexOf('var P={',start);
+  assert.ok(start>=0&&end>start,'head-submersion helpers must be defined');
+  const helpers=new Function(gameScript.slice(start,end)+';return {isHeadSubmerged,swimFloatHeight};')();
+  assert.equal(helpers.isHeadSubmerged(-1.2,-4,false),true,'deep water should submerge the head');
+  assert.equal(helpers.isHeadSubmerged(-1.2,-2,false),false,'waist/chest-depth water should not trigger swimming');
+  assert.equal(helpers.isHeadSubmerged(0.3,0,false),false,'shallow rivers should remain wadeable');
+  assert.equal(helpers.isHeadSubmerged(-1.2,-3.1,false),false,'head must reach the water before swimming');
+  assert.equal(helpers.isHeadSubmerged(-1.2,-3.1,true),true,'swimming should have a small exit hysteresis');
+  assert.equal(helpers.isHeadSubmerged(-1.2,-2.9,true),false,'swimming should end when leaving deep water');
+  assert.ok(Math.abs(helpers.swimFloatHeight(2)-(-0.28))<1e-9,'float target should keep the head at the water surface');
+});
+
+test('underwater tint follows head-submersion swimming state and swim animation has a dedicated stroke', () => {
+  assert.ok(gameScript.includes('var underwater=!!P.swimming'));
+  assert.ok(gameScript.includes('player.legL.rotation.x=0.62+Math.sin(phase*1.7)*0.22'));
+  assert.ok(gameScript.includes('player.armL.rotation.x=-1.05+Math.sin(phase)*0.38'));
+  assert.ok(gameScript.includes('P.y+=(swimFloatHeight(waterSurface)-P.y)*Math.min(1,dt*4.2)'));
+  assert.ok(gameScript.includes('else if(!caveMode&&waterColumn>0.35)P.wetness=Math.min(100,P.wetness+dt*(P.swimming?18:5))'));
+});
