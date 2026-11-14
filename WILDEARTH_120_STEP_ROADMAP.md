@@ -35,7 +35,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 23. Support multiple hair styles and facial-hair options.
 - [x] 24. Provide character presets.
 - [x] 25. Add a preview turntable and lighting in the customization screen.
-- [ ] 26. Add separate head, torso, legs, and accessory customization slots.
+- [x] 26. Add separate head, torso, legs, and accessory customization slots.
 - [ ] 27. Add cosmetic unlock tracking.
 - [x] 28. Add outfit save slots.
 - [x] 29. Add animation preview controls in customization.
@@ -167,6 +167,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Rare world event: after three survived nights, a glowing fallen star appears in the world. Players can discover and collect it for Lumen Crystal and Gold Ore; the one-time reward claim persists in the world save.
 
 - Character preview: added a persisted turntable toggle, dedicated preview light toggle, and Idle/Walk/Attack animation preview controls in the customization screen.
+
+- Character appearance slots: separated head/skin, torso/outfit, leg fabric, and accessory/leather color controls; the new leg/accessory choices persist globally and are included in the three outfit presets.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
