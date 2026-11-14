@@ -1604,12 +1604,75 @@ function makeWraith(kind){
 
 /* ---------- structures ---------- */
 var wallMat=stdMat(0x8d6b43,0.9),plankMat=stdMat(0x6b4d2e,0.95);
-function makeChest(){var g=new THREE.Group(),wood=stdMat(0x80552f,0.94),trim=stdMat(0xc39a58,0.6,{metalness:0.2}),dark=stdMat(0x38291d,1);g.add(mesh(new THREE.BoxGeometry(1.35,0.82,0.92),wood,0,0.48,0));g.add(mesh(new THREE.BoxGeometry(1.4,0.12,0.98),trim,0,0.9,0));g.add(mesh(new THREE.BoxGeometry(1.25,0.38,0.86),wood,0,1.13,0));g.add(mesh(new THREE.BoxGeometry(0.16,0.3,0.06),trim,0,0.84,0.49));g.add(mesh(new THREE.BoxGeometry(0.08,0.13,0.035),dark,0,0.84,0.53));return g;}
-function makeDoor(){var g=new THREE.Group(),wood=stdMat(0x80552f,0.92),trim=stdMat(0xc39a58,0.65,{metalness:0.3}),iron=stdMat(0x68747a,0.45,{metalness:0.65});g.add(mesh(new THREE.BoxGeometry(2.55,2.82,0.16),wood,0,0,0));for(var i=-1;i<=1;i++)g.add(mesh(new THREE.BoxGeometry(0.1,2.85,0.2),trim,i*0.82,0,0));g.add(mesh(new THREE.BoxGeometry(0.14,0.14,0.1),iron,0.9,-0.05,0.13));g.add(mesh(new THREE.BoxGeometry(2.5,0.12,0.2),trim,0,-1.32,0));return g;}
-function makeGate(){var g=new THREE.Group(),wood=stdMat(0x765033,0.95),iron=stdMat(0x71818a,0.4,{metalness:0.65});g.add(mesh(new THREE.BoxGeometry(2.65,0.18,0.18),wood,0,1.35,0));g.add(mesh(new THREE.BoxGeometry(2.65,0.18,0.18),wood,0,-1.35,0));for(var i=-2;i<=2;i++)g.add(mesh(new THREE.BoxGeometry(0.12,2.7,0.14),iron,i*0.52,0,0));return g;}
-function makeRoof(){var g=new THREE.Group(),wood=stdMat(0x8a633e,0.92),dark=stdMat(0x5a4028,0.96);var left=mesh(new THREE.BoxGeometry(2.2,0.14,3.2),wood,-0.55,0.08,0);left.rotation.z=-0.28;g.add(left);var right=mesh(new THREE.BoxGeometry(2.2,0.14,3.2),wood,0.55,0.08,0);right.rotation.z=0.28;g.add(right);g.add(mesh(new THREE.BoxGeometry(0.16,0.22,3.25),dark,0,0.23,0));return g;}
-function makeWorkbench(){var g=new THREE.Group(),wood=stdMat(0x825b35,0.94),metal=stdMat(0x7d8589,0.5,{metalness:0.6});g.add(mesh(new THREE.BoxGeometry(1.8,0.18,1.1),wood,0,0.95,0));for(var x=-1;x<=1;x+=2)for(var z=-1;z<=1;z+=2)g.add(mesh(new THREE.BoxGeometry(0.14,0.95,0.14),wood,x*0.72,0.45,z*0.42));g.add(mesh(new THREE.BoxGeometry(0.6,0.08,0.32),metal,0,1.08,0.1));g.add(mesh(new THREE.BoxGeometry(0.08,0.38,0.08),metal,0.32,1.28,-0.2));return g;}
-function makeCookpot(){var g=new THREE.Group(),stone=stdMat(0x6b7477,0.9),pot=stdMat(0x39464b,0.45,{metalness:0.65}),glow=stdMat(0xff9c43,0.4,{emissive:0xff6a19,emissiveIntensity:1.2});for(var i=0;i<3;i++){var a=i*2.094;g.add(mesh(new THREE.CylinderGeometry(0.08,0.12,0.55,6),stone,Math.cos(a)*0.48,0.25,Math.sin(a)*0.48));}g.add(mesh(new THREE.CylinderGeometry(0.52,0.42,0.42,12),pot,0,0.68,0));g.add(mesh(new THREE.TorusGeometry(0.48,0.055,8,16),pot,0,0.9,0));g.add(mesh(new THREE.SphereGeometry(0.22,8,6),glow,0,0.44,0));return g;}
+function makeChest(){
+  var g=new THREE.Group(),wood=stdMat(0x80552f,0.94),trim=stdMat(0xc39a58,0.6,{metalness:0.2}),dark=stdMat(0x38291d,1),iron=stdMat(0x56636a,0.48,{metalness:0.7});
+  g.add(mesh(new THREE.BoxGeometry(1.35,0.82,0.92),wood,0,0.48,0));
+  for(var plank=-2;plank<=2;plank++)g.add(mesh(new THREE.BoxGeometry(0.018,0.72,0.012),dark,plank*0.22,0.48,0.466));
+  g.add(mesh(new THREE.BoxGeometry(1.4,0.12,0.98),trim,0,0.9,0));
+  g.add(mesh(new THREE.BoxGeometry(1.25,0.38,0.86),wood,0,1.13,0));
+  g.add(mesh(new THREE.BoxGeometry(0.16,0.3,0.06),trim,0,0.84,0.49));
+  g.add(mesh(new THREE.BoxGeometry(0.08,0.13,0.035),dark,0,0.84,0.53));
+  for(var side=-1;side<=1;side+=2)for(var row=0;row<2;row++)g.add(mesh(new THREE.SphereGeometry(0.035,7,5),iron,side*0.58,0.32+row*0.32,0.49));
+  for(var hinge=-1;hinge<=1;hinge+=2)g.add(mesh(new THREE.BoxGeometry(0.1,0.16,0.045),iron,hinge*0.46,1.13,0.45));
+  return g;
+}
+function makeDoor(){
+  var g=new THREE.Group(),wood=stdMat(0x80552f,0.92),trim=stdMat(0xc39a58,0.65,{metalness:0.3}),iron=stdMat(0x68747a,0.45,{metalness:0.65}),dark=stdMat(0x3f2b1e,1);
+  g.add(mesh(new THREE.BoxGeometry(2.55,2.82,0.16),wood,0,0,0));
+  for(var i=-3;i<=3;i++)g.add(mesh(new THREE.BoxGeometry(0.012,2.62,0.012),dark,i*0.36,0,0.087));
+  for(var i=-1;i<=1;i++)g.add(mesh(new THREE.BoxGeometry(0.1,2.85,0.2),trim,i*0.82,0,0));
+  for(var brace=-1;brace<=1;brace+=2){var cross=mesh(new THREE.BoxGeometry(2.15,0.12,0.12),iron,0,brace*0.83,0.12);cross.rotation.z=brace*0.04;g.add(cross);}
+  g.add(mesh(new THREE.BoxGeometry(0.14,0.14,0.1),iron,0.9,-0.05,0.13));
+  g.add(mesh(new THREE.BoxGeometry(2.5,0.12,0.2),trim,0,-1.32,0));
+  for(var pin=-1;pin<=1;pin+=2)g.add(mesh(new THREE.SphereGeometry(0.055,8,6),trim,pin*0.9,0.95,0.17));
+  return g;
+}
+function makeGate(){
+  var g=new THREE.Group(),wood=stdMat(0x765033,0.95),iron=stdMat(0x71818a,0.4,{metalness:0.65}),dark=stdMat(0x39291d,1);
+  g.add(mesh(new THREE.BoxGeometry(2.65,0.18,0.18),wood,0,1.35,0));
+  g.add(mesh(new THREE.BoxGeometry(2.65,0.18,0.18),wood,0,-1.35,0));
+  for(var i=-2;i<=2;i++)g.add(mesh(new THREE.BoxGeometry(0.12,2.7,0.14),iron,i*0.52,0,0));
+  for(var row=-1;row<=1;row+=2)g.add(mesh(new THREE.BoxGeometry(2.55,0.1,0.16),wood,0,row*0.58,0.03));
+  for(var bolt=-2;bolt<=2;bolt++)g.add(mesh(new THREE.SphereGeometry(0.045,7,5),dark,bolt*0.52,1.35,0.11));
+  for(var side=-1;side<=1;side+=2)g.add(mesh(new THREE.BoxGeometry(0.2,0.2,0.2),wood,side*1.32,0,0));
+  return g;
+}
+function makeRoof(){
+  var g=new THREE.Group(),wood=stdMat(0x8a633e,0.92),dark=stdMat(0x5a4028,0.96),shingle=stdMat(0x765237,0.94);
+  var left=mesh(new THREE.BoxGeometry(2.2,0.14,3.2),wood,-0.55,0.08,0);left.rotation.z=-0.28;g.add(left);
+  var right=mesh(new THREE.BoxGeometry(2.2,0.14,3.2),wood,0.55,0.08,0);right.rotation.z=0.28;g.add(right);
+  g.add(mesh(new THREE.BoxGeometry(0.16,0.22,3.25),dark,0,0.23,0));
+  for(var row=0;row<3;row++)for(var col=0;col<4;col++){
+    var x=-1.25+col*0.82,z=-1.15+row*1.08;
+    var a=mesh(new THREE.BoxGeometry(0.78,0.045,0.92),shingle,x,-0.015,z);a.rotation.z=x<0?-0.28:0.28;g.add(a);
+  }
+  g.add(mesh(new THREE.CylinderGeometry(0.09,0.09,3.3,8),dark,0,0.22,0));
+  return g;
+}
+function makeWorkbench(){
+  var g=new THREE.Group(),wood=stdMat(0x825b35,0.94),metal=stdMat(0x7d8589,0.5,{metalness:0.6}),iron=stdMat(0x4c555b,0.52,{metalness:0.68});
+  g.add(mesh(new THREE.BoxGeometry(1.8,0.18,1.1),wood,0,0.95,0));
+  for(var x=-1;x<=1;x+=2)for(var z=-1;z<=1;z+=2)g.add(mesh(new THREE.BoxGeometry(0.14,0.95,0.14),wood,x*0.72,0.45,z*0.42));
+  g.add(mesh(new THREE.BoxGeometry(0.6,0.08,0.32),metal,0,1.08,0.1));
+  g.add(mesh(new THREE.BoxGeometry(0.08,0.38,0.08),metal,0.32,1.28,-0.2));
+  // Crafting tools: hammer, chisel, saw blade and a small parts tray.
+  var hammer=new THREE.Group();hammer.position.set(-0.48,1.08,0.2);hammer.rotation.z=-0.3;hammer.add(mesh(new THREE.CylinderGeometry(0.025,0.03,0.38,7),wood,0,0.18,0));hammer.add(mesh(new THREE.BoxGeometry(0.25,0.09,0.1),iron,0,0.39,0));g.add(hammer);
+  var chisel=mesh(new THREE.BoxGeometry(0.055,0.34,0.055),metal,0.56,1.18,-0.18);chisel.rotation.z=0.12;g.add(chisel);
+  g.add(mesh(new THREE.BoxGeometry(0.34,0.06,0.25),iron,-0.46,1.08,-0.28));
+  for(var riv=0;riv<4;riv++)g.add(mesh(new THREE.SphereGeometry(0.025,6,5),metal,-0.58+(riv%2)*0.24,1.18,-0.32+Math.floor(riv/2)*0.08));
+  return g;
+}
+function makeCookpot(){
+  var g=new THREE.Group(),stone=stdMat(0x6b7477,0.9),pot=stdMat(0x39464b,0.45,{metalness:0.65}),glow=stdMat(0xff9c43,0.4,{emissive:0xff6a19,emissiveIntensity:1.2}),iron=stdMat(0x69757b,0.42,{metalness:0.72});
+  for(var i=0;i<3;i++){var a=i*2.094;g.add(mesh(new THREE.CylinderGeometry(0.08,0.12,0.55,6),stone,Math.cos(a)*0.48,0.25,Math.sin(a)*0.48));}
+  g.add(mesh(new THREE.CylinderGeometry(0.52,0.42,0.42,12),pot,0,0.68,0));
+  g.add(mesh(new THREE.TorusGeometry(0.48,0.055,8,16),pot,0,0.9,0));
+  g.add(mesh(new THREE.SphereGeometry(0.22,8,6),glow,0,0.44,0));
+  var handle=mesh(new THREE.TorusGeometry(0.32,0.025,6,12),iron,0,1.12,0);handle.rotation.x=Math.PI/2;g.add(handle);
+  for(var side=-1;side<=1;side+=2)g.add(mesh(new THREE.CylinderGeometry(0.025,0.025,0.28,6),iron,side*0.34,1.0,0));
+  for(var leg=0;leg<3;leg++){var a=leg*2.094;g.add(mesh(new THREE.SphereGeometry(0.075,7,5),iron,Math.cos(a)*0.49,0.44,Math.sin(a)*0.49));}
+  return g;
+}
 function makeWall(){
   var g=new THREE.Group();
   /* A wall is a thin panel, not a full 3x3x3 cube. */
