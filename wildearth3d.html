@@ -261,7 +261,7 @@
     #bag{top:3px;transform:translateX(-50%);max-height:calc(100dvh - 6px)}
   }
 
-  .outfitSlots{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:end}.outfitSlots label{grid-column:1/-1}.outfitSlots button{text-align:center}@media(max-width:420px){.outfitSlots{grid-template-columns:1fr 1fr}}.charChoice{cursor:pointer}#settingsPanel .bagTop{position:sticky;top:-14px;z-index:2;margin:-14px -14px 2px;padding:12px 14px;background:rgba(7,17,13,.99);border-bottom:1px solid #ffffff22}#settingsPanel .settingRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,auto);align-items:center;gap:12px;min-width:0;line-height:1.35}#settingsPanel .settingRow select,#settingsPanel .settingRow button{width:auto;max-width:100%;min-width:0}#settingsPanel .settingRow input[type=range]{width:clamp(110px,38vw,210px);max-width:100%;min-width:0;accent-color:#86c98b}#settingsPanel .settingRow input[type=checkbox]{justify-self:end;width:20px;height:20px}#settingsPanel .settingNote{overflow-wrap:anywhere}#settingsPanel .settingsActions{grid-template-columns:repeat(2,minmax(0,1fr))}#settingsPanel .settingsActions button{min-width:0;white-space:normal}@media(max-width:420px){#settingsPanel{width:calc(100vw - 16px);padding:12px;top:max(8px,env(safe-area-inset-top));max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));gap:9px}#settingsPanel .bagTop{top:-12px;margin:-12px -12px 2px;padding:10px 12px}#settingsPanel .settingRow{grid-template-columns:minmax(0,1fr) minmax(104px,44%);gap:8px;font-size:12px}#settingsPanel .settingRow input[type=range]{width:100%}#settingsPanel .settingRow select{width:100%;font-size:12px;padding:7px 5px}}@media(max-height:560px){#settingsPanel{top:6px;max-height:calc(100dvh - 12px);padding:10px;gap:7px}#settingsPanel .bagTop{top:-10px;margin:-10px -10px 1px;padding:8px 10px}}
+  .outfitSlots{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:end}.outfitSlots label{grid-column:1/-1}.outfitSlots button{text-align:center}@media(max-width:420px){.outfitSlots{grid-template-columns:1fr 1fr}}.charChoice{cursor:pointer}#settingsPanel .bagTop{position:sticky;top:-14px;z-index:2;margin:-14px -14px 2px;padding:12px 14px;background:rgba(7,17,13,.99);border-bottom:1px solid #ffffff22}#settingsPanel .settingRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,auto);align-items:center;gap:12px;min-width:0;line-height:1.35}#settingsPanel .settingRow select,#settingsPanel .settingRow button{width:auto;max-width:100%;min-width:0}#settingsPanel .settingRow input[type=range]{width:clamp(110px,38vw,210px);max-width:100%;min-width:0;accent-color:#86c98b}#settingsPanel .settingRow input[type=checkbox]{justify-self:end;width:20px;height:20px}#settingsPanel .settingNote{overflow-wrap:anywhere}#settingsPanel .renderDistanceSetting{grid-template-columns:minmax(0,1fr);gap:5px}#settingsPanel .renderDistanceSetting>label{display:flex;justify-content:space-between;gap:10px;align-items:center}#settingsPanel .renderDistanceSetting input[type=range]{width:100%;max-width:none;accent-color:#86c98b}#settingsPanel .settingsActions{grid-template-columns:repeat(2,minmax(0,1fr))}#settingsPanel .settingsActions button{min-width:0;white-space:normal}@media(max-width:420px){#settingsPanel{width:calc(100vw - 16px);padding:12px;top:max(8px,env(safe-area-inset-top));max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));gap:9px}#settingsPanel .bagTop{top:-12px;margin:-12px -12px 2px;padding:10px 12px}#settingsPanel .settingRow{grid-template-columns:minmax(0,1fr) minmax(104px,44%);gap:8px;font-size:12px}#settingsPanel .settingRow input[type=range]{width:100%}#settingsPanel .settingRow select{width:100%;font-size:12px;padding:7px 5px}}@media(max-height:560px){#settingsPanel{top:6px;max-height:calc(100dvh - 12px);padding:10px;gap:7px}#settingsPanel .bagTop{top:-10px;margin:-10px -10px 1px;padding:8px 10px}}
 </style>
 </head>
 <body>
@@ -287,7 +287,7 @@
 <div id="hint"></div><div id="subtitleLine" role="status" aria-live="polite"></div>
 <div id="chestPanel" hidden role="dialog" aria-modal="true" aria-labelledby="chestTitle"><div class="chestCard"><div class="chestTop"><strong id="chestTitle">STORAGE CHEST</strong><button id="chestClose" type="button">Close ✕</button></div><p class="questIntro">Select a chest slot, then store the selected hotbar stack or take the selected stack.</p><div id="chestGrid"></div><div class="chestControls"><button id="chestStore" type="button" disabled>Store hotbar stack</button><button id="chestTake" type="button" disabled>Take selected stack</button></div><div id="chestStatus" role="status" aria-live="polite"></div></div></div>
 <button id="settingsBtn" type="button">⚙ Settings</button>
-<div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label>
+<div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><div class="settingRow renderDistanceSetting"><label for="renderDistanceSlider">World render distance <strong id="renderDistanceValue">85 m</strong></label><input id="renderDistanceSlider" type="range" min="40" max="160" step="5" value="85" aria-label="World render distance in metres"><div class="settingNote">Increase to see more of the world; lower it for better performance.</div></div><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label>
 <label class="settingRow">Survival difficulty<select id="difficultySelect"><option value="easy">Explorer · Easy</option><option value="normal" selected>Survivor · Normal</option><option value="hard">Wilderness · Hard</option></select></label>
 <label class="settingRow">Interface language<select id="gameLanguage"><option value="en">English</option><option value="ur">Urdu</option></select></label><label class="settingRow">Notification duration <input id="notificationDuration" type="range" min="1" max="8" step="0.5" value="3.5"></label>
 <label class="settingRow">Sound captions / subtitles <input id="subtitlesToggle" type="checkbox" checked></label><label class="settingRow">Caption language <select id="captionLanguage"><option value="en">English</option><option value="ur">Urdu</option></select></label>
@@ -474,9 +474,9 @@ var renderProfiles=[
   {name:'Balanced',shadows:true,fogFar:230,particleScale:0.7},
   {name:'High',shadows:true,fogFar:280,particleScale:1}
 ];
-var renderLevel=isLowEnd?0:1,areaLevel=1,areaRadii=[55,85,125],SETTINGS_KEY='mfwilds3d_settings_v1';
-try{var savedGraphics=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');if(savedGraphics.quality!==undefined)renderLevel=clamp(savedGraphics.quality|0,0,2);if(savedGraphics.area!==undefined)areaLevel=clamp(savedGraphics.area|0,0,2);}catch(e){}
-function saveGraphicsSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({quality:renderLevel,area:areaLevel}));}catch(e){}}
+var renderLevel=isLowEnd?0:1,areaLevel=1,areaRadii=[55,85,125],areaRadius=85,SETTINGS_KEY='mfwilds3d_settings_v1';
+try{var savedGraphics=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');if(savedGraphics.quality!==undefined)renderLevel=clamp(savedGraphics.quality|0,0,2);if(savedGraphics.areaRadius!==undefined)areaRadius=clamp(Number(savedGraphics.areaRadius)||85,40,160);else if(savedGraphics.area!==undefined)areaRadius=areaRadii[clamp(savedGraphics.area|0,0,2)];areaLevel=areaRadius<70?0:areaRadius<110?1:2;}catch(e){}
+function saveGraphicsSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({quality:renderLevel,area:areaLevel,areaRadius:areaRadius}));}catch(e){}}
 function applyRenderProfile(level){
   renderLevel=clamp(level|0,0,2);
   var profile=renderProfiles[renderLevel];
@@ -486,7 +486,7 @@ function applyRenderProfile(level){
     var shadowSize=renderLevel===2?1024:512;
     if(sun.shadow.mapSize.x!==shadowSize||sun.shadow.mapSize.y!==shadowSize){
       sun.shadow.mapSize.set(shadowSize,shadowSize);
-      sun.shadow.map=null;
+      if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
     }
   }else if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
   renderer.shadowMap.needsUpdate=true;
@@ -495,9 +495,11 @@ function applyRenderProfile(level){
   $('qualitySelect').value=String(renderLevel);
   saveGraphicsSettings();
 }
-function applyAreaLevel(level){
-  areaLevel=clamp(level|0,0,2);
-  $('areaSelect').value=String(areaLevel);
+function applyAreaRadius(radius){
+  areaRadius=clamp(Math.round((Number(radius)||85)/5)*5,40,160);
+  areaLevel=areaRadius<70?0:areaRadius<110?1:2;
+  $('renderDistanceSlider').value=String(areaRadius);
+  $('renderDistanceValue').textContent=areaRadius+' m';
   streamDirty=true;
   saveGraphicsSettings();
 }
@@ -517,8 +519,9 @@ $('musicVolume').value=String(audioPrefs.music);$('effectsVolume').value=String(
 $('captionLanguage').value=audioPrefs.captionLanguage||'en';$('captionLanguage').addEventListener('change',function(){audioPrefs.captionLanguage=this.value==='ur'?'ur':'en';saveAudioPrefs();});
 $('musicVolume').addEventListener('input',function(){audioPrefs.music=clamp(+this.value,0,0.3);if(musicBus)musicBus.gain.setTargetAtTime(audioPrefs.music,audioCtx.currentTime,0.04);saveAudioPrefs();initAudio();});
 $('effectsVolume').addEventListener('input',function(){audioPrefs.effects=clamp(+this.value,0,0.8);if(effectsBus)effectsBus.gain.setTargetAtTime(audioPrefs.effects,audioCtx.currentTime,0.04);saveAudioPrefs();initAudio();});
-$('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
-$('areaSelect').value=String(areaLevel);
+$('renderDistanceSlider').addEventListener('input',function(){applyAreaRadius(+this.value)});
+$('renderDistanceSlider').addEventListener('change',function(){say('World render distance: '+areaRadius+' metres',2)});
+applyAreaRadius(areaRadius);
 var ACCESS_KEY='mfwilds3d_accessibility_v1',accessPrefs={size:'normal',contrast:false};
 var CONTROL_KEY='mfwilds3d_controls_v1',controlPrefs={deadzone:0.10,sensitivity:1,invertY:false};
 var keyBindings={forward:'KeyW',backward:'KeyS',left:'KeyA',right:'KeyD'},waitingBinding=null;
@@ -584,7 +587,7 @@ function finishDeviceProfile(){
   if(!values.length){$('deviceProfileStatus').textContent='No frame samples were captured. Keep the game running and try again.';return;}
   var sum=values.reduce(function(a,v){return a+v},0),avg=sum/values.length;
   var update=frames.reduce(function(a,v){return a+v.update},0)/frames.length,render=frames.reduce(function(a,v){return a+v.render},0)/frames.length;
-  var report={game:'WILDEARTH device profile',createdAt:new Date().toISOString(),durationSeconds:30,sampleCount:frames.length,userAgent:navigator.userAgent,viewport:{width:innerWidth,height:innerHeight,pixelRatio:devicePixelRatio||1},hardware:{logicalCores:navigator.hardwareConcurrency||null,deviceMemoryGB:navigator.deviceMemory||null},graphics:{quality:renderLevel,loadingArea:areaLevel},metrics:{fps:Math.round(1000/avg),averageFrameMs:+avg.toFixed(2),p95FrameMs:+values[Math.min(values.length-1,Math.floor(values.length*.95))].toFixed(2),averageUpdateMs:+update.toFixed(2),averageRenderSubmitMs:+render.toFixed(2),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles},samples:frames};
+  var report={game:'WILDEARTH device profile',createdAt:new Date().toISOString(),durationSeconds:30,sampleCount:frames.length,userAgent:navigator.userAgent,viewport:{width:innerWidth,height:innerHeight,pixelRatio:devicePixelRatio||1},hardware:{logicalCores:navigator.hardwareConcurrency||null,deviceMemoryGB:navigator.deviceMemory||null},graphics:{quality:renderLevel,loadingArea:areaRadius},metrics:{fps:Math.round(1000/avg),averageFrameMs:+avg.toFixed(2),p95FrameMs:+values[Math.min(values.length-1,Math.floor(values.length*.95))].toFixed(2),averageUpdateMs:+update.toFixed(2),averageRenderSubmitMs:+render.toFixed(2),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles},samples:frames};
   var blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download='wildearth-device-profile-'+Date.now()+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000);
   $('deviceProfileStatus').textContent='Profile exported: '+report.metrics.fps+' FPS average · '+report.metrics.p95FrameMs+' ms p95 · '+frames.length+' samples. Run separately on Low, Balanced, and High.';
@@ -787,7 +790,7 @@ var streamedMeshes=[],streamDirty=true,streamTimer=0;
 function registerStreamMesh(im,positions,baseMatrices){im.userData.streamPositions=positions;im.userData.baseMatrices=baseMatrices;im.userData.streamVisible=[];streamedMeshes.push(im);}
 function streamChunkActive(x,z,playerX,playerZ,radius,chunkSize){var cx=Math.floor(x/chunkSize)*chunkSize+chunkSize/2,cz=Math.floor(z/chunkSize)*chunkSize+chunkSize/2,dx=cx-playerX,dz=cz-playerZ;return dx*dx+dz*dz<=(radius+chunkSize*0.72)*(radius+chunkSize*0.72)}
 function updateWorldStreaming(force){
-  var radius=areaRadii[areaLevel],radius2=radius*radius,chunkSize=32,changed=0;
+  var radius=areaRadius,radius2=radius*radius,chunkSize=32,changed=0;
   function active(x,z){return streamChunkActive(x,z,P.x,P.z,radius,chunkSize)}
   for(var m=0;m<streamedMeshes.length;m++){
     var meshChanged=false,im=streamedMeshes[m],pos=im.userData.streamPositions,base=im.userData.baseMatrices,vis=im.userData.streamVisible;
@@ -806,7 +809,7 @@ function updateWorldStreaming(force){
     if(r.streamOn!==onR){r.streamOn=onR;if(r.dead<=0)setInst(r,0,!onR);if(r.si!==undefined)setStump(r,onR&&r.dead>0);}
   }
   for(var wi=0;wi<wild.length;wi++){var w=wild[wi];w.m.g.visible=active(w.x,w.z);}
-  $('worldStatus').textContent='Active area: '+areaRadii[areaLevel]+' m · '+streamedMeshes.length+' streamed detail groups';
+  $('worldStatus').textContent='Active render distance: '+areaRadius+' m · '+streamedMeshes.length+' streamed detail groups';
   streamDirty=false;
 }
 
