@@ -353,3 +353,10 @@ test('season cycle changes environmental temperature, water palette, and HUD sea
   assert.ok(gameScript.includes('water.material.color.setHex(season.water)'));
   assert.ok(gameScript.includes("+' · '+seasonInfo().name"));
 });
+
+
+test('rare fallen-star event spawns after three nights, grants rewards once, and persists its claim', () => {
+  for (const marker of ['function spawnRareEvent()', "new THREE.IcosahedronGeometry(0.62,1)", "say('A fallen star has landed nearby.", "rareEventClaimed=true", "gain('crystal',8", "gain('goldOre',3", 'rareEventClaimed:rareEventClaimed', 'rareEventClaimed=d.rareEventClaimed===true']) {
+    assert.ok(gameScript.includes(marker), 'missing rare event marker: ' + marker);
+  }
+});
