@@ -36,7 +36,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 24. Provide character presets.
 - [x] 25. Add a preview turntable and lighting in the customization screen.
 - [x] 26. Add separate head, torso, legs, and accessory customization slots.
-- [ ] 27. Add cosmetic unlock tracking.
+- [x] 27. Add cosmetic unlock tracking.
 - [x] 28. Add outfit save slots.
 - [x] 29. Add animation preview controls in customization.
 - [x] 30. Validate customization persistence across world changes.
@@ -169,6 +169,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Character preview: added a persisted turntable toggle, dedicated preview light toggle, and Idle/Walk/Attack animation preview controls in the customization screen.
 
 - Character appearance slots: separated head/skin, torso/outfit, leg fabric, and accessory/leather color controls; the new leg/accessory choices persist globally and are included in the three outfit presets.
+
+- Cosmetic progression: three appearance rewards unlock from Night Survivor, Wraith Slayer, and Pathfinder achievements; locked color choices remain disabled until earned, and unlock IDs persist per world.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
