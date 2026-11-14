@@ -500,7 +500,7 @@ test('performance monitor records bounded frame samples and exports CPU/render s
 test('device profiling runs for 30 seconds and exports real frame, update, render, and hardware samples', () => {
   assert.match(html, /id="runDeviceProfile"/);
   assert.match(html, /id="deviceProfileStatus"/);
-  for (const marker of ['profileActive=false,profileFrames=[]', 'if(profileActive&&profileFrames.length<2400)', 'function finishDeviceProfile()', 'durationSeconds:30', 'averageFrameMs:', 'p95FrameMs:', 'averageUpdateMs:', 'averageRenderSubmitMs:', 'logicalCores:navigator.hardwareConcurrency', "link.download='wildearth-device-profile-'", 'setTimeout(finishDeviceProfile,30000)']) {
+  for (const marker of ['profileActive=false,profileFrames=[]', 'if(profileActive&&profileFrames.length<6000)', 'function finishDeviceProfile()', 'durationSeconds:30', 'averageFrameMs:', 'p95FrameMs:', 'averageUpdateMs:', 'averageRenderSubmitMs:', 'logicalCores:navigator.hardwareConcurrency', "link.download='wildearth-device-profile-'", 'setTimeout(finishDeviceProfile,30000)']) {
     assert.ok(gameScript.includes(marker), 'missing device profile marker: '+marker);
   }
 });
