@@ -508,9 +508,9 @@
     <span class="pill">Health<span class="bar"><i id="hp" style="background:#e8574f"></i></span></span>
     <span class="pill">Food<span class="bar"><i id="food" style="background:#e9b44c"></i></span></span>
     <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
-    <span class="pill" id="levelStatus">LVL 1 · 0/100 XP</span><span class="pill" id="time"></span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="baseRating">Base comfort 0 · protection 0</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
+    <span class="pill" id="levelStatus">LVL 1 · 0/100 XP</span><span class="pill" id="time"></span><span class="pill" id="weatherStatus">Clear</span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="baseRating">Base comfort 0 · protection 0</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
   </div>
-  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div><div id="cavePrompt" hidden><span id="cavePromptText">Cave entrance</span><button id="caveAction" type="button">Enter Cave</button></div><div id="baseActions" hidden><span id="basePieceName">Nearby structure</span><button id="upgradeBasePiece" type="button">Upgrade</button><button id="dismantleBasePiece" type="button">Dismantle</button></div>
+  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div><div id="cavePrompt" hidden><span id="cavePromptText">Cave entrance</span><button id="caveAction" type="button">Enter Cave</button></div><div id="sleepPrompt" hidden><span id="sleepPromptText">Rest at your bed</span><button id="sleepAction" type="button">Sleep until dawn</button></div><div id="baseActions" hidden><span id="basePieceName">Nearby structure</span><button id="upgradeBasePiece" type="button">Upgrade</button><button id="dismantleBasePiece" type="button">Dismantle</button></div>
 </div>
 <div id="miniMapWrap" aria-label="2D minimap"><canvas id="miniMap" width="232" height="232"></canvas><div id="miniMapLabel">LOCAL MAP</div></div>
 <div id="mapPanel" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle"><div class="mapCard"><button class="mapClose" id="mapClose" type="button">Close ✕</button><strong id="mapTitle">WORLD MAP · 600 × 600 M</strong><p class="questIntro">Explore to reveal terrain. Colors show woodland, forest, desert, gravel, beaches, ocean and highlands.</p><div class="mapLegend"><span>Explored terrain</span><span class="keyLand">Landmark</span><span class="keyPlayer">You</span></div><canvas id="mapCanvas" class="mapCanvas" width="600" height="600" aria-label="Top-down 2D world map"></canvas><div id="landmarkList"></div></div></div>
@@ -1262,7 +1262,7 @@ function placeInstanced(geo,count,ok,sMin,sMax,castSh,yFix){
 
 /* ---------- characters ---------- */
 function stdMat(c,r,extra){var o={color:c,roughness:r===undefined?0.8:r,metalness:0};if(extra)for(var k in extra)o[k]=extra[k];return new THREE.MeshStandardMaterial(o)}
-function mesh(geo,m,x,y,z,sx,sy,sz){var o=new THREE.Mesh(geo,m);o.position.set(x,y,z);if(sx!==undefined)o.scale.set(sx,sy,sz);o.castShadow=true;return o}
+function mesh(geo,m,x,y,z,sx,sy,sz){var o=new THREE.Mesh(geo,m);o.position.set(x,y,z);if(sx!==undefined)o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;return o}
 function limb(len,r,color,endColor){
   var g=new THREE.Group();
   g.add(mesh(new THREE.CylinderGeometry(r,r*0.85,len,10),stdMat(color),0,-len/2,0));
@@ -1893,7 +1893,7 @@ var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,wi
 var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[],bossDefeated=false,rareEvent=null,rareEventClaimed=false,cosmeticUnlockIds=[],caveEntrances=[],caveMode=false,activeCave=null;
 var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
-var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34,stormLevel=0,lightningCooldown=0,lightningFlashTime=0;
+var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34,stormLevel=0,lightningCooldown=0,lightningFlashTime=0,snowing=false;
 var rainCount=Math.max(40,Math.round((isMobile?150:280)*renderProfiles[renderLevel].particleScale)),rainGeo=new THREE.BufferGeometry(),rainPositions=new Float32Array(rainCount*3);
 for(var rpi=0;rpi<rainCount;rpi++){
   rainPositions[rpi*3]=(random()-0.5)*54;
@@ -1914,10 +1914,14 @@ var rainPoints=new THREE.Points(rainGeo,rainMat);rainPoints.frustumCulled=false;
 function updateWeather(dt){
   var cycle=clock%240,edge=Math.min(clamp((cycle-150)/9,0,1),clamp((207-cycle)/9,0,1));
   rainLevel=edge;
+  var weatherSeason=seasonInfo(),localCold=biomeTemperature(P.x,P.z)<0.42;
+  snowing=weatherSeason.id==='winter'&&localCold&&rainLevel>0.02;
   stormLevel=clamp((rainLevel-0.38)*2.1,0,1);
-  rainWindX=0.72+Math.sin(clock*0.13)*stormLevel*2.6;rainWindZ=0.34+Math.cos(clock*0.11)*stormLevel*2.1;
+  rainWindX=0.72+Math.sin(clock*0.13)*stormLevel*(snowing?1.2:2.6);rainWindZ=0.34+Math.cos(clock*0.11)*stormLevel*(snowing?1.1:2.1);
+  rainMat.color.setHex(snowing?0xeaf6ff:0xb9d9ed);rainMat.size=snowing?(isMobile?0.16:0.2):(isMobile?0.105:0.13);
   lightningCooldown=Math.max(0,lightningCooldown-dt);lightningFlashTime=Math.max(0,lightningFlashTime-dt);
-  if(stormLevel>0.62&&lightningCooldown<=0){lightningCooldown=10+random()*18;if(random()<0.72){lightningFlashTime=0.16+random()*0.12;playSfx('warning');say('Lightning flashes across the storm clouds.',2.5);}}
+  if(!snowing&&stormLevel>0.62&&lightningCooldown<=0){lightningCooldown=10+random()*18;if(random()<0.72){lightningFlashTime=0.16+random()*0.12;playSfx('warning');say('Lightning flashes across the storm clouds.',2.5);}}
+  var weatherLabel=$('weatherStatus');if(weatherLabel)weatherLabel.textContent=snowing?'Snowfall':(stormLevel>0.62?'Thunderstorm':(rainLevel>0.08?'Rain':'Clear'));
   var flash=$('lightningFlash');if(flash)flash.style.opacity=lightningFlashTime>0?String(clamp(lightningFlashTime/0.2,0,0.92)):'0';
   rainPoints.visible=rainLevel>0.015&&!caveMode;
   rainMat.opacity=rainLevel*0.62;
@@ -1927,7 +1931,7 @@ function updateWeather(dt){
     for(var ri=0;ri<rainCount;ri++){
       var k=ri*3;
       rainPositions[k]+=rainWindX*dt*2.2;
-      rainPositions[k+1]-=dt*(17+rainLevel*5);
+      rainPositions[k+1]-=dt*(snowing?4.5+rainLevel*2:17+rainLevel*5);
       rainPositions[k+2]+=rainWindZ*dt*2.2;
       if(rainPositions[k+1]<-7){
         rainPositions[k]=(random()-0.5)*54;
@@ -1939,8 +1943,8 @@ function updateWeather(dt){
     }
     pa.needsUpdate=true;
   }
-  if(rainLevel>0.45&&!rainWasActive){rainWasActive=true;playSfx('rain');say('Rain is moving across the wilderness.');}
-  if(rainLevel<0.05&&rainWasActive){rainWasActive=false;say('The rain has cleared.');}
+  if(rainLevel>0.45&&!rainWasActive){rainWasActive=true;playSfx('rain');say(snowing?'Snow is drifting across the cold wilderness.':'Rain is moving across the wilderness.');}
+  if(rainLevel<0.05&&rainWasActive){rainWasActive=false;say('The weather has cleared.');}
 }
 P.y=heightAt(P.x,P.z);
 function addCaveEntrance(x,z){
@@ -2623,7 +2627,22 @@ function placePos(id){
   if(GRID[id]){tx=Math.round(tx/3)*3;tz=Math.round(tz/3)*3}
   return {x:clamp(tx,-HALF+12,HALF-12),z:clamp(tz,-HALF+12,HALF-12)};
 }
+function sleepAtBed(bed){
+  if(!bed||dead||caveMode||P.swimming)return false;
+  if(nightF<0.55){say('You can sleep in a bed after nightfall.',3);return false;}
+  var nextDawn=Math.floor(clock/DAY)*DAY+DAY*0.89;
+  if(nextDawn<=clock)nextDawn+=DAY;
+  clock=nextDawn;nights+=1;inNight=false;
+  P.hp=Math.min(P.maxHp||100,P.hp+40);P.stamina=100;P.food=Math.max(0,P.food-8);P.wetness=0;
+  frostSlowTimer=0;emberBurnTimer=0;emberBurnTick=0;
+  rainWasActive=false;lightningFlashTime=0;updateWeather(0);envUpdate();
+  say('You rested until dawn. Health and stamina restored; food -8.',5);
+  burst(bed.x,bed.y+0.8,bed.z,0x9bcfda,14);pop(bed.x,bed.y+1.8,bed.z,'A new day begins','#e8d9a4');
+  checkAchievements();updateHud();save();return true;
+}
 function doUse(){
+  var nearbyBed=nearestOf(beds,P.x,P.z,4.8);
+  if(nearbyBed){sleepAtBed(nearbyBed);return;}
   var nearbyChest=nearestOf(chests,P.x,P.z,4.8);
   if(nearbyChest){openChest(nearbyChest);return;}
   var nearbyStation=nearestOf(walls,P.x,P.z,4.2,function(w){return w.t==='workbench'||w.t==='cookpot';});if(nearbyStation){if(nearbyStation.t==='workbench'){toggleBag();say('Workbench ready. Open crafting recipes.',3);}else{if(countOf('berry')>=5&&countOf('fiber')>=1&&canAdd('jam',1)){craft('jam',1);say('Fresh berry jam cooked.',3);}else say('Cooking pot needs 5 berries and 1 fiber to make jam.',3);}return;}
@@ -2687,6 +2706,7 @@ function renderChestPanel(){
 }
 function openChest(chest){activeChest=chest;selectedChestSlot=0;for(var i=0;i<chest.slots.length;i++)if(chest.slots[i]){selectedChestSlot=i;break;}$('chestStatus').textContent='';$('chestPanel').hidden=false;renderChestPanel();}
 function closeChest(){activeChest=null;$('chestPanel').hidden=true;}
+$('sleepAction').addEventListener('click',function(){var bed=nearestOf(beds,P.x,P.z,4.8);if(bed)sleepAtBed(bed);});
 $('chestClose').addEventListener('click',closeChest);
 $('chestPanel').addEventListener('click',function(e){if(e.target===$('chestPanel'))closeChest();});
 $('chestGrid').addEventListener('click',function(e){var b=e.target.closest('[data-chest-slot]');if(!b||!activeChest)return;selectedChestSlot=clamp(parseInt(b.getAttribute('data-chest-slot'),10)||0,0,17);renderChestPanel();});
@@ -3684,6 +3704,7 @@ function updateHud(){
   $('stamina').style.background=P.stamina<25?'#e6a34e':'#61d6a0';
   var boss=wraiths.find(function(w){return w.boss});var bossEl=$('bossStatus');if(bossEl){bossEl.hidden=!boss;if(boss){$('bossHealth').style.width=clamp(boss.hp/boss.maxHp*100,0,100)+'%';$('bossPhase').textContent='PHASE '+boss.phase;}}
   var caveNear=nearestOf(caveEntrances,P.x,P.z,4.8);$('cavePrompt').hidden=!(caveMode||caveNear);$('cavePromptText').textContent=caveMode?'Lumen Cavern · Exit path':'Lumen Cavern entrance';$('caveAction').textContent=caveMode?'Exit Cave':'Enter Cave';
+  var restBed=!caveMode&&!P.swimming?nearestOf(beds,P.x,P.z,5.2):null;$('sleepPrompt').hidden=!restBed;$('sleepAction').textContent=nightF>=0.55?'Sleep until dawn':'Rest available at night';$('sleepAction').disabled=!restBed||nightF<0.55;
   var statuses=[];
   if(P.hp<=25)statuses.push('CRITICAL HEALTH');
   if(P.food<=0)statuses.push('STARVING');else if(P.food<20)statuses.push('HUNGRY');
