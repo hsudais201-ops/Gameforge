@@ -220,6 +220,23 @@
   @media(max-width:650px){#mainMenu{align-items:flex-start;padding:9px}.menuGrid{grid-template-columns:1fr;gap:9px}.menuCard{max-height:98dvh;padding:15px}.menuTag{margin-bottom:12px}.menuPanel{padding:11px}}
 
   .customControls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}.customControls label{font-size:11px;color:#c8d8c5}.customControls .menuField{margin:5px 0 2px;padding:9px}.customControls #saveLook{grid-column:1/-1;text-align:center}
+  /* Explicitly restore touch scrolling inside every overlay; the game canvas remains non-scrollable. */
+  #mainMenu,#settingsPanel,#questPanel,#mapPanel,#chestPanel,#pausePanel,#deathPanel,#bag,
+  .menuCard,.questCard,.mapCard,.chestCard,.pauseCard,.deathCard{
+    touch-action:pan-y;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;
+    scrollbar-width:thin;
+    scrollbar-color:#718d77 #142019;
+  }
+  #mainMenu{align-items:flex-start;justify-content:flex-start;overflow-y:auto;padding:12px;touch-action:pan-y}
+  #mainMenu .menuCard{flex:0 0 auto;margin:auto;max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto;overflow-x:hidden;touch-action:pan-y}
+  #settingsPanel,#bag,.questCard,.mapCard,.chestCard,.pauseCard,.deathCard{overscroll-behavior:contain;touch-action:pan-y}
+  #questPanel,#mapPanel,#chestPanel,#pausePanel,#deathPanel{touch-action:pan-y}
+  #questPanel>.questCard,#mapPanel>.mapCard,#chestPanel>.chestCard,#pausePanel>.pauseCard,#deathPanel>.deathCard{margin:auto;flex:0 0 auto}
+  #mainMenu::-webkit-scrollbar,.menuCard::-webkit-scrollbar,#settingsPanel::-webkit-scrollbar,#bag::-webkit-scrollbar,.questCard::-webkit-scrollbar,.mapCard::-webkit-scrollbar,.chestCard::-webkit-scrollbar,.pauseCard::-webkit-scrollbar,.deathCard::-webkit-scrollbar{width:8px}
+  #mainMenu::-webkit-scrollbar-thumb,.menuCard::-webkit-scrollbar-thumb,#settingsPanel::-webkit-scrollbar-thumb,#bag::-webkit-scrollbar-thumb,.questCard::-webkit-scrollbar-thumb,.mapCard::-webkit-scrollbar-thumb,.chestCard::-webkit-scrollbar-thumb,.pauseCard::-webkit-scrollbar-thumb,.deathCard::-webkit-scrollbar-thumb{background:#718d77;border:2px solid #142019;border-radius:8px}
+  @media(max-width:650px){#mainMenu{padding:8px}#mainMenu .menuCard{width:100%;max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));margin:0 auto}}
   /* Shared small-screen menu and dialog scrolling */
   #mainMenu,#questPanel,#mapPanel,#chestPanel,#pausePanel,#deathPanel{box-sizing:border-box;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;align-items:flex-start;justify-content:center;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
   #mainMenu{align-items:center}
