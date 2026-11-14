@@ -48,7 +48,7 @@
   .mapClose{float:right;padding:7px 11px;border:1px solid #9caf8c66;border-radius:8px;background:#203629;color:#fff}
   .bar{display:inline-block;width:80px;height:7px;background:rgba(255,255,255,.18);border-radius:4px;overflow:hidden;vertical-align:middle;margin-left:6px}
   .bar i{display:block;height:100%}
-  #hint{position:fixed;left:50%;top:34%;transform:translateX(-50%);width:max-content;max-width:80%;text-align:center;background:rgba(8,16,12,.74);padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.4;pointer-events:none;transition:opacity .4s}
+  #subtitleLine{position:fixed;left:50%;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 208px);transform:translateX(-50%);max-width:88vw;padding:7px 12px;border-radius:8px;background:rgba(4,10,8,.82);border:1px solid #c7d6bd66;color:#f4f1df;font:600 12px/1.4 system-ui;text-align:center;text-shadow:0 1px 2px #000;pointer-events:none;z-index:8}#subtitleLine:empty{display:none}@media(min-width:700px){#subtitleLine{bottom:76px}}\n  #hint{position:fixed;left:50%;top:34%;transform:translateX(-50%);width:max-content;max-width:80%;text-align:center;background:rgba(8,16,12,.74);padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.4;pointer-events:none;transition:opacity .4s}
   .float{position:fixed;left:0;top:0;pointer-events:none;font:700 13px system-ui,sans-serif;text-shadow:0 1px 3px #000;white-space:nowrap;will-change:transform}
   #joy{position:fixed;left:max(18px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));width:124px;height:124px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);touch-action:none}
   #stick{position:absolute;left:36px;top:36px;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.45)}
@@ -233,13 +233,13 @@
 <div id="pausePanel" hidden><div class="pauseCard"><div class="pauseBrand">PAUSED</div><p>Your adventure is safely paused.</p><button id="pauseResume" class="pauseAction primary">▶ Resume Game</button><button id="pauseSave" class="pauseAction">Save World</button><button id="pauseSettings" class="pauseAction">⚙ Settings</button><button id="pauseMainMenu" class="pauseAction">Return to Main Menu</button><div id="pauseStatus" role="status" aria-live="polite">Autosave is active.</div></div></div>
 <div id="pauseBtn" aria-label="Pause game"><button id="pauseToggle" type="button">Ⅱ Pause</button></div>
 <div id="deathPanel" hidden role="dialog" aria-modal="true" aria-labelledby="deathTitle"><div class="deathCard"><div class="deathIcon">✦</div><div class="deathTitle" id="deathTitle">YOU FELL</div><p>Your journey is not over. Choose where to recover and return to the wild.</p><label for="deathSpawn">Respawn location</label><select id="deathSpawn"></select><div id="deathCountdown" aria-live="polite">Respawning in 5 seconds…</div><button id="respawnNow" type="button">Respawn Now</button><p>Penalty: lose half of your carried wood, stone and fiber.</p></div></div>
-<div id="hint"></div>
+<div id="hint"></div><div id="subtitleLine" role="status" aria-live="polite"></div>
 <div id="chestPanel" hidden role="dialog" aria-modal="true" aria-labelledby="chestTitle"><div class="chestCard"><div class="chestTop"><strong id="chestTitle">STORAGE CHEST</strong><button id="chestClose" type="button">Close ✕</button></div><p class="questIntro">Select a chest slot, then store the selected hotbar stack or take the selected stack.</p><div id="chestGrid"></div><div class="chestControls"><button id="chestStore" type="button" disabled>Store hotbar stack</button><button id="chestTake" type="button" disabled>Take selected stack</button></div><div id="chestStatus" role="status" aria-live="polite"></div></div></div>
 <button id="settingsBtn" type="button">⚙ Settings</button>
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label>
 <label class="settingRow">Survival difficulty<select id="difficultySelect"><option value="easy">Explorer · Easy</option><option value="normal" selected>Survivor · Normal</option><option value="hard">Wilderness · Hard</option></select></label>
 <label class="settingRow">Notification duration <input id="notificationDuration" type="range" min="1" max="8" step="0.5" value="3.5"></label>
-<label class="settingRow">Ambient music volume <input id="musicVolume" type="range" min="0" max="0.3" step="0.01" value="0.08"></label>
+<label class="settingRow">Sound captions / subtitles <input id="subtitlesToggle" type="checkbox" checked></label>\n<label class="settingRow">Ambient music volume <input id="musicVolume" type="range" min="0" max="0.3" step="0.01" value="0.08"></label>
 <label class="settingRow">Sound effects volume <input id="effectsVolume" type="range" min="0" max="0.8" step="0.02" value="0.35"></label>
 <label class="settingRow">Joystick dead zone <input id="joyDeadzone" type="range" min="0" max="40" step="5" value="10"></label>
 <label class="settingRow">Camera sensitivity <input id="cameraSensitivity" type="range" min="50" max="200" step="10" value="100"></label>
@@ -447,7 +447,7 @@ $('pauseMainMenu').addEventListener('click',function(){save();pauseOpen=false;$(
 $('saveWorldBtn').addEventListener('click',function(){var ok=save();var status=$('saveStatus');status.textContent=ok?'World saved successfully.':'Could not save. Check available device storage.';say(ok?'World saved.':'Save failed — device storage may be full.',3)});
 $('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});if(pauseOpen)$('pausePanel').hidden=false;
 $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this.value);say('Graphics set to '+renderProfiles[renderLevel].name,2)});
-$('musicVolume').value=String(audioPrefs.music);$('effectsVolume').value=String(audioPrefs.effects);
+$('musicVolume').value=String(audioPrefs.music);$('effectsVolume').value=String(audioPrefs.effects);$('subtitlesToggle').checked=audioPrefs.subtitles!==false;$('subtitlesToggle').addEventListener('change',function(){audioPrefs.subtitles=!!this.checked;if(!audioPrefs.subtitles)$('subtitleLine').textContent='';saveAudioPrefs();});
 $('musicVolume').addEventListener('input',function(){audioPrefs.music=clamp(+this.value,0,0.3);if(musicBus)musicBus.gain.setTargetAtTime(audioPrefs.music,audioCtx.currentTime,0.04);saveAudioPrefs();initAudio();});
 $('effectsVolume').addEventListener('input',function(){audioPrefs.effects=clamp(+this.value,0,0.8);if(effectsBus)effectsBus.gain.setTargetAtTime(audioPrefs.effects,audioCtx.currentTime,0.04);saveAudioPrefs();initAudio();});
 $('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
@@ -1214,8 +1214,8 @@ function makeBed(){
 
 /* ---------- state ---------- */
 var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
-var AUDIO_KEY='mfwilds3d_audio_v1',audioPrefs={music:0.08,effects:0.35},audioCtx=null,musicBus=null,effectsBus=null;
-try{var savedAudio=JSON.parse(localStorage.getItem(AUDIO_KEY)||'{}');if(isFinite(savedAudio.music))audioPrefs.music=clamp(savedAudio.music,0,0.3);if(isFinite(savedAudio.effects))audioPrefs.effects=clamp(savedAudio.effects,0,0.8);}catch(e){}
+var AUDIO_KEY='mfwilds3d_audio_v1',audioPrefs={music:0.08,effects:0.35,subtitles:true},audioCtx=null,musicBus=null,effectsBus=null;
+try{var savedAudio=JSON.parse(localStorage.getItem(AUDIO_KEY)||'{}');if(isFinite(savedAudio.music))audioPrefs.music=clamp(savedAudio.music,0,0.3);if(isFinite(savedAudio.effects))audioPrefs.effects=clamp(savedAudio.effects,0,0.8);if(typeof savedAudio.subtitles==='boolean')audioPrefs.subtitles=savedAudio.subtitles;}catch(e){}
 function saveAudioPrefs(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs));}catch(e){}}
 function initAudio(){
   if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}
@@ -1228,7 +1228,18 @@ function initAudio(){
     low.connect(lowGain);high.connect(highGain);lowGain.connect(musicBus);highGain.connect(musicBus);low.start();high.start();
   }catch(e){audioCtx=null;}
 }
+var subtitleTimer=null;
+function showSoundCaption(kind){
+  if(!audioPrefs.subtitles)return;
+  var captions={gather:'Gathering nearby resources',capture:'Creature capture',damage:'You are taking damage',rain:'Rain is falling',creature:'Wildlife nearby',warning:'Danger nearby'};
+  var line=captions[kind];if(!line)return;
+  var el=$('subtitleLine');if(!el)return;
+  el.textContent=line;
+  if(subtitleTimer)clearTimeout(subtitleTimer);
+  subtitleTimer=setTimeout(function(){el.textContent='';subtitleTimer=null;},1800);
+}
 function playSfx(kind){
+  showSoundCaption(kind);
   if(!audioCtx||!effectsBus||audioPrefs.effects<=0)return;
   var tones={gather:[250,0.13,'triangle'],capture:[620,0.28,'sine'],damage:[92,0.22,'sawtooth'],rain:[175,0.34,'sine'],creature:[420,0.2,'triangle'],warning:[130,0.3,'sawtooth'],ui:[540,0.08,'sine']},tone=tones[kind]||tones.ui;
   try{var now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=tone[2];osc.frequency.setValueAtTime(tone[0],now);osc.frequency.exponentialRampToValueAtTime(Math.max(45,tone[0]*0.72),now+tone[1]);gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(Math.max(0.001,audioPrefs.effects*0.16),now+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+tone[1]);osc.connect(gain);gain.connect(effectsBus);osc.start(now);osc.stop(now+tone[1]+0.02);}catch(e){}
