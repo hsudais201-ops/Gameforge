@@ -1007,3 +1007,30 @@ test('inventory is rebuilt as a full-screen character, backpack, party and craft
   assert.ok(html.includes('.wildCharacterSilhouette'));
   assert.ok(html.includes('.wildRecipeBody'));
 });
+
+test('inventory reference behaviors are selectively integrated and every storage action is wired', () => {
+  // The Library reference index (2).html uses the same select-then-destination
+  // interaction. Keep that touch-friendly behavior while retaining WILDEARTH's
+  // larger backpack, equipment, party and crafting systems.
+  assert.ok(gameScript.includes('function slotClick(i)'));
+  assert.ok(gameScript.includes("if(moveFrom<0){if(slots[i])moveFrom=i;renderInv(true);return;}"));
+  assert.ok(gameScript.includes("else if(b.id===a.id){var t=Math.min(a.n,ITEMS[a.id].max-b.n);"));
+  assert.ok(gameScript.includes("$('hotbar').addEventListener('click'"));
+  assert.ok(gameScript.includes("var b=e.target.closest('[data-slot]');"));
+  assert.ok(gameScript.includes("if(e.target.closest('#quickMove')&&moveFrom>=0)"));
+  assert.ok(gameScript.includes("if(e.target.closest('#quickDiscard'))"));
+  assert.ok(gameScript.includes("if(e.target.closest('#repairTool'))"));
+  assert.ok(gameScript.includes("if(e.target.closest('#splitStack'))"));
+  assert.ok(gameScript.includes("if(e.target.closest('#equipArmor'))"));
+  assert.ok(gameScript.includes("function sortStorageInventory()"));
+  assert.ok(gameScript.includes("function splitSelectedStack()"));
+  assert.ok(gameScript.includes("function equipSelectedArmor()"));
+  assert.ok(gameScript.includes("$('bagSort').addEventListener('click',sortStorageInventory)"));
+  assert.ok(gameScript.includes("function setBagTab(tab)"));
+  assert.ok(gameScript.includes("function setInventoryFilter(filter)"));
+  assert.ok(gameScript.includes("function setCompanionMode(mode)"));
+  assert.ok(gameScript.includes("function craft(k,amount)"));
+  assert.ok(gameScript.includes("$('bag').addEventListener('dragstart'"));
+  assert.ok(gameScript.includes("$('bag').addEventListener('drop'"));
+  assert.ok(html.includes('touch-action:manipulation'));
+});
