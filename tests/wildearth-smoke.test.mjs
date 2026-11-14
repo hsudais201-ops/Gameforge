@@ -1189,3 +1189,18 @@ test('atmospheric fog follows the selected graphics profile and day-night cycle'
   assert.ok(gameScript.includes('scene.fog.far=renderProfiles[renderLevel].fogFar*(0.72+0.28*dayF)'));
   assert.ok(gameScript.includes('scene.fog.near=22+18*dayF'));
 });
+
+test('world water uses a segmented physical material with mobile-scaled geometry and subtle waves', () => {
+  assert.ok(gameScript.includes('new THREE.PlaneGeometry(WORLD*1.6,WORLD*1.6,isMobile?20:40,isMobile?20:40)'));
+  assert.ok(gameScript.includes('new THREE.MeshPhysicalMaterial({color:0x327b98'));
+  assert.ok(gameScript.includes('clearcoat:0.82'));
+  assert.ok(gameScript.includes('function animateWater(dt)'));
+  assert.ok(gameScript.includes('waterGeo.computeVertexNormals()'));
+  assert.ok(gameScript.includes('animateWater(dt);if(!menuOpen)update(dt)'));
+});
+
+test('terrain vertex colors include layered micro-variation without external texture assets', () => {
+  assert.ok(gameScript.includes('var detail=vnoise(x*2.4+31,z*2.4-17),micro=vnoise(x*5.2-8,z*5.2+23)'));
+  assert.ok(gameScript.includes('if(biome.id===\'volcanic\'&&micro>0.68)'));
+  assert.ok(gameScript.includes('var v=0.86+0.22*fine+(micro-0.5)*0.045'));
+});
