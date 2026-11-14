@@ -1148,3 +1148,20 @@ test('sleeping bed model has a timber frame, mattress, stitched blanket and pill
   assert.ok(gameScript.includes('for(var stitch=0;stitch<5;stitch++)'));
   assert.ok(gameScript.includes('new THREE.SphereGeometry(0.24,12,9)'));
 });
+test('survival chest model includes plank seams, reinforced hinges and metal hardware', () => {
+  assert.ok(gameScript.includes('function makeChest(){'));
+  assert.ok(gameScript.includes('for(var plank=-2;plank<=2;plank++)'));
+  assert.ok(gameScript.includes('for(var hinge=-1;hinge<=1;hinge+=2)'));
+});
+
+test('door and gate models include structural braces, plank seams and rivets', () => {
+  assert.ok(gameScript.includes('for(var brace=-1;brace<=1;brace+=2)'));
+  assert.ok(gameScript.includes('for(var bolt=-2;bolt<=2;bolt++)'));
+  assert.ok(gameScript.includes('new THREE.SphereGeometry(0.055,8,6)'));
+});
+
+test('roof, workbench and cookpot models include additional construction and tool details', () => {
+  assert.ok(gameScript.includes('for(var row=0;row<3;row++)for(var col=0;col<4;col++)'));
+  assert.ok(gameScript.includes('Crafting tools: hammer, chisel, saw blade and a small parts tray.'));
+  assert.ok(gameScript.includes('new THREE.TorusGeometry(0.32,0.025,6,12)'));
+});
