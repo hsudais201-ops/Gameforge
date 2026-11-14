@@ -3132,7 +3132,7 @@ function renderMiniMap(){
   ctx.save();ctx.beginPath();ctx.arc(px,px,size*0.48,0,Math.PI*2);ctx.clip();
   for(var rz=0;rz<cells;rz++)for(var rx=0;rx<cells;rx++){var wx=P.x-range+(rx+0.5)*step,wz=P.z-range+(rz+0.5)*step;ctx.fillStyle=biomeMapColor(wx,wz);ctx.fillRect(rx*cellPx,rz*cellPx,cellPx+1,cellPx+1);}
   ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,size);ctx.moveTo(0,px);ctx.lineTo(size,px);ctx.stroke();
-  drawPlayerArrow(ctx,px,px,12,P.face);ctx.restore();ctx.strokeStyle='#d5e7d0';ctx.lineWidth=4;ctx.beginPath();ctx.arc(px,px,size*0.48,0,Math.PI*2);ctx.stroke();
+  drawPlayerArrow(ctx,px,px,12,Math.PI-P.face);ctx.restore();ctx.strokeStyle='#d5e7d0';ctx.lineWidth=4;ctx.beginPath();ctx.arc(px,px,size*0.48,0,Math.PI*2);ctx.stroke();
 }
 function renderWorldMap(){
   var canvas=$('mapCanvas'),ctx=canvas.getContext('2d');if(!ctx)return;
@@ -3144,7 +3144,7 @@ function renderWorldMap(){
     ctx.fillStyle=seen[idx]?biomeMapColor(x,z):'#172127';ctx.fillRect(cx*cell,cz*cell,cell+0.4,cell+0.4);
   }
   for(var j=0;j<LANDMARKS.length;j++)if(discoveredLandmarks.indexOf(LANDMARKS[j].id)>=0){var l=LANDMARKS[j],lx=(l.x+HALF)/WORLD*canvas.width,lz=(l.z+HALF)/WORLD*canvas.height;ctx.fillStyle='#f1bd61';ctx.beginPath();ctx.arc(lx,lz,5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#3b2813';ctx.lineWidth=2;ctx.stroke();}
-  var px=(P.x+HALF)/WORLD*canvas.width,pz=(P.z+HALF)/WORLD*canvas.height;drawPlayerArrow(ctx,px,pz,9,P.face);
+  var px=(P.x+HALF)/WORLD*canvas.width,pz=(P.z+HALF)/WORLD*canvas.height;drawPlayerArrow(ctx,px,pz,9,Math.PI-P.face);
   var list='<strong>Discovered landmarks ('+discoveredLandmarks.length+'/'+LANDMARKS.length+')</strong><br>';
   for(var k=0;k<LANDMARKS.length;k++){var lm=LANDMARKS[k],found=discoveredLandmarks.indexOf(lm.id)>=0;list+=found?('✦ <b>'+lm.name+'</b> — '+lm.lore+'<br>'):'? Unknown location<br>';}
   $('landmarkList').innerHTML=list;
