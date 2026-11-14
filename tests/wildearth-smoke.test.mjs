@@ -1069,3 +1069,11 @@ test('companions coordinate their attacks on the Night Herald instead of splitti
   assert.ok(gameScript.includes('guardDist=wd;guardScore=threatScore'));
   assert.ok(gameScript.includes('if(guard&&guardDist<3.1&&t.guardCd<=0)'));
 });
+
+test('companions resolve movement against world obstacles and avoid invalid water or world-edge positions', () => {
+  assert.ok(gameScript.includes('var companionNext={x:t.x+ddx/dl*sp2*dt,z:t.z+ddz/dl*sp2*dt}'));
+  assert.ok(gameScript.includes('pushOutBoxes(companionNext,0.72)'));
+  assert.ok(gameScript.includes('heightAt(companionNext.x,companionNext.z)>WATER+0.2'));
+  assert.ok(gameScript.includes('t.x=companionNext.x;t.z=companionNext.z;t.speed=Math.min(1,sp2/6)'));
+  assert.ok(gameScript.includes('else{t.speed=0;}'));
+});
