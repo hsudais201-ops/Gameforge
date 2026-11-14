@@ -2267,9 +2267,10 @@ function updateRecipePanel(){var k=selectedRecipe,a=Math.max(1,Math.min(99,parse
 function buildCraftUI(){
   var h='';
   CATS.forEach(function(c){
+    var craftable=c[1].filter(function(k){return RECIPES[k]&&typeof RECIPES[k]==='object';});if(!craftable.length)return;
     h+='<div class="cat" data-craft-heading="'+c[0]+'">'+c[0]+'</div>';
-    c[1].forEach(function(k){
-      var r=RECIPES[k];if(!r||typeof r!=='object')return;var cost=Object.keys(r).map(function(i){return r[i]+' '+(ITEMS[i]?ITEMS[i].n:i).toLowerCase()}).join(', ');
+    craftable.forEach(function(k){
+      var r=RECIPES[k];var cost=Object.keys(r).map(function(i){return r[i]+' '+(ITEMS[i]?ITEMS[i].n:i).toLowerCase()}).join(', ');
       h+='<button data-craft="'+k+'" data-craft-category="'+c[0]+'">'+(NAMES[k]||k)+(OUT[k]>1?' ×'+OUT[k]:'')+'<small>'+cost+'</small></button>';
     });
   });
