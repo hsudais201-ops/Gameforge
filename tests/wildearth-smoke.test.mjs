@@ -924,7 +924,7 @@ test('player levels, persists upgrades, and exposes a caught-creature index', ()
 
 test('craft menu safely excludes loot-only relics without recipes', () => {
   assert.ok(gameScript.includes("var craftable=c[1].filter(function(k){return RECIPES[k]&&typeof RECIPES[k]==='object';});if(!craftable.length)return;"));
-  assert.ok(gameScript.includes("if(!r||typeof r!=='object')return;"));
+  assert.ok(gameScript.includes("var r=RECIPES[k];var cost=Object.keys(r).map(function(i){return r[i]+' '+(ITEMS[i]?ITEMS[i].n:i).toLowerCase()}).join(', ');"));
   assert.ok(gameScript.includes("!k||!RECIPES[k]||typeof RECIPES[k]!=='object'"));
   for (const id of ['wraithEssence','shadowFang','bruteHeart','heraldSigil','frostShard','emberCore']) {
     assert.match(gameScript, new RegExp(id+':'));
