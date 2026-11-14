@@ -1070,6 +1070,24 @@ test('companions coordinate their attacks on the Night Herald instead of splitti
   assert.ok(gameScript.includes('if(guard&&guardDist<3.1&&t.guardCd<=0)'));
 });
 
+test('Escape closes the topmost open game menu before attempting to pause', () => {
+  assert.ok(gameScript.includes('function closeTopMenu(){'));
+  for (const overlay of ["$('chestPanel')", "$('settingsPanel')", "$('mapPanel')", "$('questPanel')", 'bagOpen', 'pauseOpen']) {
+    assert.ok(gameScript.includes(overlay), 'Escape handler must close ' + overlay);
+  }
+  assert.ok(gameScript.includes('if(closeTopMenu()){e.preventDefault();e.stopPropagation();return;}'));
+  assert.ok(gameScript.includes("if(waitingBinding){e.preventDefault();waitingBinding=null;renderKeyBindings();say('Key binding cancelled.'"));
+  assert.ok(gameScript.includes('function closeSettingsPanel(){'));
+  assert.ok(gameScript.includes('if(pauseOpen)$(' + "'pausePanel'" + ').hidden=false'));
+});
+
+test('graphics upgrades color output and increases shadow quality without changing display resolution', () => {
+  assert.ok(gameScript.includes('renderer.outputEncoding=THREE.sRGBEncoding'));
+  assert.ok(gameScript.includes('renderLevel===2?(isMobile?1024:2048):(isMobile?512:1024)'));
+  assert.ok(gameScript.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))'));
+  assert.ok(gameScript.includes('renderer.setSize(vw,vh,false)'));
+});
+
 test('companions resolve movement against world obstacles and avoid invalid water or world-edge positions', () => {
   assert.ok(gameScript.includes('var companionNext={x:t.x+ddx/dl*sp2*dt,z:t.z+ddz/dl*sp2*dt}'));
   assert.ok(gameScript.includes('pushOutBoxes(companionNext,0.72)'));
