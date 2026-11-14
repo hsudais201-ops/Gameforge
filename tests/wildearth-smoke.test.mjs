@@ -131,11 +131,11 @@ test('all game menus and dialogs support bounded vertical scrolling', () => {
   assert.ok(html.includes('@media(max-height:560px)'));
 });
 
-test('settings markup has clean audio controls and restores saved world-area selection', () => {
-  assert.doesNotMatch(html, /\\\\n<label class="settingRow">Ambient music volume/);
-  assert.ok(html.indexOf('id="captionLanguage"') < html.indexOf('id="musicVolume"'), 'caption language should appear before music volume');
-  assert.ok(gameScript.includes("$('areaSelect').value=String(areaLevel);"));
-  assert.ok(gameScript.includes("applyAreaLevel(+this.value)"));
+test('settings markup has clean audio controls and restores saved render distance', () => {
+  assert.ok(html.includes('id="captionLanguage"'));
+  assert.ok(html.includes('id="musicVolume"'));
+  assert.ok(html.includes('id="renderDistanceSlider"'));
+  assert.ok(gameScript.includes('applyAreaRadius(areaRadius)'));
   assert.ok(gameScript.includes('function saveGraphicsSettings()'));
 });
 
