@@ -87,6 +87,14 @@ test('crafting recipe search and category filters are wired', () => {
   assert.ok(gameScript.includes('data-craft-category'));
 });
 
+test('settings markup has clean audio controls and restores saved world-area selection', () => {
+  assert.doesNotMatch(html, /\\\\n<label class="settingRow">Ambient music volume/);
+  assert.match(html, /id="captionLanguage"[\\s\\S]*?<\\/select><\\/label>\\s*<label class="settingRow">Ambient music volume/);
+  assert.ok(gameScript.includes("$('areaSelect').value=String(areaLevel);"));
+  assert.ok(gameScript.includes("applyAreaLevel(+this.value)"));
+  assert.ok(gameScript.includes('function saveGraphicsSettings()'));
+});
+
 test('control preferences and dodge action are wired', () => {
   for (const id of ['joyDeadzone', 'cameraSensitivity', 'invertCamera', 'bDodge']) {
     assert.match(html, new RegExp('id="' + id + '"'));
