@@ -1382,6 +1382,12 @@ function makeBed(){
 }
 
 /* ---------- state ---------- */
+var SWIM_HEAD_CLEARANCE=2.38,SWIM_EXIT_CLEARANCE=1.85;
+function isHeadSubmerged(waterSurface,groundY,alreadySwimming){
+  var waterColumn=waterSurface-groundY;
+  return waterColumn>=(alreadySwimming?SWIM_EXIT_CLEARANCE:SWIM_HEAD_CLEARANCE);
+}
+function swimFloatHeight(waterSurface){return waterSurface-2.28;}
 var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
 function saveAudioPrefs(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs));}catch(e){}}
 function initAudio(){
@@ -2547,11 +2553,13 @@ function update(dt){
   pushOutBoxes(P,0.5);
   explorationDistance+=Math.hypot(P.x-travelStartX,P.z-travelStartZ);
   if(caveMode&&activeCave){P.x=clamp(P.x,activeCave.x-6.8,activeCave.x+6.8);P.z=clamp(P.z,activeCave.z-5.2,activeCave.z+5.2);}
-  var groundY=caveMode&&activeCave?activeCave.floorY:heightAt(P.x,P.z),riverDepth=caveMode?0:riverDepthAt(P.x,P.z),waterDepth=caveMode?0:Math.max(WATER-groundY,riverDepth),waterSurface=riverDepth>0?groundY+0.3:WATER;
-  P.swimming=!caveMode&&waterDepth>0.55;
+  var groundY=caveMode&&activeCave?activeCave.floorY:heightAt(P.x,P.z),riverDepth=caveMode?0:riverDepthAt(P.x,P.z),waterSurface=riverDepth>0?groundY+0.3:WATER,waterColumn=caveMode?0:Math.max(0,waterSurface-groundY);
+  // Shallow rivers and ponds are wading depth. Swimming starts only when the
+  // water reaches the character's head, with a small exit hysteresis to stop flicker.
+  P.swimming=!caveMode&&isHeadSubmerged(waterSurface,groundY,P.swimming);
   if(caveMode){P.y+=(groundY+1-P.y)*Math.min(1,dt*14);P.oxygen=100;}
   else if(P.swimming){
-    P.y+=(waterSurface-0.45-P.y)*Math.min(1,dt*3.5);
+    P.y+=(swimFloatHeight(waterSurface)-P.y)*Math.min(1,dt*4.2);
     P.oxygen=Math.max(0,P.oxygen-dt*8);
     P.stamina=Math.max(0,P.stamina-dt*2.2);
     if(P.oxygen<=0)playerDamage(4*dt,'Drowning');
@@ -2562,7 +2570,8 @@ function update(dt){
   var baseTemp=caveMode?0.03:biomeTemperature(P.x,P.z)-(riverDepth>0?0.04:0);
   P.temperature=clamp(baseTemp-(P.wetness/100)*0.32-(rainLevel*0.1),-0.2,1);
   if(rainLevel>0.12&&!caveMode)P.wetness=Math.min(100,P.wetness+rainLevel*dt*7);
-  else P.wetness=Math.max(0,P.wetness-dt*(P.swimming?0.15:2.2));
+  else if(!caveMode&&waterColumn>0.35)P.wetness=Math.min(100,P.wetness+dt*(P.swimming?18:5));
+  else P.wetness=Math.max(0,P.wetness-dt*2.2);
   if(P.temperature<0.08&&P.wetness>30)playerDamage(0.45*dt,'Cold exposure');
   P.cool-=dt;if(P.swing>0)P.swing-=dt;
   if(held.gather)doGather();
@@ -3076,23 +3085,31 @@ function animPlayer(dt){
   player.g.position.set(P.x,P.y,P.z);
   var dy=P.face-player.g.rotation.y;dy=Math.atan2(Math.sin(dy),Math.cos(dy));
   player.g.rotation.y+=dy*Math.min(1,dt*12);
-  var moving=P.speed>0.06,run=P.speed>1.15;
-  P.walk+=dt*(moving?(run?13:9)*Math.min(1.45,P.speed)+2:1.6);
+  var moving=P.speed>0.06,run=P.speed>1.15,swimming=!!P.swimming;
+  P.walk+=dt*(swimming?7.5:(moving?(run?13:9)*Math.min(1.45,P.speed)+2:1.6));
   var stride=moving?Math.min(1.25,P.speed):0;
   var phase=P.walk,step=Math.sin(phase),bounce=Math.abs(Math.cos(phase));
   var a=step*(run?0.98:0.72)*stride;
-  player.legL.rotation.x=a;player.legR.rotation.x=-a;
-  player.legL.rotation.z=Math.sin(phase+Math.PI/2)*0.035*stride;
-  player.legR.rotation.z=-Math.sin(phase+Math.PI/2)*0.035*stride;
-  player.armL.rotation.x=-a*0.82;player.armL.rotation.z=-0.08;
-  if(P.swing>0){
-    var k=1-P.swing/0.45;
-    player.armR.rotation.x=-2.6+Math.sin(k*Math.PI)*-0.2+k*2.4;
-    player.armR.rotation.z=-0.18+Math.sin(k*Math.PI)*0.12;
-  }else{player.armR.rotation.x=a*0.78;player.armR.rotation.z=0.08}
-  player.hips.position.y=1+Math.sin(phase*2)*0.018*stride+bounce*0.045*stride;
-  player.hips.rotation.z=moving?-0.035*stride:Math.sin(clock*0.8)*0.012;
-  player.torso.rotation.x=moving?(run?-0.13:-0.045):Math.sin(clock*1.1)*0.018;
+  if(swimming){
+    player.legL.rotation.x=0.62+Math.sin(phase*1.7)*0.22;
+    player.legR.rotation.x=0.62+Math.sin(phase*1.7+Math.PI)*0.22;
+    player.legL.rotation.z=0.04;player.legR.rotation.z=-0.04;
+    player.armL.rotation.x=-1.05+Math.sin(phase)*0.38;player.armL.rotation.z=-0.24;
+    player.armR.rotation.x=-1.05+Math.sin(phase+Math.PI)*0.38;player.armR.rotation.z=0.24;
+  }else{
+    player.legL.rotation.x=a;player.legR.rotation.x=-a;
+    player.legL.rotation.z=Math.sin(phase+Math.PI/2)*0.035*stride;
+    player.legR.rotation.z=-Math.sin(phase+Math.PI/2)*0.035*stride;
+    player.armL.rotation.x=-a*0.82;player.armL.rotation.z=-0.08;
+    if(P.swing>0){
+      var k=1-P.swing/0.45;
+      player.armR.rotation.x=-2.6+Math.sin(k*Math.PI)*-0.2+k*2.4;
+      player.armR.rotation.z=-0.18+Math.sin(k*Math.PI)*0.12;
+    }else{player.armR.rotation.x=a*0.78;player.armR.rotation.z=0.08}
+  }
+  player.hips.position.y=1+(swimming?Math.sin(phase*2)*0.018:Math.sin(phase*2)*0.018*stride+bounce*0.045*stride);
+  player.hips.rotation.z=swimming?Math.sin(phase)*0.045:(moving?-0.035*stride:Math.sin(clock*0.8)*0.012);
+  player.torso.rotation.x=swimming?-0.16:(moving?(run?-0.13:-0.045):Math.sin(clock*1.1)*0.018);
   player.head.rotation.x=Math.sin(clock*1.35)*0.025+(moving?-0.025:0);
   player.head.rotation.y=Math.sin(clock*0.72)*0.035;
   player.pack.rotation.x=Math.sin(phase*2-0.5)*0.055*stride;
