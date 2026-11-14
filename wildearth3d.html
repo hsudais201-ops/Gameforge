@@ -2171,7 +2171,7 @@ function doGather(){
   if(!applyTouchAimAssist(wraiths,5,0.82))applyTouchAimAssist(wild,3.4,0.82);
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5,function(o){return inWeaponArc(o,5,0.25)});
-  if(w){var weapon=activeElementalWeapon(),weaponLevel=weapon.damage;var dealt=Math.max(1,(weaponLevel+weapon.bonus)*(w.damageTaken||1));w.hp-=dealt;wearTool(weapon.id,1);w.hit=0.25;burst(w.x,w.y+1.2,w.z,weapon.color,weapon.id==='frostblade'||weapon.id==='emberblade'?12:6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),weapon.textColor);return}
+  if(w){var weapon=activeElementalWeapon(),weaponLevel=weapon.damage;var dealt=Math.max(1,(weaponLevel+weapon.bonus)*(w.damageTaken||1));w.hp-=dealt;if(weapon.id==='frostblade'){w.frostTimer=Math.max(w.frostTimer||0,2.8);pop(w.x,w.y+2.5,w.z,'FROZEN','#a8edff');}else if(weapon.id==='emberblade'){w.burnTimer=Math.max(w.burnTimer||0,3.2);w.burnTick=0.15;pop(w.x,w.y+2.5,w.z,'BURNING','#ffb17c');}wearTool(weapon.id,1);w.hit=0.25;burst(w.x,w.y+1.2,w.z,weapon.color,weapon.id==='frostblade'||weapon.id==='emberblade'?12:6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),weapon.textColor);return}
   var prey=nearestOf(wild,P.x,P.z,3.4,function(o){return !o.held&&inWeaponArc(o,3.4,0.35)});
   if(prey){var preyWeapon=activeElementalWeapon(),preyDamage=12+preyWeapon.damage*7+preyWeapon.bonus*4;prey.hp=Math.max(0,prey.hp-preyDamage);wearTool(preyWeapon.id,1);prey.hitTimer=0.22;prey.attackAnim=0.38;prey.flee=Math.max(prey.flee,2.6);prey.state='flee';prey.alertT=1.2;P.face=Math.atan2(prey.x-P.x,prey.z-P.z);burst(prey.x,prey.y+1.1,prey.z,SPECIES[prey.sp].c,5);pop(prey.x,prey.y+2.1,prey.z,'-'+preyDamage,'#ffd08a');
     if(prey.hp<=0){var preyIndex=wild.indexOf(prey);if(prey.parent)prey.parent.young=null;if(prey.secondParent)prey.secondParent.young=null;if(prey.young){prey.young.parent=null;prey.young.secondParent=null;}scene.remove(prey.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[prey.sp].w,prey.sp===3?3:2,prey.x,prey.y+1.2,prey.z,'#d8c6a1');say(SPECIES[prey.sp].n+' has been defeated.');}
@@ -2504,8 +2504,8 @@ var hudT=0,saveT=0,flick=0,sprintEmptyNotified=false,hungerWarned=false;
 var frostSlowTimer=0,emberBurnTimer=0,emberBurnTick=0;
 function applyWraithStatus(mob){
   if(!mob)return;
-  if(mob.kind==='frostreaver'){frostSlowTimer=Math.max(frostSlowTimer,2.4);pop(P.x,P.y+2.1,P.z,'Frostbound','#8de5ff');}
-  else if(mob.kind==='emberwisp'){emberBurnTimer=Math.max(emberBurnTimer,3.2);emberBurnTick=0.25;pop(P.x,P.y+2.1,P.z,'Burning','#ff9b59');}
+  if(mob.kind==='frostreaver'){frostSlowTimer=Math.max(frostSlowTimer,2.4*(equippedArmor==='frostarmor'?0.35:1));pop(P.x,P.y+2.1,P.z,equippedArmor==='frostarmor'?'Frost resisted':'Frostbound','#8de5ff');}
+  else if(mob.kind==='emberwisp'){emberBurnTimer=Math.max(emberBurnTimer,3.2*(equippedArmor==='emberarmor'?0.35:1));emberBurnTick=0.25;pop(P.x,P.y+2.1,P.z,equippedArmor==='emberarmor'?'Burn resisted':'Burning','#ff9b59');}
 }
 function update(dt){
   if(dead){respawnTimer=Math.max(0,respawnTimer-dt);var secs=Math.ceil(respawnTimer);$("deathCountdown").textContent=respawnTimer>0?"Respawning in "+secs+" second"+(secs===1?"":"s")+"…":"Ready to return";if(respawnTimer<=0)finishRespawn();return;}
@@ -2882,6 +2882,8 @@ function update(dt){
   for(i=wraiths.length-1;i>=0;i--){
     var s=wraiths[i];
     if(s.hit>0)s.hit=Math.max(0,s.hit-dt);
+    s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);
+    if(s.burnTimer>0){s.burnTimer=Math.max(0,s.burnTimer-dt);s.burnTick=(s.burnTick||0)-dt;if(s.burnTick<=0){s.hp-=1.25;s.burnTick=0.65;burst(s.x,s.y+1.1,s.z,0xff7138,3);}}
     if(nightF<0.25&&!s.boss)s.hp-=3*dt;
     if(s.boss){var bossPhase=s.hp>40?1:(s.hp>18?2:3);if(bossPhase!==s.phase){s.phase=bossPhase;say(bossPhase===2?'The Night Herald enters its second phase!':(bossPhase===3?'The Night Herald is enraged!':'The Night Herald shifts form.'),4);burst(s.x,s.y+1.5,s.z,0xff684f,18);}s.moveSpeed=bossPhase===1?3.3:(bossPhase===2?4.25:5.2);s.damageScale=bossPhase===1?1.3:(bossPhase===2?1.5:1.75);s.lungeSpeed=bossPhase===1?4.8:(bossPhase===2?5.8:7);}
     var sx=P.x-s.x,sz=P.z-s.z,sl=Math.hypot(sx,sz)||1,targetWild=null;
@@ -2920,8 +2922,7 @@ function update(dt){
         }else if(!struckWild){
           var playerDistance=Math.hypot(P.x-s.x,P.z-s.z);
           if(playerDistance<2.35&&!safe){
-            var armor=equippedArmor==='wraithguard'?0.28:(equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1));
-            playerDamage(Math.min(18,(9+nights*0.65)*(s.damageScale||1))*armor,'Wraith strike');
+            playerDamage(Math.min(18,(9+nights*0.65)*(s.damageScale||1)),'Wraith strike');
             applyWraithStatus(s);
             s.attackCd=1.15;
           }else if(playerDistance<4.8&&!safe){s.lunge=0.28;s.lungeHit=false;s.attackCd=2.0;}
@@ -2933,9 +2934,8 @@ function update(dt){
       if(s.lunge===0&&!s.lungeHit){
         s.lungeHit=true;
         if(Math.hypot(P.x-s.x,P.z-s.z)<2.25&&!nearFire(P.x,P.z,13)){
-          var lungeArmor=equippedArmor==='wraithguard'?0.28:(equippedArmor==='ironarmor'?0.42:(equippedArmor==='copperarmor'?0.7:1));
-          var lungeDamage=Math.min(18,(9+nights*0.65)*(s.damageScale||1))*lungeArmor;
-          playerDamage(lungeDamage,'Wraith lunge -'+Math.ceil(lungeDamage));
+          var lungeDamage=Math.min(18,(9+nights*0.65)*(s.damageScale||1));
+          playerDamage(lungeDamage,'Wraith lunge -'+Math.ceil(lungeDamage*armorDamageMultiplier(equippedArmor)));
           applyWraithStatus(s);
         }
       }
@@ -2943,7 +2943,7 @@ function update(dt){
       s.windup=s.boss?(s.phase===3?0.28:0.52):0.42;s.attackX=sx/sl;s.attackZ=sz/sl;s.attackTarget=targetWild||null;s.lungeHit=false;
       s.attackCd=1.7;
     }else{
-      var swp=Math.min(9.5,(s.moveSpeed||5.1)+nights*0.32);
+      var swp=Math.min(9.5,(s.moveSpeed||5.1)+nights*0.32)*(s.frostTimer>0?0.62:1);
       s.x+=sx/sl*swp*dt;s.z+=sz/sl*swp*dt;
     }
     pushOutBoxes(s,0.7);
