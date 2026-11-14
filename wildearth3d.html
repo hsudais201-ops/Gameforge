@@ -771,7 +771,7 @@ function applyRenderProfile(level){
   renderer.shadowMap.enabled=profile.shadows;
   sun.castShadow=profile.shadows;
   if(profile.shadows){
-    var shadowSize=renderLevel===2?(isMobile?1024:2048):(isMobile?512:1024);
+    var shadowSize=renderLevel===2?((isMobile||isLowEnd)?1024:2048):((isMobile||isLowEnd)?512:1024);
     if(sun.shadow.mapSize.x!==shadowSize||sun.shadow.mapSize.y!==shadowSize){
       sun.shadow.mapSize.set(shadowSize,shadowSize);
       if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
