@@ -813,7 +813,7 @@ function scatter(kind,type,count,minS,maxS,rad,hp){
     if(Math.hypot(x,z)<12)continue;
     var y=heightAt(x,z),biome=biomeAt(x,z);
     if(y<WATER+0.5||y>14)continue;
-    var habitatChance=kind==='pine'?(biome.id==='forest'||biome.id==='woodland'?0.88:0.12):kind==='oak'?(biome.id==='jungle'?0.94:(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.82:(biome.id==='savanna'?0.46:0.12))):kind==='birch'?(biome.id==='frost'||biome.id==='highland'||biome.id==='tundra'?0.8:0.18):kind==='bush'?(biome.id==='jungle'?0.96:(biome.id==='savanna'?0.72:(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.86:0.18))):(biome.id==='volcanic'||biome.id==='highland'||biome.id==='frost'||biome.id==='gravel'?0.78:0.2);
+    var habitatChance=kind==='pine'?(biome.id==='forest'||biome.id==='woodland'?0.88:0.12):kind==='oak'?(biome.id==='jungle'?0.94:(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.82:(biome.id==='savanna'?0.46:0.12))):kind==='birch'?(biome.id==='frost'||biome.id==='highland'||biome.id==='tundra'?0.8:0.18):kind==='bush'?(biome.id==='jungle'?0.96:(biome.id==='savanna'?0.72:(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.86:0.18))):kind==='cactus'?(biome.id==='desert'?0.98:(biome.id==='savanna'?0.16:0.01)):(biome.id==='volcanic'||biome.id==='highland'||biome.id==='frost'||biome.id==='gravel'?0.78:0.2);
     if(R()>habitatChance)continue;
     if((kind==='rock'||kind==='copperOre'||kind==='ironOre'||kind==='crystalOre'||kind==='tinOre'||kind==='goldOre')?false:(Math.abs(heightAt(x+2,z)-y)+Math.abs(heightAt(x,z+2)-y)>3.2))continue;
     var s=minS+R()*(maxS-minS);
