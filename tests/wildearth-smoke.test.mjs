@@ -782,3 +782,46 @@ test('mob signature drops unlock legendary Nightfall Blade and Wraithguard recip
   assert.ok(gameScript.includes("id==='ironpick'||id==='ironsword'||id==='heraldblade'?'ironbar'"));
   assert.ok(gameScript.includes("id==='wraithguard'?'Wraithguard'"));
 });
+
+
+test('Frost Reavers and Ember Wisps have distinct combat profiles and visual identities', () => {
+  const paletteStart=gameScript.indexOf('function makeWraith(kind){');
+  const paletteEnd=gameScript.indexOf('/* ---------- structures ---------- */',paletteStart);
+  const palette=gameScript.slice(paletteStart,paletteEnd);
+  assert.ok(palette.includes('frostreaver:{'));
+  assert.ok(palette.includes('emberwisp:{'));
+  assert.ok(gameScript.includes("kind==='frostreaver'"));
+  assert.ok(gameScript.includes("kind==='emberwisp'"));
+  assert.ok(gameScript.includes("kind='frostreaver'"));
+  assert.ok(gameScript.includes("kind='emberwisp'"));
+});
+
+test('Frost and ember attacks apply short status effects that affect movement and health', () => {
+  assert.ok(gameScript.includes('var frostSlowTimer=0,emberBurnTimer=0,emberBurnTick=0'));
+  assert.ok(gameScript.includes('function applyWraithStatus(mob){'));
+  assert.ok(gameScript.includes("mob.kind==='frostreaver'"));
+  assert.ok(gameScript.includes("mob.kind==='emberwisp'"));
+  assert.ok(gameScript.includes('frostSlowTimer=Math.max(frostSlowTimer,2.4)'));
+  assert.ok(gameScript.includes('emberBurnTimer=Math.max(emberBurnTimer,3.2)'));
+  assert.ok(gameScript.includes('frostSlowTimer>0?0.58:1'));
+  assert.ok(gameScript.includes('emberBurnTimer>0'));
+  assert.ok(gameScript.includes("playerDamage(2.2*dt,'Burning')"));
+  assert.ok(gameScript.includes('applyWraithStatus(s)'));
+});
+
+test('new wraith types drop their signature materials and existing wraiths can drop rare variants', () => {
+  const start=gameScript.indexOf('function dropWraithLoot(');
+  const end=gameScript.indexOf('function slotHtml(',start);
+  const loot=gameScript.slice(start,end);
+  assert.ok(loot.includes("mob.kind==='frostreaver'"));
+  assert.ok(loot.includes("mob.kind==='emberwisp'"));
+  assert.ok(loot.includes("gain('frostShard'"));
+  assert.ok(loot.includes("gain('emberCore'"));
+  assert.ok(loot.includes('random()<0.14'));
+  for(const id of ['frostShard','emberCore']) {
+    assert.ok(gameScript.includes(id+':{n:'));
+    assert.ok(gameScript.includes(id+':\'<svg'));
+    assert.ok(gameScript.includes(id+':'));
+  }
+  assert.ok(gameScript.includes("['Relics',['wraithEssence','shadowFang','bruteHeart','heraldSigil','frostShard','emberCore']]"));
+});
