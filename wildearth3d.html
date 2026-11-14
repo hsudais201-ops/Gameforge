@@ -11,6 +11,7 @@
   #underwaterTint{position:fixed;inset:0;z-index:7;pointer-events:none;opacity:0;background:linear-gradient(180deg,rgba(26,104,145,.18),rgba(5,43,72,.38));transition:opacity .25s}#underwaterTint.active{opacity:1}
   #damageFlash.hit{animation:damagePulse .42s ease-out}
   @keyframes damagePulse{0%{opacity:.95}100%{opacity:0}}
+  #bossStatus{position:fixed;top:96px;left:50%;transform:translateX(-50%);width:min(340px,82vw);padding:8px 12px;border:1px solid #e28c74aa;border-radius:8px;background:rgba(32,10,14,.86);text-align:center;font-size:11px;z-index:9}#bossStatus[hidden]{display:none}#bossStatus strong{display:block;letter-spacing:.12em;color:#ffd4c5}#bossPhase{display:block;margin:3px;color:#ffb18f;font-size:9px}.bossTrack{height:7px;border-radius:6px;background:#ffffff30;overflow:hidden}.bossTrack i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#a82d3b,#ff946b)}
   #hud{position:fixed;left:0;right:0;top:0;padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) 0 max(10px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:6px;pointer-events:none;font-size:12px}
   .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .pill{background:rgba(8,16,12,.62);padding:4px 9px;border-radius:999px;white-space:nowrap}
@@ -230,7 +231,7 @@
     <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
     <span class="pill" id="time"></span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
   </div>
-  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div>
+  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div>
 </div>
 <div id="mapPanel" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle"><div class="mapCard"><button class="mapClose" id="mapClose" type="button">Close ✕</button><strong id="mapTitle">WORLD MAP</strong><p class="questIntro">Unexplored areas remain hidden. Explore the world to reveal the map and discover landmarks.</p><div class="mapLegend"><span>Explored</span><span class="keyLand">Landmark</span><span class="keyPlayer">You</span></div><div id="mapGrid" class="mapGrid" aria-label="Exploration map"></div><div id="landmarkList"></div></div></div>
 <div id="questPanel" hidden role="dialog" aria-modal="true" aria-labelledby="questTitle"><div class="questCard"><div class="questHead"><strong id="questTitle">QUEST JOURNAL</strong><button id="questClose" type="button">Close ✕</button></div><p class="questIntro">Track your journey. Objectives complete automatically as you explore, build, craft and survive. Progress is saved with this world.</p><div id="questList"></div><div id="questSummary" class="questIntro" aria-live="polite"></div><h3 class="questSectionTitle">FIELD TUTORIAL</h3><div id="tutorialList"></div><h3 class="questSectionTitle">MAIN STORY · A NEW DAWN</h3><div id="mainQuest"></div></div></div>
@@ -1411,7 +1412,7 @@ function benchCellClick(i){var c=benchCells[i];if(moveFrom>=0&&slots[moveFrom]){
 function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]||1;if(!canAdd(key,n)){say('Your backpack is full.');return;}addItem(key,n);craftedCount++;checkAchievements();benchCells=[null,null,null,null];renderInv(true);say('Crafted '+NAMES[key]+'.');}
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
 var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0,craftedCount=0,achievementIds=[];
-var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[];
+var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[],bossDefeated=false;
 var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34;
@@ -1541,7 +1542,7 @@ function save(){
   var snapshot;
   try{
     snapshot=JSON.stringify({
-      version:5,worldSeed:worldSeed,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
+      version:5,worldSeed:worldSeed,bossDefeated:bossDefeated,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
@@ -1593,7 +1594,7 @@ function load(){
     }
     if(!d)d=validSave(localStorage.getItem(OLD_KEY));
     if(!d)return false;
-    P.x=d.P.x;P.z=d.P.z;companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
+    P.x=d.P.x;P.z=d.P.z;bossDefeated=d.bossDefeated===true;companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
       slots=migrateInventorySlots(d.slots,ITEMS,NSLOTS,HOT);
       hotSel=clamp(d.hot|0,0,HOT-1);
@@ -2527,11 +2528,18 @@ function update(dt){
     var wg=makeWraith(kind);wg.scale.setScalar(profile.scale);wg.position.set(wxp,heightAt(wxp,wzp),wzp);scene.add(wg);
     wraiths.push({g:wg,kind:kind,moveSpeed:profile.speed,damageScale:profile.damage,lungeSpeed:profile.lunge,baseScale:profile.scale,damageTaken:profile.damageTaken,x:wxp,z:wzp,y:heightAt(wxp,wzp),hp:profile.hp,hit:0,ph:random()*6,attackCd:rand(0.5,1.5),windup:0,lunge:0,attackX:0,attackZ:0});
   }
+  if(nights>=7&&nightF>0.72&&!bossDefeated&&!wraiths.some(function(w){return w.boss})){
+    var ba=random()*6.283,bx=clamp(P.x+Math.cos(ba)*34,-HALF+8,HALF-8),bz=clamp(P.z+Math.sin(ba)*34,-HALF+8,HALF-8);
+    var bg=makeWraith('brute');bg.scale.setScalar(1.8);bg.position.set(bx,heightAt(bx,bz),bz);scene.add(bg);
+    wraiths.push({boss:true,kind:'harbinger',moveSpeed:3.3,damageScale:1.3,lungeSpeed:4.8,baseScale:1.8,damageTaken:0.85,x:bx,z:bz,y:heightAt(bx,bz),hp:60,maxHp:60,phase:1,hit:0,ph:random()*6,attackCd:1.2,windup:0,lunge:0,attackX:0,attackZ:0});
+    say('THE NIGHT HERALD HAS ARRIVED. Prepare for the final hunt.',6);playSfx('warning');
+  }
   var safe=nearFire(P.x,P.z,13);
   for(i=wraiths.length-1;i>=0;i--){
     var s=wraiths[i];
     if(s.hit>0)s.hit=Math.max(0,s.hit-dt);
-    if(nightF<0.25)s.hp-=3*dt;
+    if(nightF<0.25&&!s.boss)s.hp-=3*dt;
+    if(s.boss){var bossPhase=s.hp>40?1:(s.hp>18?2:3);if(bossPhase!==s.phase){s.phase=bossPhase;say(bossPhase===2?'The Night Herald enters its second phase!':(bossPhase===3?'The Night Herald is enraged!':'The Night Herald shifts form.'),4);burst(s.x,s.y+1.5,s.z,0xff684f,18);}s.moveSpeed=bossPhase===1?3.3:(bossPhase===2?4.25:5.2);s.damageScale=bossPhase===1?1.3:(bossPhase===2?1.5:1.75);s.lungeSpeed=bossPhase===1?4.8:(bossPhase===2?5.8:7);}
     var sx=P.x-s.x,sz=P.z-s.z,sl=Math.hypot(sx,sz)||1,targetWild=null;
     // Wraiths prioritize the player, but may stalk nearby adult wildlife when the player is far away.
     if(sl>15&&!safe){
@@ -2586,7 +2594,7 @@ function update(dt){
         }
       }
     }else if(sl<2.45&&s.attackCd<=0&&(!safe||targetWild)){
-      s.windup=0.42;s.attackX=sx/sl;s.attackZ=sz/sl;s.attackTarget=targetWild||null;s.lungeHit=false;
+      s.windup=s.boss?(s.phase===3?0.28:0.52):0.42;s.attackX=sx/sl;s.attackZ=sz/sl;s.attackTarget=targetWild||null;s.lungeHit=false;
       s.attackCd=1.7;
     }else{
       var swp=Math.min(9.5,(s.moveSpeed||5.1)+nights*0.32);
@@ -2600,6 +2608,7 @@ function update(dt){
     var pulse=s.windup>0?1+Math.sin((0.42-s.windup)*24)*0.1:(s.lunge>0?1.14:1);
     s.g.scale.setScalar((s.baseScale||1)*(s.hit>0?1.12:pulse));
     if(s.hp<=0){
+      if(s.boss){bossDefeated=true;gain('crystal',12,s.x,s.y+2.6,s.z,'#83e8ff');gain('goldOre',6,s.x,s.y+2.2,s.z,'#f6d47a');say('THE NIGHT HERALD HAS FALLEN. The wilds are safer now.',7);save();}
       wraithsDefeated++;checkAchievements();
       if(nightF>=0.25)gain('fiber',1,s.x,s.y+2.6,s.z,'#c9a8ff');
       scene.remove(s.g);wraiths.splice(i,1);
@@ -2932,6 +2941,7 @@ function updateHud(){
   $('food').style.width=clamp(P.food,0,100)+'%';
   $('stamina').style.width=clamp(P.stamina,0,100)+'%';
   $('stamina').style.background=P.stamina<25?'#e6a34e':'#61d6a0';
+  var boss=wraiths.find(function(w){return w.boss});var bossEl=$('bossStatus');if(bossEl){bossEl.hidden=!boss;if(boss){$('bossHealth').style.width=clamp(boss.hp/boss.maxHp*100,0,100)+'%';$('bossPhase').textContent='PHASE '+boss.phase;}}
   var statuses=[];
   if(P.hp<=25)statuses.push('CRITICAL HEALTH');
   if(P.food<=0)statuses.push('STARVING');else if(P.food<20)statuses.push('HUNGRY');
