@@ -87,6 +87,18 @@ test('crafting recipe search and category filters are wired', () => {
   assert.ok(gameScript.includes('data-craft-category'));
 });
 
+test('settings panel fits short and narrow screens and scrolls all controls', () => {
+  assert.match(html, /width:min\\(94vw,520px\\)/);
+  assert.match(html, /max-height:calc\\(100dvh - 20px/);
+  assert.match(html, /overflow-y:auto/);
+  assert.match(html, /overscroll-behavior:contain/);
+  assert.match(html, /grid-template-columns:minmax\\(0,1fr\\) minmax\\(110px,auto\\)/);
+  assert.match(html, /@media\\(max-height:560px\\)/);
+  for (const id of ['settingsClose','qualitySelect','musicVolume','cameraSensitivity','exportDiagnostics','settingsMenu']) {
+    assert.match(html, new RegExp('id="' + id + '"'), 'settings control must remain accessible: ' + id);
+  }
+});
+
 test('settings markup has clean audio controls and restores saved world-area selection', () => {
   assert.doesNotMatch(html, /\\\\n<label class="settingRow">Ambient music volume/);
   assert.ok(html.indexOf('id="captionLanguage"') < html.indexOf('id="musicVolume"'), 'caption language should appear before music volume');
