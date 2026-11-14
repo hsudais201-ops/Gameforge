@@ -335,6 +335,8 @@ var selectedWorld=worldList.find(function(w){return w.id===selectedWorldId;})||w
 var seedParam=new URLSearchParams(location.search).get('seed');
 var seedOverride=seedParam!==null&&/^\\d+$/.test(seedParam)?(Number(seedParam)>>>0):null;
 var worldSeed=seedOverride!==null&&seedOverride!==0?seedOverride:(selectedWorld.seed>>>0);
+// Show the resolved seed immediately; world streaming is deliberately deferred until after the menu's first paint.
+var earlySeedLabel=$('worldSeedInfo');if(earlySeedLabel)earlySeedLabel.textContent='World seed: '+worldSeed+(seedOverride!==null?' · temporary URL override':'');
 function persistWorldList(){localStorage.setItem(WORLD_LIST_KEY,JSON.stringify(worldList));localStorage.setItem(SELECTED_WORLD_KEY,selectedWorldId);}
 persistWorldList();
 var SAVE_KEY='mfwilds3d_world_'+selectedWorldId;
@@ -1738,7 +1740,8 @@ if(location.hash==='#chop'){
 }
 if(location.hash==='#craft'||location.hash==='#chop')window.__dbg=Object.assign(window.__dbg||{},{falls:falls,P:P,slots:slots,walls:walls,fires:fires,beds:beds});
 for(var wi=0;wi<(isMobile?28:40);wi++)spawnWild();
-updateWorldStreaming(true);
+// Let the title menu and world seed render before the initial visibility pass. This avoids a long main-thread stall on low-memory Chromebooks.
+requestAnimationFrame(function(){setTimeout(function(){try{updateWorldStreaming(true);}catch(streamError){showGameError(streamError&&streamError.stack?streamError.stack:streamError);}},120);});
 
 
 /* ---------- title menu / world selection ---------- */
