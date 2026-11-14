@@ -384,3 +384,11 @@ test('achievement rewards unlock cosmetics and persist the unlocked reward IDs',
     assert.ok(gameScript.includes(marker), 'missing cosmetic unlock marker: ' + marker);
   }
 });
+
+
+test('transient particle counts are bounded and unique capture projectiles release GPU resources', () => {
+  assert.ok(gameScript.includes('while(sparks.length+n>500)'));
+  assert.ok(gameScript.includes('function disposeObject3D(root)'));
+  assert.ok(gameScript.includes('disposeObject3D(sh.m)'));
+  assert.ok(gameScript.includes('floats.length>=60'));
+});
