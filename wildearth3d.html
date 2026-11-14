@@ -2163,7 +2163,7 @@ function applyTouchAimAssist(targets,range,cone){
   return true;
 }
 function activeElementalWeapon(){if(countOf('frostblade')>0)return {id:'frostblade',damage:8,bonus:2,color:0x8de5ff,textColor:'#a8edff'};if(countOf('emberblade')>0)return {id:'emberblade',damage:7.5,bonus:2.5,color:0xff7138,textColor:'#ffb17c'};if(countOf('heraldblade')>0)return {id:'heraldblade',damage:6,bonus:0,color:0xc9a8ff,textColor:'#c9a8ff'};if(countOf('ironsword')>0)return {id:'ironsword',damage:4,bonus:0,color:0xc5d0d6,textColor:'#e0e9ed'};if(countOf('coppersword')>0)return {id:'coppersword',damage:3,bonus:0,color:0xc87942,textColor:'#e5a06a'};if(countOf('axe')>0)return {id:'axe',damage:2,bonus:0,color:0xa9784a,textColor:'#d9b07a'};return {id:'',damage:1,bonus:0,color:0xc9a8ff,textColor:'#c9a8ff'};}
-function armorDamageMultiplier(id){return ({copperarmor:0.85,ironarmor:0.72,wraithguard:0.28,frostarmor:0.68,emberarmor:0.62})[id]||1;}
+function armorDamageMultiplier(id){return ({copperarmor:0.7,ironarmor:0.42,wraithguard:0.28,frostarmor:0.68,emberarmor:0.62})[id]||1;}
 function doGather(){
   if(P.cool>0)return;
   var axe=countOf('axe')>0,pickLevel=countOf('ironpick')>0?3:(countOf('copperpick')>0?2:(countOf('pick')>0?1:0)),pick=pickLevel>0;
