@@ -1825,10 +1825,24 @@ function inWeaponArc(o,range,threshold){
   var dx=o.x-P.x,dz=o.z-P.z,l=Math.hypot(dx,dz)||1;
   return (dx*Math.sin(P.face)+dz*Math.cos(P.face))/l>=(threshold===undefined?0.25:threshold);
 }
+function applyTouchAimAssist(targets,range,cone){
+  if(!isMobile)return false;
+  var target=nearestOf(targets,P.x,P.z,range,function(o){
+    if(o.held)return false;
+    var angle=Math.atan2(o.x-P.x,o.z-P.z);
+    var delta=Math.atan2(Math.sin(angle-P.face),Math.cos(angle-P.face));
+    return Math.abs(delta)<=cone;
+  });
+  if(!target)return false;
+  P.face=Math.atan2(target.x-P.x,target.z-P.z);
+  return true;
+}
 function doGather(){
   if(P.cool>0)return;
   var axe=countOf('axe')>0,pickLevel=countOf('ironpick')>0?3:(countOf('copperpick')>0?2:(countOf('pick')>0?1:0)),pick=pickLevel>0;
   P.cool=axe?0.42:0.55;P.swing=0.45;playSfx('gather');
+  applyTouchAimAssist(wraiths,5,0.82);
+  applyTouchAimAssist(wild,3.4,0.82);
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5,function(o){return inWeaponArc(o,5,0.25)});
   if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var dealt=Math.max(1,weaponLevel*(w.damageTaken||1));w.hp-=dealt;w.hit=0.25;burst(w.x,w.y+1.2,w.z,0xc9a8ff,6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),'#c9a8ff');return}
@@ -1844,6 +1858,8 @@ function doGather(){
   });
   if(!r)return;
   if(r.type==='ore'&&pickLevel===0){say('You need a pickaxe to mine ore.');return;}
+  if(r.type==='tree'&&axe)P.cool=0.34;
+  else if(r.type==='ore'||r.type==='rock')P.cool=pickLevel===3?0.30:(pickLevel===2?0.38:(pickLevel===1?0.46:0.55));
   var dmg=(r.type==='tree'&&axe)?2:((r.type==='rock'||r.type==='ore')?Math.max(1,pickLevel):1);
   r.hp-=dmg;r.hit=0.28;
   burst(r.x,r.y+1.2,r.z,r.type==='tree'?0x8a5a3a:(r.type==='rock'?0xb4bac0:(r.type==='ore'?(r.kind==='copperOre'?0xc87942:(r.kind==='ironOre'?0xaebbc4:0x72d9ef)):LEAF.bush)),3);
