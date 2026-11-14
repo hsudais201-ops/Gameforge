@@ -280,6 +280,96 @@
   @media(max-width:420px){#settingsPanel{width:calc(100vw - 16px);padding:12px}#settingsPanel>.bagTop{margin:-12px -12px 0;padding:10px 12px}#settingsContent{gap:9px;padding:10px 1px 4px}}
   @media(max-height:560px){#settingsPanel{top:6px;bottom:6px;padding:10px}#settingsPanel>.bagTop{margin:-10px -10px 0;padding:8px 10px}#settingsContent{gap:7px;padding-top:8px}}
   #settingsPanel[hidden]{display:none}
+
+  /* Palworld-inspired field inventory: original WILDEARTH layout and styling */
+  #bag.palBag{width:min(98vw,1120px);max-height:min(92dvh,850px);padding:14px;gap:10px;overflow:auto;border:1px solid #718779;border-radius:12px;background:linear-gradient(145deg,#1c2925f7,#0c1513fa);box-shadow:0 24px 90px #000e,inset 0 1px #ffffff20;backdrop-filter:blur(14px)}
+  #bag.palBag:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 0%,#8ba88a18,transparent 65%);pointer-events:none}
+  #bag.palBag .bagTop{min-height:38px;padding:0 0 10px;border-bottom:1px solid #b5c7b52c}
+  #bag.palBag .bagHeading{display:flex;align-items:baseline;gap:12px;min-width:0}
+  #bag.palBag .bagTop strong{font-size:17px;letter-spacing:.16em;color:#f0f2e9}
+  #bag.palBag .invSub{margin:0;color:#9daf9f;font-size:9px;letter-spacing:.14em}
+  #bag.palBag .bagTopActions{display:flex;gap:7px}
+  #bag.palBag .bagTop button,#bag.palBag .quickActions button,#bag.palBag #equipArmor,#bag.palBag #bagDiscard,#bag.palBag #craftSelected{border:1px solid #78907d;border-radius:5px;background:linear-gradient(180deg,#344b3e,#203128);color:#edf4e9;font-weight:800;padding:7px 10px;font-size:10px}
+  #bag.palBag #bagClose{font-size:16px;padding:4px 10px}
+  #bag.palBag #bagInfo{padding:6px 9px;border:1px solid #ffffff16;border-radius:5px;background:#080f0d80;color:#bdcbbb;font-size:10px;line-height:1.4}
+  #bag.palBag .palInventory{display:grid;grid-template-columns:minmax(170px, .82fr) minmax(300px,1.55fr) minmax(220px,1.05fr);gap:10px;align-items:start;min-width:0}
+  #bag.palBag .invSide,#bag.palBag .invCenter,#bag.palBag .bagCraft{position:static;float:none;width:auto;max-width:none;min-width:0;max-height:none;overflow:visible;box-sizing:border-box;padding:10px;border:1px solid #9fb2a22b;border-radius:8px;background:linear-gradient(155deg,#1b2923,#111b17)}
+  #bag.palBag .invLabel{margin:0 0 8px;color:#b8c9b8;font-size:9px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+  #bag.palBag .playerPaper{height:138px;margin-bottom:9px;border:1px solid #8ca28b55;border-radius:6px;background:radial-gradient(ellipse at 50% 40%,#6b806d,#293a30 70%);box-shadow:inset 0 0 28px #07100b66}
+  #bag.palBag .paperAvatar{font-size:58px}
+  #bag.palBag .armorSlots{grid-template-columns:repeat(2,36px);gap:5px}
+  #bag.palBag .armorSlot{height:34px;border:1px solid #a6b7a755;border-radius:4px;background:linear-gradient(145deg,#526459,#26362d);font-size:14px}
+  #bag.palBag .equipStatus{min-height:24px;margin:4px 0 7px;color:#d4e0d2;font-size:10px}
+  #bag.palBag #equipArmor{width:100%;margin-bottom:9px}
+  #bag.palBag .itemPreview{min-height:110px;margin:8px 0;padding:9px;border:1px solid #b5c79a55;border-radius:6px;background:radial-gradient(ellipse at 50% 20%,#526b55,#1a2a21 78%)}
+  #bag.palBag .previewIcon{width:48px;height:48px;font-size:36px}
+  #bag.palBag .previewIcon svg{width:100%;height:100%}
+  #bag.palBag .itemPreview strong{color:#f3f1df;font-size:12px}
+  #bag.palBag #itemCount{color:#b7c9b7;font-size:9px}
+  #bag.palBag .quickActions{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  #bag.palBag .quickActions button{min-width:0;padding:8px 4px;font-size:9px}
+  #bag.palBag button:disabled{opacity:.38}
+  #bag.palBag .invHelp{margin:7px 0;color:#91a596;font-size:9px}
+  #bag.palBag #bagTeam{margin-top:9px;padding:8px;border:1px solid #a5bba32b;border-radius:6px;background:#0a130f}
+  #bag.palBag #bagTeam strong{font-size:10px;color:#e3eadf}
+  #bag.palBag #bagTeam .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  #bag.palBag #bagTeam .chip{padding:3px 5px;border:1px solid #a7b9a52a;border-radius:4px;background:#ffffff09;font-size:8px}
+  #bag.palBag .invSectionHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  #bag.palBag .invSectionHead>span{margin-bottom:8px;color:#819589;font-size:8px;font-weight:800;letter-spacing:.12em}
+  #bag.palBag #bagGrid,#bag.palBag #bagHotbar{width:100%;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:5px}
+  #bag.palBag #bagGrid .slot,#bag.palBag #bagHotbar .slot{width:100%;height:auto;min-width:0;aspect-ratio:1;border:1px solid #7e9383;background:linear-gradient(145deg,#35483d,#1c2b23);border-radius:5px;box-shadow:inset 0 1px #ffffff1c,inset 0 -2px #0007;transition:border-color .12s,filter .12s}
+  #bag.palBag #bagGrid .slot svg,#bag.palBag #bagHotbar .slot svg{width:72%;height:72%}
+  #bag.palBag #bagGrid .slot b,#bag.palBag #bagHotbar .slot b{font-size:9px}
+  #bag.palBag #bagGrid .slot.on,#bag.palBag #bagHotbar .slot.on{border:2px solid #e9cf82;background:linear-gradient(145deg,#65734d,#344b37);box-shadow:0 0 0 2px #e5c56b33}
+  #bag.palBag #bagGrid .slot.mv,#bag.palBag #bagHotbar .slot.mv{border:2px solid #82d8a6;background:#28533b}
+  #bag.palBag .hotbarHeading{margin-top:15px;padding-top:10px;border-top:1px solid #ffffff20}
+  #bag.palBag .inventoryFootnote{margin-top:8px;color:#819589;font-size:8px;text-align:center}
+  #bag.palBag .bagCraft{display:flex;flex-direction:column;gap:7px;max-height:100%;overflow-y:auto}
+  #bag.palBag .bagCraft>strong,#bag.palBag .recipeHeading{color:#e2e9dc;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  #bag.palBag .craftBench{padding:6px 0}
+  #bag.palBag .craftGrid{grid-template-columns:repeat(2,34px);gap:5px}
+  #bag.palBag .craftGrid button{width:34px;height:34px;border:1px solid #84998a;border-radius:4px;background:linear-gradient(145deg,#394d41,#1b2a22);color:#e8efdf;font-size:18px}
+  #bag.palBag .craftArrow{color:#d6c88f}
+  #bag.palBag .craftOutput{width:42px;height:42px;border:1px solid #c6b77d;border-radius:5px;background:linear-gradient(145deg,#665b37,#29291c);color:#f4dc8d}
+  #bag.palBag .craftCaption{color:#9eaf9f;font-size:9px}
+  #bag.palBag #craftSearch,#bag.palBag #craftCategoryFilter,#bag.palBag #craftAmount{width:100%;min-width:0;box-sizing:border-box;border:1px solid #657d6d;border-radius:5px;background:#0c1711;color:#edf4e9;padding:8px;font-size:10px}
+  #bag.palBag #craftList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  #bag.palBag #craftList button{min-width:0;min-height:42px;padding:6px;border:1px solid #647e6b;border-radius:5px;background:linear-gradient(145deg,#304637,#1b2d23);color:#e8eee4;font-size:9px;line-height:1.25}
+  #bag.palBag #craftList button small{display:block;margin-top:3px;color:#a9bba9;font-size:8px}
+  #bag.palBag #craftList button.no{opacity:.42}
+  #bag.palBag #craftList button.selected{outline:2px solid #d8c47f;background:#52643d}
+  #bag.palBag #recipeDetails{padding:8px;border:1px solid #9eb39d30;border-radius:5px;background:#0b1510}
+  #bag.palBag #recipeDetails b{color:#e7eddf;font-size:10px}
+  #bag.palBag #recipeDetails label,#bag.palBag #recipeIngredients,#bag.palBag #craftTotal{display:block;margin:6px 0;color:#aebead;font-size:9px}
+  #bag.palBag #craftSelected{width:100%;margin-top:7px}
+  @media(max-width:760px){
+    #bag.palBag{padding:10px}
+    #bag.palBag .palInventory{grid-template-columns:minmax(145px,.78fr) minmax(0,1.5fr);gap:7px}
+    #bag.palBag .bagCraft{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;column-gap:9px;align-items:start}
+    #bag.palBag .bagCraft>.invLabel,#bag.palBag .bagCraft>strong,#bag.palBag .bagCraft .craftBench,#bag.palBag .bagCraft .craftCaption,#bag.palBag .bagCraft .recipeHeading{grid-column:1/-1}
+    #bag.palBag #craftList{grid-column:1}
+    #bag.palBag #recipeDetails{grid-column:2;grid-row:8 / span 4}
+  }
+  @media(max-width:480px){
+    #bag.palBag{width:98vw;max-height:94dvh;padding:8px;gap:7px}
+    #bag.palBag .bagTop strong{font-size:14px}
+    #bag.palBag .invSub{display:none}
+    #bag.palBag .palInventory{grid-template-columns:1fr;gap:7px}
+    #bag.palBag .invSide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center}
+    #bag.palBag .invSide>.invLabel:first-child{grid-column:1/-1}
+    #bag.palBag .playerPaper{grid-column:1;height:108px;margin:0}
+    #bag.palBag .equipStatus,#bag.palBag #equipArmor{grid-column:2}
+    #bag.palBag .itemPreview{grid-column:1;margin:0;min-height:88px}
+    #bag.palBag .quickActions{grid-column:2}
+    #bag.palBag .invHelp,#bag.palBag #bagTeam,#bag.palBag #bagDiscard{grid-column:1/-1}
+    #bag.palBag .invCenter{padding:8px}
+    #bag.palBag #bagGrid,#bag.palBag #bagHotbar{gap:3px}
+    #bag.palBag #bagGrid .slot b,#bag.palBag #bagHotbar .slot b{font-size:8px}
+    #bag.palBag .bagCraft{grid-template-columns:1fr}
+    #bag.palBag .bagCraft>*{grid-column:1!important;grid-row:auto!important}
+    #bag.palBag #craftList{grid-template-columns:repeat(2,minmax(0,1fr))}
+    #bag.palBag #recipeDetails{grid-column:1}
+  }
 </style>
 </head>
 <body>
@@ -321,33 +411,44 @@
 <div class="settingRow">Right <button id="bindRight" type="button">D</button></div>
 <label class="settingRow">Invert camera vertical <input id="invertCamera" type="checkbox"></label><label class="settingRow">Performance monitor <input id="perfMonitorToggle" type="checkbox"></label><div id="perfStatus" class="settingNote" role="status">Performance monitor is off.</div><button id="runDeviceProfile" type="button">Run 30-second device profile</button><div id="deviceProfileStatus" class="settingNote" role="status" aria-live="polite">Run this on the target Chromebook with the game world loaded. Keep the same graphics profile you intend to use.</div><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
-<div id="bag" hidden>
-  <div class="bagTop"><strong>Inventory</strong><span class="invSub">WILDEARTH survival pack</span><button id="bagSort" type="button">Sort Storage</button><button id="bagClose">✕</button></div>
-  <div id="bagInfo"></div>
-  <div class="invMain">
+<div id="bag" hidden class="palBag">
+  <div class="bagTop"><div class="bagHeading"><strong>INVENTORY</strong><span class="invSub">WILDEARTH · FIELD EQUIPMENT</span></div><div class="bagTopActions"><button id="bagSort" type="button">SORT</button><button id="bagClose" type="button" aria-label="Close inventory">✕</button></div></div>
+  <div id="bagInfo" role="status" aria-live="polite"></div>
+  <div class="palInventory">
     <section class="invSide">
       <div class="invLabel">Character</div>
-      <div class="playerPaper"><div class="paperAvatar">🧍</div><div class="armorSlots">
+      <div class="playerPaper"><div class="paperAvatar" aria-hidden="true">🧍</div><div class="armorSlots">
         <div class="armorSlot" id="armorHead">◈<small>Head</small></div>
         <div class="armorSlot" id="armorChest">◇<small>Chest</small></div>
         <div class="armorSlot" id="armorLegs">▤<small>Legs</small></div>
         <div class="armorSlot" id="armorFeet">▥<small>Feet</small></div>
       </div></div>
-      <div class="invLabel">Equipment</div><div id="equipStatus" class="equipStatus">No armor equipped</div><button id="equipArmor" type="button" disabled>Equip selected armor</button>
-      <button id="bagDiscard" style="display:none">Discard selected stack</button>
-    </section>
-    <section class="invRight">
-      <div class="invLabel">Quick actions</div>
+      <div class="invLabel">Equipped armor</div><div id="equipStatus" class="equipStatus">No armor equipped</div><button id="equipArmor" type="button" disabled>Equip selected armor</button>
+      <div class="itemPreview" aria-live="polite"><div id="itemPreviewIcon" class="previewIcon">◇</div><strong id="itemPreviewName">Select an item</strong><span id="itemCount">Choose an item to view its details</span></div>
       <div class="quickActions"><button id="quickMove" type="button" disabled>Move / swap</button><button id="splitStack" type="button" disabled>Split stack</button><button id="quickDiscard" type="button" disabled>Discard</button><button id="repairTool" type="button">Repair Tool</button></div>
-      <p class="invHelp">Tap an item, then tap another slot to move it. Matching stacks combine automatically.</p>
+      <button id="bagDiscard" type="button" style="display:none">Discard selected stack</button>
+      <p class="invHelp">Select an item to inspect it. Select another slot to move, swap or combine stacks.</p>
+      <div id="bagTeam"></div>
+    </section>
+    <section class="invCenter">
+      <div class="invSectionHead"><div class="invLabel">Backpack</div><span>27 STORAGE SLOTS</span></div>
+      <div id="bagGrid"></div>
+      <div class="invSectionHead hotbarHeading"><div class="invLabel">Quick access</div><span>1–9</span></div>
+      <div id="bagHotbar"></div>
+      <div class="inventoryFootnote">Drag or tap to move items · Matching stacks combine automatically</div>
+    </section>
+    <section class="bagCraft">
+      <div class="invLabel">Crafting station</div>
+      <strong>Manual crafting</strong>
+      <div class="craftBench"><div id="benchGrid" class="craftGrid"><button data-benchcell="0" type="button">+</button><button data-benchcell="1" type="button">+</button><button data-benchcell="2" type="button">+</button><button data-benchcell="3" type="button">+</button></div><span class="craftArrow">→</span><button id="benchOutput" class="craftOutput" type="button" disabled>◇</button></div>
+      <div id="benchHint" class="craftCaption">Select an item, then add it to a crafting cell.</div>
+      <div class="recipeHeading">Recipes</div>
+      <input id="craftSearch" type="search" placeholder="Search recipes or ingredients" aria-label="Search crafting recipes">
+      <select id="craftCategoryFilter" aria-label="Filter recipe category"><option value="all">All categories</option><option value="Capture">Capture</option><option value="Tools">Tools</option><option value="Armor">Armor</option><option value="Metallurgy">Metallurgy</option><option value="Survival">Survival</option><option value="Building">Building</option></select>
+      <div id="craftList"></div>
+      <div id="recipeDetails"><b id="recipeSelected">Select a recipe</b><div id="recipeIngredients"></div><label for="craftAmount">Amount to craft</label><input id="craftAmount" type="number" min="1" max="99" value="1" inputmode="numeric"><div id="craftTotal"></div><button id="craftSelected" type="button" disabled>Craft selected recipe</button></div>
     </section>
   </div>
-  <div class="invLabel">Inventory · 27 slots</div>
-  <div id="bagGrid"></div>
-  <div class="invLabel">Hotbar · 9 slots</div>
-  <div id="bagHotbar"></div>
-  <div id="bagTeam"></div>
-  <div class="bagCraft"><strong>2×2 Crafting grid</strong><div class="craftBench"><div id="benchGrid" class="craftGrid"><button data-benchcell="0">+</button><button data-benchcell="1">+</button><button data-benchcell="2">+</button><button data-benchcell="3">+</button></div><span class="craftArrow">→</span><button id="benchOutput" class="craftOutput" type="button" disabled>◇</button></div><div id="benchHint" class="craftCaption">Select an item, then tap a grid cell to add one unit. Tap a filled cell to return it.</div><strong>Crafting recipes</strong><input id="craftSearch" type="search" placeholder="Search recipes or ingredients" aria-label="Search crafting recipes"><select id="craftCategoryFilter" aria-label="Filter recipe category"><option value="all">All categories</option><option value="Capture">Capture</option><option value="Tools">Tools</option><option value="Armor">Armor</option><option value="Metallurgy">Metallurgy</option><option value="Survival">Survival</option><option value="Building">Building</option></select><div id="craftList"></div><div id="recipeDetails"><b id="recipeSelected">Select a recipe</b><div id="recipeIngredients"></div><label for="craftAmount">Amount to craft</label><input id="craftAmount" type="number" min="1" max="99" value="1" inputmode="numeric"><div id="craftTotal"></div><button id="craftSelected" type="button" disabled>Craft selected recipe</button></div></div>
 </div>
 <div id="joy"><div id="stick"></div></div>
 <div id="btns">
@@ -1550,7 +1651,11 @@ function renderInv(force){
     var g='',bh='';for(i=HOT;i<NSLOTS;i++)g+=slotHtml(i);for(i=0;i<HOT;i++)bh+=slotHtml(i);
     $('bagGrid').innerHTML=g;$('bagHotbar').innerHTML=bh;
     var mv=moveFrom>=0?slots[moveFrom]:null;
-    $('bagInfo').textContent=mv?'Moving '+ITEMS[mv.id].n+'. Tap another slot to place or stack it.':'Tap an item, then tap a slot to move or stack it. The first 9 slots are your hotbar. Tap an item, then tap another slot to move, swap or stack it.';
+    var preview=mv||(slots[hotSel]||null);
+    $('itemPreviewIcon').innerHTML=preview?(ICON[preview.id]||ICON.stone):'◇';
+    $('itemPreviewName').textContent=preview?ITEMS[preview.id].n:'Select an item';
+    $('itemCount').textContent=preview?('Stack: '+preview.n+(TOOL_MAX[preview.id]?' · Durability '+Math.round(toolDurabilityNow(preview.id))+'/'+TOOL_MAX[preview.id]:'')):'Choose an item from your backpack or quick-access bar.';
+    $('bagInfo').textContent=mv?'Selected: '+ITEMS[mv.id].n+'. Choose a destination slot, or use a quick action.':'Choose an item to inspect it, then choose another slot to move, swap or combine stacks.';
     $('bagDiscard').style.display=mv?'':'none';
     $('quickMove').disabled=!mv;
     $('quickDiscard').disabled=!mv;
