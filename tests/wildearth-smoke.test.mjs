@@ -1178,3 +1178,14 @@ test('creature animation includes breathing, blinking, ear reactions and relaxed
   assert.ok(gameScript.includes('m.ears[ei].rotation.z'));
   assert.ok(gameScript.includes("c.state!=='rest'"));
 });
+test('world lighting uses a low-cost sky fill and improved exposure for readable shaded models', () => {
+  assert.ok(gameScript.includes('renderer.toneMappingExposure=1.2'));
+  assert.ok(gameScript.includes('var skyFill=new THREE.DirectionalLight(0x9bbdff,0.2)'));
+  assert.ok(gameScript.includes('skyFill.castShadow=false'));
+  assert.ok(gameScript.includes('skyFill.intensity=0.055+0.2*dayF'));
+});
+
+test('atmospheric fog follows the selected graphics profile and day-night cycle', () => {
+  assert.ok(gameScript.includes('scene.fog.far=renderProfiles[renderLevel].fogFar*(0.72+0.28*dayF)'));
+  assert.ok(gameScript.includes('scene.fog.near=22+18*dayF'));
+});
