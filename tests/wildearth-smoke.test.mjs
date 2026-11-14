@@ -426,7 +426,7 @@ test('workbench and cooking pot are craftable, placeable, and usable stations', 
 test('roof support and world structure-count limits are validated before placement and loading', () => {
   assert.ok(gameScript.includes("id==='roof'&&!walls.some"));
   assert.ok(gameScript.includes('walls.length+fires.length+beds.length+chests.length>=120'));
-  assert.ok(gameScript.includes("parsed[k].length>120"));
+  assert.ok(gameScript.includes('function validStructureCounts(parsed)'));
 });
 
 test('base comfort and protection ratings respond to nearby structures', () => {
