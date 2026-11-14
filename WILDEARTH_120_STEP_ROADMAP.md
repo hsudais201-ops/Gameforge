@@ -146,7 +146,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 116. Add memory cleanup for streamed-out objects and effects.
 - [x] 117. Add mobile touch-layout and viewport regression tests.
 - [x] 118. Add long-session save/load and world-streaming stress tests.
-- [ ] 119. Add browser compatibility checks and release build validation.
+- [x] 119. Add browser compatibility checks and release build validation.
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
 - Localization foundation: sound captions now use a persisted English/Urdu text table with a language selector; the existing subtitle enable/disable preference remains persisted.
@@ -188,6 +188,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Rivers and ponds: added two connected flowing river channels and two ponds using lightweight mesh geometry. River/pond proximity now feeds the swimming, oxygen, temperature, and water-surface systems.
 
 - Stress QA: added 2,000 repeated save/inventory migration round trips and 5,000 player-position × chunk-visibility streaming iterations. River animation now uses immutable base vertex heights to prevent cumulative vertical drift during long sessions.
+
+- Browser preflight: added a visible startup fallback for missing Three.js/WebGL, WebGL2/WebGL/experimental-WebGL detection, and a prefixed/requestAnimationFrame fallback. Regression tests cover audio and gamepad capability guards.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
