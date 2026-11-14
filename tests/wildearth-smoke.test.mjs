@@ -87,6 +87,17 @@ test('crafting recipe search and category filters are wired', () => {
   assert.ok(gameScript.includes('data-craft-category'));
 });
 
+test('settings uses a fixed header and a dedicated independently scrollable content region', () => {
+  assert.match(html, /id="settingsContent" tabindex="0"/);
+  assert.ok(html.includes('#settingsContent{display:flex;flex:1 1 0%'));
+  assert.ok(html.includes('overflow-y:auto;overscroll-behavior-y:contain'));
+  assert.ok(html.includes('#settingsPanel{top:max(8px,env(safe-area-inset-top));bottom:max(8px,env(safe-area-inset-bottom))'));
+  assert.ok(html.includes('#settingsPanel>.bagTop{position:relative;top:auto;flex:0 0 auto'));
+  assert.ok(html.includes('#settingsContent>*{flex:0 0 auto;min-height:max-content}'));
+  assert.ok(html.includes('#settingsContent::-webkit-scrollbar'));
+  assert.ok(html.includes('#settingsPanel[hidden]{display:none}'));
+});
+
 test('settings panel keeps all controls full-height and scrolls the full content', () => {
   for (const css of ['#settingsPanel>*{flex:0 0 auto;min-height:max-content}', '#settingsPanel .settingRow{flex:0 0 auto;min-height:36px}', 'height:calc(100dvh - 20px', '-webkit-overflow-scrolling:touch', '#settingsPanel>.bagTop{position:sticky']) {
     assert.ok(html.includes(css), 'missing full-content settings layout: '+css);
