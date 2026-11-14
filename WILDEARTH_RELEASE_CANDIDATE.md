@@ -29,8 +29,9 @@ The test suite checks script syntax and critical UI wiring, deterministic seeds,
 
 ## Latest automated verification
 
-- GitHub Actions run [#142](https://github.com/hsudais201-ops/Gameforge/actions/runs/43560542030) completed successfully on 2026-11-14.
-- Result: **59 tests passed, 0 failed** on commit `d3a5602a66a11c583335b8c32c2ae3e552705430`.
+- GitHub Actions run [#155](https://github.com/hsudais201-ops/Gameforge/actions/runs/43563419085) completed successfully on 2026-11-14.
+- Result: **64 tests passed, 0 failed** on commit `94934e984d76a7afa749ff4698d63fe2295aff4a`.
+- Regression coverage now includes low-end Chromebook startup defaults and the combined 120-piece save-validation limit.
 - Scope: Node.js source-level smoke/regression checks. This is not a substitute for browser gameplay, physical Chromebook profiling, controller testing, or release acceptance.
 
 ## Required target-device test matrix
