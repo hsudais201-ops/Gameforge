@@ -1798,7 +1798,7 @@ function addStructure(kind,x,z){
 
 /* ---------- save / load ---------- */
 function validStructureCounts(parsed){
-  if(!parsed||typeof parsed!=='object')return false;
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return false;
   var keys=['walls','fires','beds','chests'],total=0;
   for(var i=0;i<keys.length;i++){
     var value=parsed[keys[i]];
@@ -1806,7 +1806,24 @@ function validStructureCounts(parsed){
     if(!Array.isArray(value)||value.length>120)return false;
     total+=value.length;
     if(total>120)return false;
+    for(var j=0;j<value.length;j++){
+      var item=value[j];
+      if(!item||typeof item!=='object'||!isFinite(item.x)||!isFinite(item.z))return false;
+      if(Math.abs(item.x)>HALF||Math.abs(item.z)>HALF)return false;
+      if(keys[i]==='walls'&&['wall','stone','floor','door','gate','roof','workbench','cookpot'].indexOf(item.t)<0)return false;
+      if(keys[i]==='fires'&&['fire','torch'].indexOf(item.t)<0)return false;
+      if(keys[i]==='chests'&&item.slots!==undefined&&(!Array.isArray(item.slots)||item.slots.length>18))return false;
+    }
   }
+  if(parsed.team!==undefined){
+    if(!Array.isArray(parsed.team)||parsed.team.length>32)return false;
+    for(var ti=0;ti<parsed.team.length;ti++){
+      var member=parsed.team[ti];
+      if(!member||!Number.isInteger(member.sp)||member.sp<0||member.sp>=SPECIES.length)return false;
+    }
+  }
+  if(parsed.slots!==undefined&&!Array.isArray(parsed.slots))return false;
+  if(parsed.progress!==undefined&&(!parsed.progress||typeof parsed.progress!=='object'||Array.isArray(parsed.progress)))return false;
   return true;
 }
 function awardXP(amount,reason){amount=Math.max(0,Math.floor(Number(amount)||0));if(!amount)return;P.xp=(P.xp||0)+amount;var need=100+(Math.max(1,P.level||1)-1)*60;while(P.xp>=need){P.xp-=need;P.level=(P.level||1)+1;P.statPoints=(P.statPoints||0)+1;need=100+(P.level-1)*60;say('LEVEL UP! Level '+P.level+' · 1 stat point earned',5);playSfx('achievement');}if(reason&&$('levelStatus'))$('levelStatus').textContent='LVL '+P.level+' · '+P.xp+'/'+need+' XP';}
