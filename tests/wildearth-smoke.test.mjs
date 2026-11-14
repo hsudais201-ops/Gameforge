@@ -319,7 +319,7 @@ test('character appearance is restored from global profile storage when a world 
 
 test('Night Herald boss has three escalating combat phases, a health HUD, and persistent defeat reward', () => {
   for (const id of ['bossStatus', 'bossPhase', 'bossHealth']) assert.match(html, new RegExp('id="' + id + '"'));
-  for (const marker of ['bossDefeated:false', 'nights>=7&&nightF>0.72&&!bossDefeated', "kind:'harbinger'", 'hp>40?1:(s.hp>18?2:3)', 's.phase===3?0.28:0.52', "gain('crystal',12", 'bossDefeated=d.bossDefeated===true']) {
+  for (const marker of ['bossDefeated:bossDefeated', 'nights>=7&&nightF>0.72&&!bossDefeated', "kind:'harbinger'", 'hp>40?1:(s.hp>18?2:3)', 's.phase===3?0.28:0.52', "gain('crystal',12", 'bossDefeated=d.bossDefeated===true']) {
     assert.ok(gameScript.includes(marker), 'missing boss encounter marker: ' + marker);
   }
 });
@@ -336,4 +336,20 @@ test('tools and weapons have saved durability, wear on use, and can be repaired 
   for (const marker of ['var TOOL_MAX={axe:80,pick:90,copperpick:140,ironpick:220', 'function toolDurabilityNow(id)', 'function wearTool(id,amount)', 'function repairSelectedTool()', 'toolDurability:toolDurability', "wearTool('axe',1)", "toolDurability[id]=max"]) {
     assert.ok(gameScript.includes(marker), 'missing durability marker: ' + marker);
   }
+});
+
+
+test('storm weather adds variable wind and timed lightning flashes', () => {
+  assert.match(html, /id="lightningFlash"/);
+  for (const marker of ['stormLevel=clamp((rainLevel-0.38)*2.1,0,1)', 'rainWindX=0.72+Math.sin(clock*0.13)*stormLevel*2.6', 'lightningCooldown=10+random()*18', 'lightningFlashTime=0.16+random()*0.12', "flash.style.opacity=lightningFlashTime>0"]) {
+    assert.ok(gameScript.includes(marker), 'missing storm marker: ' + marker);
+  }
+});
+
+test('season cycle changes environmental temperature, water palette, and HUD season label', () => {
+  assert.ok(gameScript.includes('function seasonInfo()'));
+  assert.ok(gameScript.includes('temperature:-0.24'));
+  assert.ok(gameScript.includes('seasonInfo().temperature'));
+  assert.ok(gameScript.includes('water.material.color.setHex(season.water)'));
+  assert.ok(gameScript.includes("+' · '+seasonInfo().name"));
 });
