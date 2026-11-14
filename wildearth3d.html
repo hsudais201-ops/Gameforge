@@ -3128,11 +3128,14 @@ function update(dt){
   }
 
   for(i=0;i<team.length;i++){
-    var t=team[i],guard=null,guardDist=999;
+    var t=team[i],guard=null,guardDist=999,guardScore=Infinity;
     t.guardCd=Math.max(0,(t.guardCd||0)-dt);
     for(j=0;j<wraiths.length;j++){
       var candidate=wraiths[j],wd=Math.hypot(candidate.x-t.x,candidate.z-t.z);
-      if(wd<guardDist&&wd<(companionMode==='defend'?19:13)&&Math.hypot(candidate.x-P.x,candidate.z-P.z)<(companionMode==='defend'?27:19)){guard=candidate;guardDist=wd}
+      var threatScore=wd-(candidate.boss?5:0);
+      // During the Night Herald encounter, the party coordinates on the boss
+      // instead of scattering damage across nearby lesser Wraiths.
+      if(wd<(companionMode==='defend'?19:13)&&Math.hypot(candidate.x-P.x,candidate.z-P.z)<(companionMode==='defend'?27:19)&&threatScore<guardScore){guard=candidate;guardDist=wd;guardScore=threatScore}
     }
     var forwardX=Math.sin(P.face),forwardZ=Math.cos(P.face),rightX=Math.cos(P.face),rightZ=-Math.sin(P.face);
     var row=i===0?0:Math.ceil(i/2),side=i===0?0:(i%2===1?-1:1);
