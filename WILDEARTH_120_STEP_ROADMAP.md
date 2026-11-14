@@ -37,9 +37,9 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 25. Add a preview turntable and lighting in the customization screen.
 - [ ] 26. Add separate head, torso, legs, and accessory customization slots.
 - [ ] 27. Add cosmetic unlock tracking.
-- [ ] 28. Add outfit save slots.
+- [x] 28. Add outfit save slots.
 - [ ] 29. Add animation preview controls in customization.
-- [ ] 30. Validate customization persistence across world changes.
+- [x] 30. Validate customization persistence across world changes.
 
 ## D. World generation and streaming
 - [x] 31. Generate procedural terrain height.
@@ -153,6 +153,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Runtime cleanup: floating combat text is capped at 60 DOM nodes and removed safely; streamed instance buffers now mark only the changed mesh dirty, avoiding redundant GPU uploads.
 
 - Underwater camera: third-person framing moves closer/lower while swimming and a lightweight blue underwater tint communicates submersion.
+
+- Character outfits: added three independent local outfit save slots with validation before applying selections; appearance remains stored globally and is restored when switching worlds.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
