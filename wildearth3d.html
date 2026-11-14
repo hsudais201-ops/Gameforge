@@ -731,6 +731,8 @@ try{var glProbe=cv.getContext('webgl2')||cv.getContext('webgl')||cv.getContext('
 if(!window.THREE||!webglAvailable){$('webglFallback').hidden=false;$('webglFallback').textContent=!window.THREE?'The 3D engine could not load. Check your internet connection and reload.':'WILDEARTH requires WebGL. Enable hardware acceleration or try a supported browser.';throw new Error('WILDEARTH startup requires Three.js and WebGL support.');}
 var renderer;try{renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!isLowEnd,powerPreference:'high-performance'});}catch(rendererError){$('webglFallback').hidden=false;$('webglFallback').textContent='This browser could not create a WebGL 2 rendering context. Update your browser and enable hardware acceleration.';throw new Error('WILDEARTH WebGL renderer initialization failed: '+rendererError.message);}
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+// Three.js r128 color management: preserve rich, correctly encoded material colors.
+if(THREE.sRGBEncoding!==undefined)renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
 renderer.shadowMap.enabled=true;
@@ -769,7 +771,7 @@ function applyRenderProfile(level){
   renderer.shadowMap.enabled=profile.shadows;
   sun.castShadow=profile.shadows;
   if(profile.shadows){
-    var shadowSize=renderLevel===2?1024:512;
+    var shadowSize=renderLevel===2?(isMobile?1024:2048):(isMobile?512:1024);
     if(sun.shadow.mapSize.x!==shadowSize||sun.shadow.mapSize.y!==shadowSize){
       sun.shadow.mapSize.set(shadowSize,shadowSize);
       if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
@@ -800,7 +802,8 @@ $('pauseSettings').addEventListener('click',function(){$('pausePanel').hidden=tr
 $('pauseMainMenu').addEventListener('click',function(){save();pauseOpen=false;$('pausePanel').hidden=true;mainMenu.hidden=false;menuOpen=true;});
 
 $('saveWorldBtn').addEventListener('click',function(){var ok=save();autosaveElapsed=0;var status=$('saveStatus');status.textContent=ok?'World saved successfully · autosave active every 10 seconds':'Could not save. Check available device storage.';say(ok?'World saved.':'Save failed — device storage may be full.',3)});
-$('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});if(pauseOpen)$('pausePanel').hidden=false;
+function closeSettingsPanel(){ $('settingsPanel').hidden=true;if(pauseOpen)$('pausePanel').hidden=false; }
+$('settingsClose').addEventListener('click',closeSettingsPanel);if(pauseOpen)$('pausePanel').hidden=false;
 $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this.value);say('Graphics set to '+renderProfiles[renderLevel].name,2)});
 $('musicVolume').value=String(audioPrefs.music);$('effectsVolume').value=String(audioPrefs.effects);$('subtitlesToggle').checked=audioPrefs.subtitles!==false;$('subtitlesToggle').addEventListener('change',function(){audioPrefs.subtitles=!!this.checked;if(!audioPrefs.subtitles)$('subtitleLine').textContent='';saveAudioPrefs();});
 $('captionLanguage').value=audioPrefs.captionLanguage||'en';$('captionLanguage').addEventListener('change',function(){audioPrefs.captionLanguage=this.value==='ur'?'ur':'en';saveAudioPrefs();});
@@ -2302,7 +2305,21 @@ function startDodge(){
   P.stamina-=22;P.dodge=0.34;P.invulnerable=0.26;
   P.face=Math.atan2(P.dodgeX,P.dodgeZ);say('Dodge!',1);
 }
+function closeTopMenu(){
+  if(!$('chestPanel').hidden){closeChest();return true;}
+  if(!$('settingsPanel').hidden){closeSettingsPanel();return true;}
+  if(!$('mapPanel').hidden){$('mapPanel').hidden=true;return true;}
+  if(!$('questPanel').hidden){$('questPanel').hidden=true;return true;}
+  if(bagOpen){toggleBag();return true;}
+  if(pauseOpen){togglePause(false);return true;}
+  if(!$('createWorldForm').hidden&&mainMenu.hidden===false){$('createWorldForm').hidden=true;return true;}
+  return false;
+}
 window.addEventListener('keydown',function(e){
+  if(e.code==='Escape'){
+    if(waitingBinding){e.preventDefault();waitingBinding=null;renderKeyBindings();say('Key binding cancelled.',2);return;}
+    if(closeTopMenu()){e.preventDefault();e.stopPropagation();return;}
+  }
   if(waitingBinding){
     e.preventDefault();
     var reserved=['Space','Tab','Escape','KeyE','KeyF','KeyQ','KeyI','KeyC','KeyV','ShiftLeft','ShiftRight'];
@@ -2319,7 +2336,7 @@ window.addEventListener('keydown',function(e){
   else if(e.code==='KeyV')startDodge();
   else if(e.code==='KeyQ'){hotSel=(hotSel+1)%HOT;renderInv(true)}
   else if(e.code==='KeyI'||e.code==='KeyC'||e.code==='Tab')toggleBag();
-  else if(e.code==='Escape'){if(!$('chestPanel').hidden)closeChest();else if(bagOpen)toggleBag();else togglePause();}
+  else if(e.code==='Escape'){if(!closeTopMenu()&&mainMenu.hidden!==false)togglePause();}
   else if(/^Digit[1-9]$/.test(e.code)){hotSel=+e.code.slice(5)-1;renderInv(true)}
 });
 window.addEventListener('keyup',function(e){keys[e.code]=false;if(e.code==='Space')held.gather=false});
