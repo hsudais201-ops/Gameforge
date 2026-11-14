@@ -322,6 +322,21 @@
   #bag.palBag #bagGrid .slot b,#bag.palBag #bagHotbar .slot b{font-size:9px}
   #bag.palBag #bagGrid .slot.on,#bag.palBag #bagHotbar .slot.on{border:2px solid #e9cf82;background:linear-gradient(145deg,#65734d,#344b37);box-shadow:0 0 0 2px #e5c56b33}
   #bag.palBag #bagGrid .slot.mv,#bag.palBag #bagHotbar .slot.mv{border:2px solid #82d8a6;background:#28533b}
+  #bag.palBag .inventoryFilters{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 10px}
+  #bag.palBag .inventoryFilters button{border:1px solid #667b6b;border-radius:4px;background:#18251e;color:#bdc9bd;padding:5px 8px;font-size:9px;font-weight:800;letter-spacing:.04em}
+  #bag.palBag .inventoryFilters button.active{background:linear-gradient(180deg,#6b8054,#3b573d);border-color:#e5cc83;color:#fff4ce}
+  #bag.palBag .slot.filteredOut{visibility:hidden;pointer-events:none}
+  #bag.palBag #itemPreviewMeta{display:block;margin-top:5px;color:#b9c9ad;font-size:9px;letter-spacing:.12em;font-weight:800}
+  #bag.palBag .partyHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+  #bag.palBag .partyHead small{color:#c0cbbd;font-size:9px}
+  #bag.palBag .partyCards{display:grid;gap:5px}
+  #bag.palBag .partyCard{display:flex;align-items:center;gap:8px;padding:6px 7px;background:#1a2921;border:1px solid #536b58;border-radius:5px;min-width:0}
+  #bag.palBag .partyOrb{width:19px;height:19px;flex:0 0 19px;border:2px solid #d8e0c5;border-radius:50%;box-shadow:0 0 8px #fff3}
+  #bag.palBag .partyCard span:nth-child(2){display:grid;min-width:0}
+  #bag.palBag .partyCard b{font-size:10px;color:#f0f2e9}
+  #bag.palBag .partyCard small{font-size:8px;color:#b9c5b8}
+  #bag.palBag .partyCard em{margin-left:auto;font-size:7px;font-style:normal;color:#9ed7a7;letter-spacing:.08em}
+  #bag.palBag .partyEmpty{padding:12px 8px;text-align:center;color:#aebbac;font-size:10px;border:1px dashed #536b58;border-radius:5px}
   #bag.palBag .hotbarHeading{margin-top:15px;padding-top:10px;border-top:1px solid #ffffff20}
   #bag.palBag .inventoryFootnote{margin-top:8px;color:#819589;font-size:8px;text-align:center}
   #bag.palBag .bagCraft{display:flex;flex-direction:column;gap:7px;max-height:100%;overflow-y:auto}
@@ -424,7 +439,7 @@
         <div class="armorSlot" id="armorFeet">▥<small>Feet</small></div>
       </div></div>
       <div class="invLabel">Equipped armor</div><div id="equipStatus" class="equipStatus">No armor equipped</div><button id="equipArmor" type="button" disabled>Equip selected armor</button>
-      <div class="itemPreview" aria-live="polite"><div id="itemPreviewIcon" class="previewIcon">◇</div><strong id="itemPreviewName">Select an item</strong><span id="itemCount">Choose an item to view its details</span></div>
+      <div class="itemPreview" aria-live="polite"><div id="itemPreviewIcon" class="previewIcon">◇</div><strong id="itemPreviewName">Select an item</strong><span id="itemCount">Choose an item to view its details</span><small id="itemPreviewMeta">ITEM DETAILS</small></div>
       <div class="quickActions"><button id="quickMove" type="button" disabled>Move / swap</button><button id="splitStack" type="button" disabled>Split stack</button><button id="quickDiscard" type="button" disabled>Discard</button><button id="repairTool" type="button">Repair Tool</button></div>
       <button id="bagDiscard" type="button" style="display:none">Discard selected stack</button>
       <p class="invHelp">Select an item to inspect it. Select another slot to move, swap or combine stacks.</p>
@@ -432,6 +447,7 @@
     </section>
     <section class="invCenter">
       <div class="invSectionHead"><div class="invLabel">Backpack</div><span>27 STORAGE SLOTS</span></div>
+      <div class="inventoryFilters" role="group" aria-label="Filter backpack items"><button type="button" data-inv-filter="all" class="active">All</button><button type="button" data-inv-filter="gear">Gear</button><button type="button" data-inv-filter="materials">Materials</button><button type="button" data-inv-filter="food">Food</button><button type="button" data-inv-filter="capture">Capture</button><button type="button" data-inv-filter="building">Building</button></div>
       <div id="bagGrid"></div>
       <div class="invSectionHead hotbarHeading"><div class="invLabel">Quick access</div><span>1–9</span></div>
       <div id="bagHotbar"></div>
@@ -1526,7 +1542,7 @@ function playSfx(kind){
 }
 document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('button'))playSfx('ui');});
 document.addEventListener('pointerdown',initAudio,{once:true});document.addEventListener('keydown',initAudio,{once:true});
-var NSLOTS=36,HOT=9,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='';
+var NSLOTS=36,HOT=9,hotSel=0,moveFrom=-1,bagOpen=false,lastSig='',inventoryFilter='all';
 var activeChest=null,selectedChestSlot=0;
 var ITEMS={
   wood:{n:'Wood',max:50},stone:{n:'Stone',max:50},fiber:{n:'Fiber',max:50},berry:{n:'Berry',max:20},
@@ -1626,8 +1642,16 @@ function dropWraithLoot(mob){
   if(rareRoll<0.07)gain('frostShard',1,x,y+0.35,z,'#8de5ff');
   else if(rareRoll<0.14)gain('emberCore',1,x,y+0.35,z,'#ff7138');
 }
+function inventoryCategory(id){
+  if(['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','frostblade','emberblade','copperarmor','ironarmor','wraithguard','frostarmor','emberarmor'].indexOf(id)>=0)return 'gear';
+  if(['berry','jam','berrypie','heartymeal','salve','strongsalve','tonic','treat'].indexOf(id)>=0)return 'food';
+  if(['ball','great'].indexOf(id)>=0)return 'capture';
+  if(PLACEABLE[id])return 'building';
+  return 'materials';
+}
+function setInventoryFilter(filter){if(['all','gear','materials','food','capture','building'].indexOf(filter)<0)return;inventoryFilter=filter;renderInv(true);}
 function slotHtml(i){
-  var s=slots[i],c='slot'+(i<HOT?' hot':'')+(i===hotSel?' on':'')+(i===moveFrom?' mv':'');
+  var s=slots[i],hidden=s&&inventoryFilter!=='all'&&inventoryCategory(s.id)!==inventoryFilter,c='slot'+(i<HOT?' hot':'')+(i===hotSel?' on':'')+(i===moveFrom?' mv':'')+(hidden?' filteredOut':'');
   return '<div class="'+c+'" data-slot="'+i+'" draggable="'+(!!s)+'"'+(s?' data-id="'+s.id+'" title="'+ITEMS[s.id].n+(TOOL_MAX[s.id]?' · Durability '+Math.round(toolDurabilityNow(s.id))+'/'+TOOL_MAX[s.id]:'')+'"':'')+'>'+(i<HOT?'<i>'+(i+1)+'</i>':'')+(s?(ICON[s.id]||ICON.stone)+'<b>'+s.n+'</b>':'')+'</div>';
 }
 function renderInv(force){
@@ -1655,6 +1679,8 @@ function renderInv(force){
     $('itemPreviewIcon').innerHTML=preview?(ICON[preview.id]||ICON.stone):'◇';
     $('itemPreviewName').textContent=preview?ITEMS[preview.id].n:'Select an item';
     $('itemCount').textContent=preview?('Stack: '+preview.n+(TOOL_MAX[preview.id]?' · Durability '+Math.round(toolDurabilityNow(preview.id))+'/'+TOOL_MAX[preview.id]:'')):'Choose an item from your backpack or quick-access bar.';
+    $('itemPreviewMeta').textContent=preview?(inventoryCategory(preview.id).toUpperCase()+' · '+(ITEMS[preview.id].max===1?'EQUIPMENT':'STACKABLE ITEM')):'ITEM DETAILS';
+    var filterButtons=$('bag').querySelectorAll('[data-inv-filter]');for(var fi=0;fi<filterButtons.length;fi++)filterButtons[fi].classList.toggle('active',filterButtons[fi].getAttribute('data-inv-filter')===inventoryFilter);
     $('bagInfo').textContent=mv?'Selected: '+ITEMS[mv.id].n+'. Choose a destination slot, or use a quick action.':'Choose an item to inspect it, then choose another slot to move, swap or combine stacks.';
     $('bagDiscard').style.display=mv?'':'none';
     $('quickMove').disabled=!mv;
@@ -1663,7 +1689,10 @@ function renderInv(force){
     $('equipArmor').disabled=!(mv&&(mv.id==='ironarmor'||mv.id==='copperarmor'||mv.id==='wraithguard'||mv.id==='frostarmor'||mv.id==='emberarmor'));
     var cnt={},tn=0;
     team.forEach(function(t){cnt[t.sp]=(cnt[t.sp]||0)+1;tn++});
-    var th='<strong>Creature log</strong> <small>'+tn+'/12 tamed</small><div class="chips">';
+    var th='<div class="partyHead"><strong>Party</strong><small>'+tn+'/12 companions</small></div><div class="partyCards">';
+    team.forEach(function(t,ti){var S=SPECIES[t.sp];th+='<div class="partyCard"><span class="partyOrb" style="background:#'+S.c.toString(16).padStart(6,'0')+'"></span><span><b>'+S.n+'</b><small>'+RAR[S.r].n+' · Companion '+(ti+1)+'</small></span><em>ACTIVE</em></div>';});
+    if(!team.length)th+='<div class="partyEmpty">No companions yet. Capture wild creatures to build your party.</div>';
+    th+='</div><div class="chips">';
     SPECIES.forEach(function(S,si){th+=cnt[si]?'<span class="chip" style="color:'+RAR[S.r].c+'">'+S.n+' ×'+cnt[si]+'</span>':'<span class="chip off">???</span>'});
     th+='</div><div class="companionCommands"><span>Companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button></div>';
     $('bagTeam').innerHTML=th;
@@ -1697,6 +1726,7 @@ function slotClick(i){
   moveFrom=-1;renderInv(true);
 }
 $('bagTeam').addEventListener('click',function(e){var b=e.target.closest('[data-team-mode]');if(b)setCompanionMode(b.getAttribute('data-team-mode'));});
+$('bag').addEventListener('click',function(e){var f=e.target.closest('[data-inv-filter]');if(f)setInventoryFilter(f.getAttribute('data-inv-filter'));});
 function sortStorageInventory(){
   var items=[];
   for(var i=HOT;i<NSLOTS;i++)if(slots[i])items.push({id:slots[i].id,n:slots[i].n});
