@@ -879,6 +879,13 @@ test('elemental weapons deal their own damage and armor reduces incoming damage'
   assert.ok(gameScript.includes('weaponLevel+weapon.bonus'));
   assert.ok(gameScript.includes('preyWeapon.damage*7+preyWeapon.bonus*4'));
   assert.ok(gameScript.includes('amount*difficultyScale()*armorDamageMultiplier(equippedArmor)'));
+  assert.ok(gameScript.includes("w.frostTimer=Math.max(w.frostTimer||0,2.8)"),'Frostfang should slow hostile enemies');
+  assert.ok(gameScript.includes("w.burnTimer=Math.max(w.burnTimer||0,3.2)"),'Emberbrand should burn hostile enemies');
+  assert.ok(gameScript.includes('s.frostTimer>0?0.62:1'),'frost status must reduce enemy movement');
+  assert.ok(gameScript.includes('s.hp-=1.25'),'burn status must deal damage over time');
+  assert.ok(gameScript.includes("equippedArmor==='frostarmor'?0.35:1"),'Frostguard should resist frost slow');
+  assert.ok(gameScript.includes("equippedArmor==='emberarmor'?0.35:1"),'Emberplate should resist burn duration');
+  assert.ok(!gameScript.includes('playerDamage(Math.min(18,(9+nights*0.65)*(s.damageScale||1))*armor'), 'wraith strike must not apply armor twice');
   assert.ok(gameScript.includes('function equipSelectedArmor()'));
   assert.ok(gameScript.includes("id!=='frostarmor'&&id!=='emberarmor'"));
 });
