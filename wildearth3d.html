@@ -1412,7 +1412,7 @@ var ITEMS={
   copperOre:{n:'Copper Ore',max:30},ironOre:{n:'Iron Ore',max:30},crystal:{n:'Lumen Crystal',max:20},tinOre:{n:'Tin Ore',max:30},goldOre:{n:'Gold Ore',max:20},copperbar:{n:'Copper Ingot',max:30},ironbar:{n:'Iron Ingot',max:30},tinbar:{n:'Tin Ingot',max:30},goldbar:{n:'Gold Ingot',max:20},crystalcore:{n:'Lumen Core',max:10},copperpick:{n:'Copper Pickaxe',max:1},ironpick:{n:'Iron Pickaxe',max:1},coppersword:{n:'Copper Sword',max:1},ironsword:{n:'Iron Sword',max:1},copperarmor:{n:'Copper Armor',max:1},ironarmor:{n:'Iron Armor',max:1},tonic:{n:'Vitality Tonic',max:8},
   ball:{n:'Capture Ball',max:20},great:{n:'Great Ball',max:10},wall:{n:'Wall block',max:20},fire:{n:'Campfire',max:5},
   torch:{n:'Torch',max:10},axe:{n:'Stone Axe',max:1},pick:{n:'Stone Pickaxe',max:1},salve:{n:'Healing Salve',max:10},
-  jam:{n:'Berry Jam',max:10},treat:{n:'Creature Treat',max:10},stonewall:{n:'Stone wall',max:20},floor:{n:'Wood floor',max:20},bed:{n:'Bedroll',max:2},chest:{n:'Storage Chest',max:8},door:{n:'Wood Door',max:10},gate:{n:'Wood Gate',max:10},roof:{n:'Wood Roof',max:20},workbench:{n:'Workbench',max:4},cookpot:{n:'Cooking Pot',max:4}
+  jam:{n:'Berry Jam',max:10},berrypie:{n:'Berry Pie',max:8},heartymeal:{n:'Hearty Meal',max:8},strongsalve:{n:'Greater Healing Salve',max:8},treat:{n:'Creature Treat',max:10},stonewall:{n:'Stone wall',max:20},floor:{n:'Wood floor',max:20},bed:{n:'Bedroll',max:2},chest:{n:'Storage Chest',max:8},door:{n:'Wood Door',max:10},gate:{n:'Wood Gate',max:10},roof:{n:'Wood Roof',max:20},workbench:{n:'Workbench',max:4},cookpot:{n:'Cooking Pot',max:4}
 };
 var PLACEABLE={wall:1,stonewall:1,floor:1,fire:1,torch:1,bed:1,chest:1,door:1,gate:1,roof:1,workbench:1,cookpot:1};
 var GRID={wall:1,stonewall:1,floor:1,door:1,gate:1,roof:1};
@@ -1451,7 +1451,10 @@ var ICON={
   ironsword:'<svg viewBox="0 0 24 24"><path d="m16 2 5 5-10 10-4-4z" fill="#c5d0d6"/><path d="m6 12 6 6-3 3-6-6z" fill="#81502f"/><path d="m3 19 2 2" stroke="#e5b27a" stroke-width="2"/></svg>',
   copperarmor:'<svg viewBox="0 0 24 24"><path d="M7 3 12 5l5-2 4 5-3 13H6L3 8z" fill="#b96c3e" stroke="#74462f"/><path d="m7 3 5 2 5-2-2 8H9z" fill="#e5a06d"/></svg>',
   ironarmor:'<svg viewBox="0 0 24 24"><path d="M7 3 12 5l5-2 4 5-3 13H6L3 8z" fill="#899ba5" stroke="#46545c"/><path d="m7 3 5 2 5-2-2 8H9z" fill="#d3e0e5"/></svg>',
-  tonic:'<svg viewBox="0 0 24 24"><path d="M9 2h6v4l3 3v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9l3-3z" fill="#65c9a9" stroke="#d6fff1"/><path d="M7 13h10v7H7z" fill="#a5f5d9"/></svg>'
+  tonic:'<svg viewBox="0 0 24 24"><path d="M9 2h6v4l3 3v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9l3-3z" fill="#65c9a9" stroke="#d6fff1"/><path d="M7 13h10v7H7z" fill="#a5f5d9"/></svg>',
+  berrypie:'<svg viewBox="0 0 24 24"><path d="M3 15a9 7 0 0 0 18 0z" fill="#c88a48"/><path d="M4 14a8 6 0 0 1 16 0z" fill="#b93655"/><circle cx="9" cy="12" r="1.5" fill="#f7c1d0"/><circle cx="15" cy="11" r="1.5" fill="#f7c1d0"/></svg>',
+  heartymeal:'<svg viewBox="0 0 24 24"><path d="M3 12h18a9 9 0 0 1-18 0z" fill="#b87943"/><path d="M5 11q7-8 14 0" fill="#8cbd62"/><circle cx="9" cy="10" r="2" fill="#d94c54"/><circle cx="15" cy="9" r="2" fill="#e9c45e"/></svg>',
+  strongsalve:'<svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="13" rx="3" fill="#56b9a2"/><rect x="7" y="4" width="10" height="4" rx="1" fill="#d8e5dc"/><path d="M12 10v8M8 14h8" stroke="#fff" stroke-width="2"/></svg>'
 };
 var slots=[];for(var si0=0;si0<NSLOTS;si0++)slots.push(null);
 var equippedArmor=null,benchCells=[null,null,null,null],benchResult=null;
@@ -2208,12 +2211,12 @@ var RECIPES={
   copperpick:{copperbar:3,wood:2,fiber:1},ironpick:{ironbar:3,copperbar:1,wood:2,fiber:2,crystalcore:1},
   coppersword:{copperbar:3,wood:1,fiber:1},ironsword:{ironbar:3,wood:1,crystalcore:1},
   copperarmor:{copperbar:5,ironbar:1,fiber:3},ironarmor:{ironbar:6,goldbar:1,crystalcore:1},tonic:{berry:3,crystal:1,fiber:2},
-  salve:{berry:3,fiber:2},jam:{berry:5,fiber:1},torch:{wood:1,fiber:1},
+  salve:{berry:3,fiber:2},strongsalve:{salve:2,crystal:1,fiber:2},jam:{berry:5,fiber:1},berrypie:{berry:4,jam:1,fiber:1},heartymeal:{berry:3,jam:1,wood:1},torch:{wood:1,fiber:1},
   wall:{wood:2},stonewall:{stone:3},floor:{wood:2},door:{wood:6,fiber:2},gate:{wood:5,stone:2},roof:{wood:5,fiber:1},workbench:{wood:8,stone:3},cookpot:{stone:6,ironbar:1},fire:{wood:2,stone:1},bed:{wood:4,fiber:4},chest:{wood:12,stone:4}
 };
-var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,copperarmor:1,ironarmor:1,tonic:1,salve:1,jam:1,torch:2,wall:1,stonewall:1,floor:2,door:1,gate:1,roof:1,workbench:1,cookpot:1,fire:1,bed:1,chest:1};
-var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',chest:'Storage Chest',door:'Wood Door',gate:'Wood Gate',roof:'Wood Roof',workbench:'Workbench',cookpot:'Cooking Pot',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',tonic:'Vitality Tonic'};
-var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword']],['Armor',['copperarmor','ironarmor']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','tonic','jam','torch']],['Building',['wall','stonewall','floor','door','gate','roof','workbench','cookpot','fire','bed','chest']]];
+var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,copperarmor:1,ironarmor:1,tonic:1,salve:1,jam:1,berrypie:1,heartymeal:1,strongsalve:1,torch:2,wall:1,stonewall:1,floor:2,door:1,gate:1,roof:1,workbench:1,cookpot:1,fire:1,bed:1,chest:1};
+var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',strongsalve:'Greater Healing Salve',berrypie:'Berry Pie',heartymeal:'Hearty Meal',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',chest:'Storage Chest',door:'Wood Door',gate:'Wood Gate',roof:'Wood Roof',workbench:'Workbench',cookpot:'Cooking Pot',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',tonic:'Vitality Tonic'};
+var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword']],['Armor',['copperarmor','ironarmor']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','strongsalve','tonic','jam','berrypie','heartymeal','torch']],['Building',['wall','stonewall','floor','door','gate','roof','workbench','cookpot','fire','bed','chest']]];
 var selectedRecipe=null;
 function updateRecipePanel(){var k=selectedRecipe,a=Math.max(1,Math.min(99,parseInt($('craftAmount').value,10)||1));$('craftAmount').value=a;if(!k){$('craftSelected').disabled=true;return;}var r=RECIPES[k],lines=[],ok=true;for(var id in r){var need=r[id]*a,have=countOf(id);lines.push((ITEMS[id]?ITEMS[id].n:id)+': '+have+' / '+need);if(have<need)ok=false;}$('recipeSelected').textContent=NAMES[k]+' ×'+((OUT[k]||1)*a);$('recipeIngredients').innerHTML=lines.join('<br>');var unique=['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(k)>=0;if(unique&&(countOf(k)>0||a>1))ok=false;if(!canAdd(k,(OUT[k]||1)*a))ok=false;$('craftTotal').textContent=ok?'Ready to craft.':'Insufficient ingredients, space, or item already owned.';$('craftSelected').disabled=!ok;var bs=$('craftList').querySelectorAll('[data-craft]');for(var j=0;j<bs.length;j++)bs[j].classList.toggle('selected',bs[j].getAttribute('data-craft')===k);}
 function buildCraftUI(){
@@ -2291,6 +2294,18 @@ function doUse(){
   else if(id==='salve'){
     if(P.hp>=95){say('You are not hurt.');return}
     takeItem('salve',1);P.hp=Math.min(100,P.hp+40);pop(P.x,P.y+2.6,P.z,'+40 health','#9be3b8');burst(P.x,P.y+1.2,P.z,0x7bc47f,10);renderInv(true);
+  }
+  else if(id==='strongsalve'){
+    if(P.hp>=95){say('You are not hurt.');return}
+    takeItem('strongsalve',1);P.hp=Math.min(100,P.hp+75);pop(P.x,P.y+2.6,P.z,'+75 health','#8cf0d2');burst(P.x,P.y+1.2,P.z,0x58c9a8,16);renderInv(true);
+  }
+  else if(id==='berrypie'){
+    if(P.food>=95){say('You are not hungry.');return}
+    takeItem('berrypie',1);P.food=Math.min(100,P.food+70);pop(P.x,P.y+2.6,P.z,'Berry Pie · +70 food','#f19ab0');renderInv(true);
+  }
+  else if(id==='heartymeal'){
+    if(P.food>=95&&P.hp>=95){say('You are already well fed and healthy.');return}
+    takeItem('heartymeal',1);P.food=Math.min(100,P.food+48);P.hp=Math.min(100,P.hp+22);pop(P.x,P.y+2.6,P.z,'Hearty Meal · restored','#9be3b8');burst(P.x,P.y+1.2,P.z,0x9bcf78,12);renderInv(true);
   }
   else if(id==='treat'){
     if(P.lure){say('A treat scent is already active.');return}
