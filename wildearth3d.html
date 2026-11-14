@@ -987,7 +987,12 @@ tgeo.rotateX(-Math.PI/2);
     if(sl>1.5)c.lerp(cDirt,clamp((sl-1.5)/1.2,0,1));
     if(sl>2.6)c.lerp(cRock,clamp((sl-2.6)/1.4,0,1));
     if(y<WATER+0.7)c.lerp(cSand,clamp((WATER+0.7-y)/0.7,0,1));
-    var v=0.92+0.16*fine;
+    // Layered micro-variation breaks up broad flat color patches without loading texture maps.
+    var detail=vnoise(x*2.4+31,z*2.4-17),micro=vnoise(x*5.2-8,z*5.2+23);
+    if(detail<0.34&&sl<2.4)c.lerp(cDirt,(0.34-detail)*0.11);
+    if(detail>0.72&&y>WATER+0.8)c.lerp(cHi,(detail-0.72)*0.13);
+    if(biome.id==='volcanic'&&micro>0.68)c.lerp(cEmber,(micro-0.68)*0.18);
+    var v=0.86+0.22*fine+(micro-0.5)*0.045;
     col[i*3]=c.r*v;col[i*3+1]=c.g*v;col[i*3+2]=c.b*v;
   }
   tgeo.setAttribute('color',new THREE.BufferAttribute(col,3));
@@ -995,8 +1000,21 @@ tgeo.rotateX(-Math.PI/2);
 })();
 var terrain=new THREE.Mesh(tgeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0}));
 terrain.receiveShadow=true;scene.add(terrain);
-var water=new THREE.Mesh(new THREE.PlaneGeometry(WORLD*1.6,WORLD*1.6),new THREE.MeshStandardMaterial({color:0x2f6f8f,transparent:true,opacity:0.8,roughness:0.12,metalness:0.15}));
-water.rotation.x=-Math.PI/2;water.position.y=WATER;scene.add(water);
+// Physically layered water with a restrained animated wave surface; segment count is lower on mobile.
+var waterGeo=new THREE.PlaneGeometry(WORLD*1.6,WORLD*1.6,isMobile?20:40,isMobile?20:40);
+var waterMat=new THREE.MeshPhysicalMaterial({color:0x327b98,transparent:true,opacity:0.86,roughness:0.22,metalness:0.08,clearcoat:0.82,clearcoatRoughness:0.18,emissive:0x061a27,emissiveIntensity:0.14,depthWrite:false});
+var water=new THREE.Mesh(waterGeo,waterMat);
+water.rotation.x=-Math.PI/2;water.position.y=WATER;water.renderOrder=1;scene.add(water);
+var waterAttr=waterGeo.attributes.position,waterBase=new Float32Array(waterAttr.array),waterClock=0,waterStep=0;
+function animateWater(dt){
+  waterClock+=dt;waterStep+=dt;if(waterStep<0.12)return;waterStep=0;
+  var a=waterAttr.array;
+  for(var wi=0;wi<a.length;wi+=3){
+    var wx=waterBase[wi],wz=waterBase[wi+1];
+    a[wi+2]=Math.sin(wx*0.018+waterClock*0.82)*0.035+Math.cos(wz*0.022-waterClock*0.68)*0.027+Math.sin((wx+wz)*0.009+waterClock*0.42)*0.018;
+  }
+  waterAttr.needsUpdate=true;waterGeo.computeVertexNormals();
+}
 
 /* ---------- vegetation and rocks ---------- */
 function buildPine(){
@@ -3894,7 +3912,7 @@ function frame(now){
   if(!pageActive)return;
   try{
     var dt=Math.min(0.05,(now-last)/1000);last=now;
-    var perfStart=performance.now();if(!menuOpen)update(dt);updateCamera();if(menuOpen)updateCharacterPreview(dt);if(!menuOpen)updateFloats(dt);var updateCost=performance.now()-perfStart;
+    var perfStart=performance.now();animateWater(dt);if(!menuOpen)update(dt);updateCamera();if(menuOpen)updateCharacterPreview(dt);if(!menuOpen)updateFloats(dt);var updateCost=performance.now()-perfStart;
     var renderStart=performance.now();renderer.render(scene,camera);var renderCost=performance.now()-renderStart;recordPerformance(performance.now()-perfStart,updateCost,renderCost);
     scheduleFrame();
   }catch(error){
