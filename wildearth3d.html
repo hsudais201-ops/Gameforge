@@ -734,7 +734,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
 // Three.js r128 color management: preserve rich, correctly encoded material colors.
 if(THREE.sRGBEncoding!==undefined)renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.15;
+renderer.toneMappingExposure=1.2;
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 var scene=new THREE.Scene();
@@ -747,8 +747,10 @@ function resize(){
 }
 window.addEventListener('resize',resize);resize();
 
-var hemi=new THREE.HemisphereLight(0xbfd8ff,0x4a5a3a,0.6);scene.add(hemi);
-var sun=new THREE.DirectionalLight(0xfff1d6,1.2);
+var hemi=new THREE.HemisphereLight(0xc8e2ff,0x514b37,0.72);scene.add(hemi);
+// A subtle non-shadowing sky fill keeps shaded creatures and structures readable without extra shadow-map cost.
+var skyFill=new THREE.DirectionalLight(0x9bbdff,0.2);skyFill.castShadow=false;scene.add(skyFill);
+var sun=new THREE.DirectionalLight(0xffedcf,1.35);
 sun.castShadow=true;
 sun.shadow.mapSize.set(isMobile?512:1024,isMobile?512:1024);
 sun.shadow.camera.left=-45;sun.shadow.camera.right=45;sun.shadow.camera.top=45;sun.shadow.camera.bottom=-45;
@@ -2887,14 +2889,15 @@ function envUpdate(){
   sunDir.set(Math.cos(ang)*0.8,Math.max(e,0.02),0.45).normalize();
   sun.position.set(P.x+sunDir.x*80,P.y+sunDir.y*80,P.z+sunDir.z*80);
   sun.target.position.set(P.x,P.y,P.z);
-  sun.intensity=1.25*dayF;
+  sun.intensity=1.38*dayF;
   sun.color.copy(cSunWarm).lerp(cSunWhite,clamp(e*2.2,0,1));
-  hemi.intensity=0.14+0.55*dayF;
+  hemi.intensity=0.2+0.65*dayF;
+  skyFill.position.set(P.x-sunDir.x*35,P.y+sunDir.y*28+12,P.z-sunDir.z*35);skyFill.intensity=0.055+0.2*dayF;
   moon.position.set(P.x-sunDir.x*60,P.y+50,P.z-20);moon.intensity=0.32*nightF;
   var warm=clamp(1-Math.abs(e)*3.5,0,1);
   cSky.copy(cNightS).lerp(cDayS,dayF).lerp(cDusk,warm*0.55);
   scene.background=cSky;scene.fog.color.copy(cSky);
-  scene.fog.far=140+90*dayF;scene.fog.near=30+30*dayF;
+  scene.fog.far=renderProfiles[renderLevel].fogFar*(0.72+0.28*dayF);scene.fog.near=22+18*dayF;
   starMat.opacity=clamp(nightF*1.2-0.2,0,1);
   playerLight.intensity=1.1*nightF;
   var season=seasonInfo()||SEASONS[0];if(water&&water.material&&water.material.color)water.material.color.setHex(Number.isFinite(season.water)?season.water:SEASONS[0].water);scene.fog.color.lerp(seasonFogColor.setHex(Number.isFinite(season.sky)?season.sky:SEASONS[0].sky),0.045);
