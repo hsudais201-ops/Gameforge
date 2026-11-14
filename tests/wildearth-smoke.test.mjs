@@ -17,7 +17,7 @@ test('startup and menu entry points remain present', () => {
   for (const id of ['c', 'mainMenu', 'worldSelect', 'playSelected', 'createWorld', 'settingsPanel', 'pausePanel']) {
     assert.match(html, new RegExp('id="' + id + '"'), 'missing required UI node: ' + id);
   }
-  assert.match(gameScript, /requestAnimationFrame\(frame\)/, 'animation loop must be started');
+  assert.match(gameScript, /function scheduleFrame\(\)[^{]*\{[^}]*requestAnimationFrame\(frame\)/, 'single animation scheduler must start the loop');
   assert.match(gameScript, /updateWorldStreaming\(true\)/, 'world streaming must initialize');
 });
 
@@ -671,4 +671,15 @@ test('night firefly simulation updates at a capped cadence instead of every rend
   assert.ok(gameScript.includes('fireflyUpdateAccumulator>=1/15'));
   assert.ok(gameScript.includes('fireflyUpdateAccumulator%=1/15'));
   assert.ok(gameScript.includes('ffGeo.attributes.position.needsUpdate=true'));
+});
+
+
+test('game uses one animation-frame scheduler so menu actions cannot create duplicate game loops', () => {
+  const directFrameCalls = gameScript.match(/requestAnimationFrame\(frame\)/g) || [];
+  assert.equal(directFrameCalls.length, 1, 'only the scheduler may request the frame callback');
+  assert.match(gameScript, /var last=performance\.now\(\),pageActive=true,frameScheduled=false/);
+  assert.match(gameScript, /function scheduleFrame\(\)\{if\(pageActive&&!frameScheduled\)/);
+  assert.match(gameScript, /frameScheduled=false;\s*if\(!pageActive\)return/);
+  assert.match(gameScript, /else\{last=performance\.now\(\);scheduleFrame\(\);\}/);
+  assert.match(gameScript, /if\(pageActive\)\{last=performance\.now\(\);scheduleFrame\(\);\}/);
 });
