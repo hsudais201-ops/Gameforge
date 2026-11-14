@@ -11,7 +11,8 @@
   #underwaterTint{position:fixed;inset:0;z-index:7;pointer-events:none;opacity:0;background:linear-gradient(180deg,rgba(26,104,145,.18),rgba(5,43,72,.38));transition:opacity .25s}#lightningFlash{position:fixed;inset:0;z-index:29;pointer-events:none;background:rgba(225,242,255,.9);opacity:0;mix-blend-mode:screen}#underwaterTint.active{opacity:1}
   #damageFlash.hit{animation:damagePulse .42s ease-out}
   @keyframes damagePulse{0%{opacity:.95}100%{opacity:0}}
-  #bossStatus{position:fixed;top:96px;left:50%;transform:translateX(-50%);width:min(340px,82vw);padding:8px 12px;border:1px solid #e28c74aa;border-radius:8px;background:rgba(32,10,14,.86);text-align:center;font-size:11px;z-index:9}#baseActions{position:fixed;right:12px;top:112px;z-index:12;display:flex;align-items:center;gap:5px;padding:6px;border-radius:8px;background:rgba(9,18,13,.86);border:1px solid #c5d5bd66;font-size:10px}#baseActions[hidden]{display:none}#baseActions button{padding:6px 8px;border:1px solid #9caf91;border-radius:5px;background:#405c43;color:#fff;font-size:10px;font-weight:700}#baseActions button:disabled{opacity:.35}@media(max-width:520px){#baseActions{right:6px;top:145px;max-width:90vw;flex-wrap:wrap}}#bossStatus[hidden]{display:none}#bossStatus strong{display:block;letter-spacing:.12em;color:#ffd4c5}#bossPhase{display:block;margin:3px;color:#ffb18f;font-size:9px}.bossTrack{height:7px;border-radius:6px;background:#ffffff30;overflow:hidden}.bossTrack i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#a82d3b,#ff946b)}
+  #bossStatus{position:fixed;top:96px;left:50%;transform:translateX(-50%);width:min(340px,82vw);padding:8px 12px;border:1px solid #e28c74aa;border-radius:8px;background:rgba(32,10,14,.86);text-align:center;font-size:11px;z-index:9}#cavePrompt{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:18;display:flex;gap:8px;align-items:center;padding:10px 12px;border:1px solid #8ed8e5;border-radius:10px;background:rgba(5,20,28,.9);color:#e6fbff;font-size:12px}#cavePrompt[hidden]{display:none}#cavePrompt button{padding:8px 12px;border:1px solid #8ed8e5;border-radius:7px;background:#245d6d;color:#fff;font-weight:800}
+#baseActions{position:fixed;right:12px;top:112px;z-index:12;display:flex;align-items:center;gap:5px;padding:6px;border-radius:8px;background:rgba(9,18,13,.86);border:1px solid #c5d5bd66;font-size:10px}#baseActions[hidden]{display:none}#baseActions button{padding:6px 8px;border:1px solid #9caf91;border-radius:5px;background:#405c43;color:#fff;font-size:10px;font-weight:700}#baseActions button:disabled{opacity:.35}@media(max-width:520px){#baseActions{right:6px;top:145px;max-width:90vw;flex-wrap:wrap}}#bossStatus[hidden]{display:none}#bossStatus strong{display:block;letter-spacing:.12em;color:#ffd4c5}#bossPhase{display:block;margin:3px;color:#ffb18f;font-size:9px}.bossTrack{height:7px;border-radius:6px;background:#ffffff30;overflow:hidden}.bossTrack i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#a82d3b,#ff946b)}
   #hud{position:fixed;left:0;right:0;top:0;padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) 0 max(10px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:6px;pointer-events:none;font-size:12px}
   .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .pill{background:rgba(8,16,12,.62);padding:4px 9px;border-radius:999px;white-space:nowrap}
@@ -231,7 +232,7 @@
     <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
     <span class="pill" id="time"></span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="baseRating">Base comfort 0 · protection 0</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
   </div>
-  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div><div id="baseActions" hidden><span id="basePieceName">Nearby structure</span><button id="upgradeBasePiece" type="button">Upgrade</button><button id="dismantleBasePiece" type="button">Dismantle</button></div>
+  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div><div id="cavePrompt" hidden><span id="cavePromptText">Cave entrance</span><button id="caveAction" type="button">Enter Cave</button></div><div id="baseActions" hidden><span id="basePieceName">Nearby structure</span><button id="upgradeBasePiece" type="button">Upgrade</button><button id="dismantleBasePiece" type="button">Dismantle</button></div>
 </div>
 <div id="mapPanel" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle"><div class="mapCard"><button class="mapClose" id="mapClose" type="button">Close ✕</button><strong id="mapTitle">WORLD MAP</strong><p class="questIntro">Unexplored areas remain hidden. Explore the world to reveal the map and discover landmarks.</p><div class="mapLegend"><span>Explored</span><span class="keyLand">Landmark</span><span class="keyPlayer">You</span></div><div id="mapGrid" class="mapGrid" aria-label="Exploration map"></div><div id="landmarkList"></div></div></div>
 <div id="questPanel" hidden role="dialog" aria-modal="true" aria-labelledby="questTitle"><div class="questCard"><div class="questHead"><strong id="questTitle">QUEST JOURNAL</strong><button id="questClose" type="button">Close ✕</button></div><p class="questIntro">Track your journey. Objectives complete automatically as you explore, build, craft and survive. Progress is saved with this world.</p><div id="questList"></div><div id="questSummary" class="questIntro" aria-live="polite"></div><h3 class="questSectionTitle">FIELD TUTORIAL</h3><div id="tutorialList"></div><h3 class="questSectionTitle">MAIN STORY · A NEW DAWN</h3><div id="mainQuest"></div></div></div>
@@ -1439,7 +1440,7 @@ function benchCellClick(i){var c=benchCells[i];if(moveFrom>=0&&slots[moveFrom]){
 function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]||1;if(!canAdd(key,n)){say('Your backpack is full.');return;}addItem(key,n);craftedCount++;checkAchievements();benchCells=[null,null,null,null];renderInv(true);say('Crafted '+NAMES[key]+'.');}
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
 var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0,craftedCount=0,achievementIds=[];
-var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[],bossDefeated=false,rareEvent=null,rareEventClaimed=false,cosmeticUnlockIds=[];
+var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[],bossDefeated=false,rareEvent=null,rareEventClaimed=false,cosmeticUnlockIds=[],caveEntrances=[],caveMode=false,activeCave=null;
 var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34,stormLevel=0,lightningCooldown=0,lightningFlashTime=0;
@@ -1492,6 +1493,25 @@ function updateWeather(dt){
   if(rainLevel<0.05&&rainWasActive){rainWasActive=false;say('The rain has cleared.');}
 }
 P.y=heightAt(P.x,P.z);
+function addCaveEntrance(x,z){
+  var surfaceY=heightAt(x,z),entrance=new THREE.Group(),stone=stdMat(0x62666b,0.98,{flatShading:true}),dark=stdMat(0x080d14,1,{emissive:0x05080d,emissiveIntensity:0.25}),glow=stdMat(0x58d8ef,0.35,{emissive:0x1b9bb9,emissiveIntensity:1.7});
+  entrance.add(mesh(new THREE.BoxGeometry(3.2,3.4,0.35),dark,0,1.45,0));
+  for(var i=0;i<8;i++){var a=(i/8)*Math.PI*2;entrance.add(mesh(new THREE.DodecahedronGeometry(0.55+random()*0.18),stone,Math.cos(a)*2.05,1.5+Math.sin(a)*1.7,0));}
+  entrance.add(mesh(new THREE.TorusGeometry(2.0,0.18,8,20),glow,0,1.55,0));entrance.children[entrance.children.length-1].rotation.x=Math.PI/2;
+  entrance.position.set(x,surfaceY,z);scene.add(entrance);
+  var floorY=surfaceY-18,room=new THREE.Group(),floorMat=stdMat(0x4d555c,0.98,{flatShading:true}),wallMat=stdMat(0x343c45,0.98,{flatShading:true}),crystalMat=stdMat(0x47d5ee,0.25,{emissive:0x168ca8,emissiveIntensity:1.9});
+  room.add(mesh(new THREE.BoxGeometry(16,0.45,13),floorMat,0,0,0));
+  room.add(mesh(new THREE.BoxGeometry(16,7,0.6),wallMat,0,3.5,-6.5));room.add(mesh(new THREE.BoxGeometry(16,7,0.6),wallMat,0,3.5,6.5));
+  room.add(mesh(new THREE.BoxGeometry(0.6,7,13),wallMat,-8,3.5,0));room.add(mesh(new THREE.BoxGeometry(0.6,7,13),wallMat,8,3.5,0));
+  room.add(mesh(new THREE.BoxGeometry(16,0.5,13),wallMat,0,7,0));
+  for(var c=0;c<5;c++){var cx=-5+c*2.4,cz=(c%2?2:-2);var crystal=mesh(new THREE.ConeGeometry(0.38,1.7+random()*1.2,6),crystalMat,cx,1.1,cz);crystal.rotation.z=(c%2?0.12:-0.12);room.add(crystal);}
+  var light1=new THREE.PointLight(0x3ecde8,2.1,18);light1.position.set(-4,3,0);room.add(light1);var light2=new THREE.PointLight(0x3ecde8,1.8,18);light2.position.set(4,3,1);room.add(light2);
+  room.position.set(x,floorY,z);scene.add(room);
+  var cave={x:x,z:z,surfaceY:surfaceY,floorY:floorY,entrance:entrance,room:room};caveEntrances.push(cave);return cave;
+}
+function enterCave(cave){if(!cave)return;caveMode=true;activeCave=cave;cave.room.visible=true;P.x=cave.x;P.z=cave.z+2.5;P.y=cave.floorY+1;P.swimming=false;P.oxygen=100;P.face=Math.PI;say('Entered the Lumen Cavern. Follow the glowing crystals back to the exit.',5);$('cavePrompt').hidden=true;}
+function exitCave(){if(!activeCave)return;var cave=activeCave;P.x=cave.x;P.z=cave.z-4;P.y=cave.surfaceY+1;caveMode=false;activeCave=null;P.oxygen=100;$('cavePrompt').hidden=true;say('You returned to the wilderness.',3);}
+var initialCave=addCaveEntrance(-52,42);
 
 function spawnRareEvent(){
   var p=landSpot(20),g=new THREE.Group(),orbMat=new THREE.MeshStandardMaterial({color:0x8beaff,emissive:0x3acfff,emissiveIntensity:2.2,metalness:0.25,roughness:0.25});
@@ -2273,9 +2293,11 @@ function update(dt){
   P.x=clamp(P.x,-HALF+6,HALF-6);P.z=clamp(P.z,-HALF+6,HALF-6);
   pushOutBoxes(P,0.5);
   explorationDistance+=Math.hypot(P.x-travelStartX,P.z-travelStartZ);
-  var groundY=heightAt(P.x,P.z),waterDepth=WATER-groundY;
-  P.swimming=waterDepth>0.55;
-  if(P.swimming){
+  if(caveMode&&activeCave){P.x=clamp(P.x,activeCave.x-6.8,activeCave.x+6.8);P.z=clamp(P.z,activeCave.z-5.2,activeCave.z+5.2);}
+  var groundY=caveMode&&activeCave?activeCave.floorY:heightAt(P.x,P.z),waterDepth=caveMode?0:WATER-groundY;
+  P.swimming=!caveMode&&waterDepth>0.55;
+  if(caveMode){P.y+=(groundY+1-P.y)*Math.min(1,dt*14);P.oxygen=100;}
+  else if(P.swimming){
     P.y+=(WATER-0.45-P.y)*Math.min(1,dt*3.5);
     P.oxygen=Math.max(0,P.oxygen-dt*8);
     P.stamina=Math.max(0,P.stamina-dt*2.2);
@@ -2284,9 +2306,9 @@ function update(dt){
     P.y+=(groundY-P.y)*Math.min(1,dt*14);
     P.oxygen=Math.min(100,P.oxygen+dt*22);
   }
-  var baseTemp=biomeTemperature(P.x,P.z);
+  var baseTemp=caveMode?0.03:biomeTemperature(P.x,P.z);
   P.temperature=clamp(baseTemp-(P.wetness/100)*0.32-(rainLevel*0.1),-0.2,1);
-  if(rainLevel>0.12)P.wetness=Math.min(100,P.wetness+rainLevel*dt*7);
+  if(rainLevel>0.12&&!caveMode)P.wetness=Math.min(100,P.wetness+rainLevel*dt*7);
   else P.wetness=Math.max(0,P.wetness-dt*(P.swimming?0.15:2.2));
   if(P.temperature<0.08&&P.wetness>30)playerDamage(0.45*dt,'Cold exposure');
   P.cool-=dt;if(P.swing>0)P.swing-=dt;
@@ -3015,6 +3037,7 @@ function dismantleNearbyBasePiece(){
   var refunds={wall:['wood',1],stone:['stone',1],floor:['wood',1],door:['wood',2],gate:['wood',2],roof:['wood',2],workbench:['wood',3],cookpot:['stone',2]},refund=refunds[w.t];if(refund)gain(refund[0],refund[1],P.x,P.y+2,P.z,'#d5c49a');nearbyBasePiece=null;save();say('Structure dismantled. Some materials recovered.',3);updateBaseActions();
 }
 $('upgradeBasePiece').addEventListener('click',upgradeNearbyBasePiece);$('dismantleBasePiece').addEventListener('click',dismantleNearbyBasePiece);
+$('caveAction').addEventListener('click',function(){if(caveMode)exitCave();else{var cave=nearestOf(caveEntrances,P.x,P.z,5);if(cave)enterCave(cave);}});
 function baseRatings(){
   var comfort=0,protection=0;
   walls.forEach(function(w){var d=Math.hypot(w.x-P.x,w.z-P.z);if(d>30)return;if(w.t==='stone'||w.t==='wall')protection+=w.t==='stone'?7:4;if(w.t==='roof')comfort+=4;if(w.t==='workbench')comfort+=7;if(w.t==='cookpot')comfort+=8;if(w.t==='door'||w.t==='gate')protection+=3;});
@@ -3028,12 +3051,13 @@ function updateHud(){
   $('stamina').style.width=clamp(P.stamina,0,100)+'%';
   $('stamina').style.background=P.stamina<25?'#e6a34e':'#61d6a0';
   var boss=wraiths.find(function(w){return w.boss});var bossEl=$('bossStatus');if(bossEl){bossEl.hidden=!boss;if(boss){$('bossHealth').style.width=clamp(boss.hp/boss.maxHp*100,0,100)+'%';$('bossPhase').textContent='PHASE '+boss.phase;}}
+  var caveNear=nearestOf(caveEntrances,P.x,P.z,4.8);$('cavePrompt').hidden=!(caveMode||caveNear);$('cavePromptText').textContent=caveMode?'Lumen Cavern · Exit path':'Lumen Cavern entrance';$('caveAction').textContent=caveMode?'Exit Cave':'Enter Cave';
   var statuses=[];
   if(P.hp<=25)statuses.push('CRITICAL HEALTH');
   if(P.food<=0)statuses.push('STARVING');else if(P.food<20)statuses.push('HUNGRY');
   if(P.stamina<=0.5)statuses.push('EXHAUSTED');
   if(P.dodge>0)statuses.push('DODGING');
-  if(P.swimming)statuses.push('SWIMMING · O₂ '+Math.ceil(P.oxygen)+'%');
+  if(caveMode)statuses.push('INSIDE LUMEN CAVERN');if(P.swimming)statuses.push('SWIMMING · O₂ '+Math.ceil(P.oxygen)+'%');
   if(P.wetness>35)statuses.push('WET '+Math.ceil(P.wetness)+'%');
   if(P.temperature<0.08)statuses.push('FREEZING');
   var statusEl=$('statusEffects');statusEl.textContent=statuses.join(' · ');statusEl.hidden=statuses.length===0;
