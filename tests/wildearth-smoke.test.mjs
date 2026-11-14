@@ -99,6 +99,15 @@ test('settings panel fits short and narrow screens and scrolls all controls', ()
   }
 });
 
+test('all game menus and dialogs support bounded vertical scrolling', () => {
+  for (const id of ['mainMenu','questPanel','mapPanel','chestPanel','pausePanel','deathPanel']) {
+    assert.match(html, new RegExp('#' + id + '[^{]*\\{[^}]*overflow-y:auto'), id + ' must scroll vertically');
+  }
+  assert.match(html, /\\.menuCard,\\.questCard,\\.mapCard,\\.chestCard,\\.pauseCard,\\.deathCard\\{[^}]*max-height:calc\\(100dvh/);
+  assert.match(html, /#bag\\{[^}]*overscroll-behavior:contain/);
+  assert.match(html, /@media\\(max-height:560px\\)/);
+});
+
 test('settings markup has clean audio controls and restores saved world-area selection', () => {
   assert.doesNotMatch(html, /\\\\n<label class="settingRow">Ambient music volume/);
   assert.ok(html.indexOf('id="captionLanguage"') < html.indexOf('id="musicVolume"'), 'caption language should appear before music volume');
