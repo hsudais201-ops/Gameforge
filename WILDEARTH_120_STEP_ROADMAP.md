@@ -86,7 +86,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 66. Add wetness and drying behavior.
 - [x] 67. Add storms with wind and lightning.
 - [x] 68. Add seasonal world-state changes.
-- [ ] 69. Add rare world events and discoverable event rewards.
+- [x] 69. Add rare world events and discoverable event rewards.
 - [x] 70. Add survival difficulty presets.
 
 ## H. Inventory, crafting, and equipment
@@ -163,6 +163,8 @@ This is the execution tracker for the next development stages. A checked item me
 
 - Storms: rain intensity now drives changing wind vectors and timed lightning flashes, with storm warnings and a visible screen flash.
 - Seasons: five-day seasonal cycles alter environmental temperature, water palette, and the HUD season label; the season derives from saved world time.
+
+- Rare world event: after three survived nights, a glowing fallen star appears in the world. Players can discover and collect it for Lumen Crystal and Gold Ore; the one-time reward claim persists in the world save.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
