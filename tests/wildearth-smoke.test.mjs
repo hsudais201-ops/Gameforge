@@ -189,3 +189,60 @@ test('audio has separate persisted music/effects volumes and unlocks only after 
   }
   assert.ok(gameScript.includes('low.start();high.start();'), 'procedural ambient tone should be started');
 });
+
+
+test('versioned save migration maps legacy 30-slot inventories into the 36-slot layout', () => {
+  const start = gameScript.indexOf('function migrateInventorySlots(');
+  const end = gameScript.indexOf('function load()', start);
+  assert.ok(start >= 0 && end > start, 'inventory migration helper must exist');
+  const source = gameScript.slice(start, end);
+  const defs = { wood: { max: 50 }, ball: { max: 20 }, berry: { max: 20 } };
+  const migrate = new Function('itemDefs', 'slotCount', 'hotbarCount', source + '; return migrateInventorySlots;')(defs, 36, 9);
+  const old = Array.from({ length: 30 }, () => null);
+  old[0] = { id: 'wood', n: 80 };
+  old[6] = { id: 'cage', n: 3 };
+  old[29] = { id: 'berry', n: 2 };
+  const result = migrate(old);
+  assert.equal(result.length, 36);
+  assert.deepEqual(result[0], { id: 'wood', n: 50 });
+  assert.deepEqual(result[9], { id: 'ball', n: 3 });
+  assert.deepEqual(result[32], { id: 'berry', n: 2 });
+  assert.equal(result[33], null);
+});
+
+test('save migration safely filters invalid legacy items and stack quantities', () => {
+  const start = gameScript.indexOf('function migrateInventorySlots(');
+  const end = gameScript.indexOf('function load()', start);
+  const source = gameScript.slice(start, end);
+  const defs = { wood: { max: 50 }, ball: { max: 20 } };
+  const migrate = new Function('itemDefs', 'slotCount', 'hotbarCount', source + '; return migrateInventorySlots;')(defs, 36, 9);
+  const old = Array.from({ length: 36 }, () => null);
+  old[0] = { id: 'unknown', n: 5 };
+  old[1] = { id: 'wood', n: -2 };
+  old[2] = { id: 'wood', n: '5' };
+  old[3] = { id: 'wood', n: 4 };
+  const result = migrate(old);
+  assert.equal(result[0], null);
+  assert.equal(result[1], null);
+  assert.equal(result[2], null);
+  assert.deepEqual(result[3], { id: 'wood', n: 4 });
+});
+
+test('mobile touch layout and viewport regression safeguards are present', () => {
+  assert.match(html, /name="viewport"[^>]*width=device-width/);
+  assert.match(html, /touch-action:none/);
+  assert.match(html, /id="joy"/);
+  assert.match(html, /id="btns"/);
+  assert.match(html, /@media\s*\(max-width:\s*380px\)/);
+  assert.match(html, /@media\s*\(max-height:\s*650px\)/);
+  assert.match(gameScript, /window\.addEventListener\('resize',resize\)/);
+  assert.match(gameScript, /renderer\.setSize\(vw,vh,false\)/);
+});
+
+test('versioned save defaults and recovery paths remain compatible', () => {
+  assert.match(gameScript, /version:5/);
+  assert.match(gameScript, /P\.wetness=isFinite\(d\.P\.wetness\)/);
+  assert.match(gameScript, /P\.oxygen=isFinite\(d\.P\.oxygen\)/);
+  assert.match(gameScript, /SAVE_KEY\+'_backup'/);
+  assert.match(gameScript, /validSave\(localStorage\.getItem\(OLD_KEY\)\)/);
+});
