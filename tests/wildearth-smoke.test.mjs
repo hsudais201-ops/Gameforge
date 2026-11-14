@@ -520,3 +520,25 @@ test('device profiling runs for 30 seconds and exports real frame, update, rende
     assert.ok(gameScript.includes(marker), 'missing device profile marker: '+marker);
   }
 });
+
+
+test('low-end Chromebook hardware receives a lighter default rendering workload', () => {
+  assert.ok(gameScript.includes('var hardwareCores=Number(navigator.hardwareConcurrency)||0'));
+  assert.ok(gameScript.includes('var isLowEnd=isMobile||(hardwareCores>0&&hardwareCores<=4)||(deviceMemoryGB>0&&deviceMemoryGB<=4)'));
+  assert.ok(gameScript.includes('antialias:!isLowEnd'));
+  assert.ok(gameScript.includes('var renderLevel=isLowEnd?0:1'));
+  assert.ok(gameScript.includes('var cnt=isLowEnd?2600:(isMobile?3500:7000)'));
+});
+
+test('loaded and backed-up saves enforce the global 120-piece structure limit', () => {
+  const start = gameScript.indexOf('function validStructureCounts(');
+  const end = gameScript.indexOf('function save()', start);
+  assert.ok(start >= 0 && end > start, 'shared structure validator must exist');
+  const validator = new Function(gameScript.slice(start, end) + ';return validStructureCounts;')();
+  assert.equal(validator({walls:Array(120).fill({}),fires:[],beds:[],chests:[]}), true);
+  assert.equal(validator({walls:Array(100).fill({}),fires:Array(21).fill({})}), false);
+  assert.equal(validator({walls:Array(121).fill({})}), false);
+  assert.equal(validator({walls:'corrupt'}), false);
+  assert.ok(gameScript.includes('validStructureCounts(parsed)'));
+  assert.match(gameScript, /validStructureCounts\(check\)/);
+});
