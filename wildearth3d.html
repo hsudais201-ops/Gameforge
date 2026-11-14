@@ -1018,24 +1018,36 @@ function animateWater(dt){
 
 /* ---------- vegetation and rocks ---------- */
 function buildPine(){
-  var parts=[{geo:new THREE.CylinderGeometry(0.22,0.4,4,7),c:0x5a3d24,m:T(0,2,0),flat:true}];
+  var parts=[{geo:new THREE.CylinderGeometry(0.2,0.46,5.2,8),c:0x604329,m:T(0,2.6,0),flat:true}];
+  var bark=[0x765333,0x4d3827,0x85603a,0x503a28,0x765333,0x4b3728];
+  for(var b=0;b<6;b++){var ba=b/6*6.283;parts.push({geo:new THREE.CylinderGeometry(0.025,0.055,4.35,4),c:bark[b],m:T(Math.cos(ba)*0.19,2.55,Math.sin(ba)*0.19,0,0,-Math.cos(ba)*0.025),flat:true});}
   var gc=[0x2c5a33,0x336638,0x2a5530,0x376e3a];
-  for(var i=0;i<4;i++)parts.push({geo:new THREE.ConeGeometry(2.3-i*0.5,2.8,9),c:gc[i],m:T(0,3.2+i*1.35,0),wobble:0.22});
+  for(var i=0;i<4;i++){
+    var y=3.1+i*1.25,rad=2.35-i*0.48;
+    parts.push({geo:new THREE.ConeGeometry(rad,2.8,9),c:gc[i],m:T(0,y,0),wobble:0.22});
+    if(i<3)for(var j=0;j<5;j++){var a=j/5*6.283+i*0.47,reach=rad*0.76;parts.push({geo:new THREE.CylinderGeometry(0.045,0.085,reach,4),c:0x5a452d,m:T(Math.cos(a)*reach*0.48,y-0.58,Math.sin(a)*reach*0.48,Math.sin(a)*0.22,0,-Math.cos(a)*0.22),flat:true});}
+  }
   return merge(parts);
 }
 function buildOak(){
-  var parts=[{geo:new THREE.CylinderGeometry(0.3,0.5,3.4,7),c:0x5e4126,m:T(0,1.7,0),flat:true}];
+  var parts=[{geo:new THREE.CylinderGeometry(0.3,0.56,3.8,8),c:0x5e4126,m:T(0,1.9,0),flat:true}];
+  for(var r=0;r<5;r++){var ra=r/5*6.283;parts.push({geo:new THREE.CylinderGeometry(0.045,0.16,1.15,5),c:r%2?0x67472a:0x765333,m:T(Math.cos(ra)*0.36,0.34,Math.sin(ra)*0.36,Math.sin(ra)*0.7,0,Math.cos(ra)*0.7),flat:true});}
+  for(var k=0;k<7;k++){var ka=k/7*6.283;parts.push({geo:new THREE.CylinderGeometry(0.018,0.035,3.05,4),c:k%2?0x765333:0x4a3526,m:T(Math.cos(ka)*0.29,1.95,Math.sin(ka)*0.29,0,0,-Math.cos(ka)*0.035),flat:true});}
   var b=[[0,4.6,0,1.9],[1.4,3.9,0.5,1.4],[-1.3,4.1,-0.5,1.5],[0.3,5.6,0.7,1.3],[-0.6,3.8,1.4,1.2]];
   var gc=[0x4b8a3b,0x3f7d35,0x58953f,0x4a8a38,0x3d7a34];
   for(var i=0;i<b.length;i++)parts.push({geo:new THREE.IcosahedronGeometry(b[i][3],1),c:gc[i],m:T(b[i][0],b[i][1],b[i][2]),wobble:0.28});
   return merge(parts);
 }
 function buildRock(){
-  return merge([
+  var parts=[
     {geo:new THREE.IcosahedronGeometry(1,1),c:0x7d8287,m:T(0,0.45,0,0,0,0,1.2,0.8,1),wobble:0.55},
     {geo:new THREE.IcosahedronGeometry(0.55,1),c:0x8b9095,m:T(0.9,0.2,0.4,0,0,0,1,0.8,1),wobble:0.5},
     {geo:new THREE.IcosahedronGeometry(0.45,1),c:0x5f8f3a,m:T(-0.25,0.88,0.1,0,0,0,1.3,0.32,1.1),wobble:0.4}
-  ]);
+  ];
+  var strata=[0x626a70,0x969b9c,0x68736f,0x858b8b];
+  for(var i=0;i<8;i++){var a=i/8*6.283,rr=0.72+0.12*(i%2);parts.push({geo:new THREE.DodecahedronGeometry(0.12+(i%3)*0.035),c:strata[i%strata.length],m:T(Math.cos(a)*rr,0.72+(i%3)*0.11,Math.sin(a)*rr,0,0,0,1.35,0.38,0.72),flat:true});}
+  for(var j=0;j<3;j++){var ma=j*2.1;parts.push({geo:new THREE.SphereGeometry(0.24,6,4),c:j===1?0x426b3b:0x527b43,m:T(Math.cos(ma)*0.55,0.94,Math.sin(ma)*0.55,0,0,0,1.3,0.18,0.9)});}
+  return merge(parts);
 }
 function buildOre(kind){
   var gold=kind==='goldOre',tin=kind==='tinOre';
