@@ -96,6 +96,24 @@ test('settings panel fits short and narrow screens and scrolls all controls', ()
   }
 });
 
+test('world render distance slider persists and controls streamed world radius', () => {
+  assert.match(html, /id="renderDistanceSlider"/);
+  assert.match(html, /min="40" max="160" step="5"/);
+  assert.match(html, /id="renderDistanceValue"/);
+  for (const marker of ['areaRadius=85', 'savedGraphics.areaRadius', 'function applyAreaRadius(radius)', "addEventListener('input',function(){applyAreaRadius(+this.value)})", 'var radius=areaRadius', 'Active render distance:']) {
+    assert.ok(gameScript.includes(marker), 'missing render-distance behavior: '+marker);
+  }
+  assert.ok(gameScript.includes('areaRadii[clamp(savedGraphics.area|0,0,2)]'), 'legacy world-area settings must migrate');
+  assert.ok(gameScript.includes('areaRadius:areaRadius'), 'render distance must persist');
+});
+
+test('graphics quality applies shadow, fog, and weather budgets and restores the selected value', () => {
+  assert.match(html, /id="qualitySelect"/);
+  for (const marker of ['function applyRenderProfile(level)', 'renderer.shadowMap.enabled=profile.shadows', 'sun.castShadow=profile.shadows', 'scene.fog.far=profile.fogFar', 'applyWeatherBudget()', "$('qualitySelect').value=String(renderLevel)", 'applyRenderProfile(renderLevel)']) {
+    assert.ok(gameScript.includes(marker), 'missing graphics setting behavior: '+marker);
+  }
+});
+
 test('menu scrolling remains touch-accessible despite gameplay touch-action rules', () => {
   assert.ok(html.includes('touch-action:pan-y'));
   assert.ok(html.includes('-webkit-overflow-scrolling:touch'));
