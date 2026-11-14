@@ -3531,16 +3531,25 @@ function animCreature(c,dt){
   m.g.scale.setScalar(creatureScale*damagePulse);
   m.g.position.set(c.x,c.y,c.z);m.g.rotation.y=c.yaw;
   for(var i=0;i<4;i++)m.legs[i].rotation.x=Math.sin(c.walk*1.6+(i===0||i===3?0:Math.PI))*amp+(attack>0.4&&i%2===0?-attack*0.32:0);
-  var gait=Math.abs(Math.sin(c.walk*1.6))*0.06*c.speed*(moving?1:0.12);\n  var breath=Math.sin(clock*(c.state==='rest'?1.15:2.05)+(c.personalityPhase||0));\n  m.torso.scale.y=1+breath*(c.state==='rest'?0.022:0.012);\n  m.g.position.y+=gait+attack*0.08-rainPose*0.035+(c.state==='rest'?Math.sin(clock*1.15)*0.018:0);
+  var gait=Math.abs(Math.sin(c.walk*1.6))*0.06*c.speed*(moving?1:0.12);
+  var breath=Math.sin(clock*(c.state==='rest'?1.15:2.05)+(c.personalityPhase||0));
+  m.torso.scale.y=1+breath*(c.state==='rest'?0.022:0.012);
+  m.g.position.y+=gait+attack*0.08-rainPose*0.035+(c.state==='rest'?Math.sin(clock*1.15)*0.018:0);
   m.g.rotation.x=(c.defending?0.035:0)+attack*0.08+rainPose*0.025;
-  var tailMood=c.state==='alert'?0.22:(c.state==='rest'?-0.12:0);\n  m.tail.rotation.y=Math.sin(clock*(c.state==='rest'?1.1:3)+c.walk)*0.35*(1-rainPose*0.22)+tailMood+attack*0.45;\n  m.tail.rotation.x=Math.sin(clock*1.7+(c.personalityPhase||0))*0.045+(c.state==='rest'?0.08:0);\n  for(var ei=0;ei<m.ears.length;ei++){var earSide=ei===0?-1:1;m.ears[ei].rotation.z+=(Math.sin(clock*1.8+(c.personalityPhase||0)+ei*1.7)*0.018+(c.state==='alert'?-earSide*0.08:0)-m.ears[ei].rotation.z)*Math.min(1,dt*5);}\n  var blink=Math.pow(Math.max(0,Math.sin(clock*0.73+(c.personalityPhase||0)*2.1)),28);\n  for(var eye=0;eye<m.eyes.length;eye++)m.eyes[eye].scale.y=1-blink*0.92;
+  var tailMood=c.state==='alert'?0.22:(c.state==='rest'?-0.12:0);
+  m.tail.rotation.y=Math.sin(clock*(c.state==='rest'?1.1:3)+c.walk)*0.35*(1-rainPose*0.22)+tailMood+attack*0.45;
+  m.tail.rotation.x=Math.sin(clock*1.7+(c.personalityPhase||0))*0.045+(c.state==='rest'?0.08:0);
+  for(var ei=0;ei<m.ears.length;ei++){var earSide=ei===0?-1:1;m.ears[ei].rotation.z+=(Math.sin(clock*1.8+(c.personalityPhase||0)+ei*1.7)*0.018+(c.state==='alert'?-earSide*0.08:0)-m.ears[ei].rotation.z)*Math.min(1,dt*5);}
+  var blink=Math.pow(Math.max(0,Math.sin(clock*0.73+(c.personalityPhase||0)*2.1)),28);
+  for(var eye=0;eye<m.eyes.length;eye++)m.eyes[eye].scale.y=1-blink*0.92;
   // A lowered head sells grazing; resting creatures make slower, softer idle motions.
   var headLook=(c.state==='graze'?0.48:(c.state==='rest'?0.12:0))+rainPose*0.055;
   var lookSpeed=c.state==='rest'?0.65:1.7;
   m.head.rotation.x=Math.sin(clock*lookSpeed+c.x)*0.06+headLook+(c.state==='alert'?-0.18:0)+attack*0.22;
   // Curious individuals make small, irregular head turns while calm; shy animals keep a tighter gaze.
   var curiosity=(c.curiosity||0.5),lookWave=Math.sin(clock*(0.72+curiosity*0.65)+(c.personalityPhase||0));
-  m.head.rotation.y=lookWave*(0.025+curiosity*0.075)*(c.state==='alert'?0.25:1);\n  m.head.rotation.z=Math.sin(clock*0.52+(c.personalityPhase||0))*0.018+(c.state==='alert'?0.025:0);
+  m.head.rotation.y=lookWave*(0.025+curiosity*0.075)*(c.state==='alert'?0.25:1);
+  m.head.rotation.z=Math.sin(clock*0.52+(c.personalityPhase||0))*0.018+(c.state==='alert'?0.025:0);
 }
 function animPlayer(dt){
   player.g.position.set(P.x,P.y,P.z);
