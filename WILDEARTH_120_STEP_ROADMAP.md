@@ -132,7 +132,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 104. Add a dedicated quest and objective panel.
 - [x] 105. Add audio settings and separate music/effects volume.
 - [x] 106. Add original ambient, weather, creature, and UI sound effects.
-- [ ] 107. Add subtitle and notification duration settings.
+- [x] 107. Add subtitle and notification duration settings.
 - [x] 108. Add scalable UI text and high-contrast mode.
 - [x] 109. Add controller/gamepad navigation.
 - [ ] 110. Add localization-ready text tables.
@@ -192,3 +192,5 @@ Source-level syntax and structural checks are not substitutes for playing the ga
 
 - Combat accessibility: added a mobile-only, limited-cone aim assist for nearby wildlife and Wraiths; keyboard/controller aiming is unchanged.
 - Gathering progression: copper/iron/stone pick tiers and the axe now have distinct gathering cooldowns in addition to existing damage differences.
+
+- Accessibility captions: added a persisted sound-caption toggle and live subtitle line for gathering, capture, damage, rain, wildlife, and danger cues. Captions remain available when sound effects are muted or unavailable.
