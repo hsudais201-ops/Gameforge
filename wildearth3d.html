@@ -1533,6 +1533,20 @@ function makeCreature(sp){
       g.add(pl);
     }
   }
+  // Shared anatomy detail pass: expressive eyes, chest markings and paw details.
+  var eyeGlint=stdMat(0xffffff,0.18,{emissive:0xffffff,emissiveIntensity:0.22});
+  for(var es=-1;es<=1;es+=2){
+    head.add(mesh(new THREE.SphereGeometry(0.018,7,5),eyeGlint,es*0.17,0.105,0.405));
+    head.add(mesh(new THREE.SphereGeometry(0.026,8,6),stdMat(0x30251e,0.65),es*0.105,-0.19,0.39,1.15,0.55,0.8));
+  }
+  var chestMark=mesh(new THREE.SphereGeometry(0.23,12,8),stdMat(sp===3?0x858d91:(sp===2?0x9c7c50:0xd8c9a8),0.86),0,0.79,0.49,0.72,0.92,0.28);
+  chestMark.castShadow=false;g.add(chestMark);
+  for(var clawSide=-1;clawSide<=1;clawSide+=2){
+    for(var clawToe=0;clawToe<2;clawToe++){
+      var toe=mesh(new THREE.SphereGeometry(0.045,7,5),sp===3?dark:mat,clawSide*(0.32+clawToe*0.055),0.055,0.49,0.9,0.7,1.25);
+      toe.castShadow=false;g.add(toe);
+    }
+  }
   var lp=[[-0.32,0.4],[0.32,0.4],[-0.32,-0.4],[0.32,-0.4]];
   for(var li=0;li<4;li++){
     var lg=new THREE.Group();lg.position.set(lp[li][0],0.6,lp[li][1]);
@@ -1567,6 +1581,18 @@ function makeWraith(kind){
   }else if(kind==='emberwisp'){
     for(var ei=0;ei<4;ei++){var flame=mesh(new THREE.ConeGeometry(0.17,0.72,5),em,Math.cos(ei*Math.PI/2)*0.55,1.55,Math.sin(ei*Math.PI/2)*0.55);flame.rotation.z=Math.cos(ei*Math.PI/2)*0.45;flame.rotation.x=Math.sin(ei*Math.PI/2)*0.45;g.add(flame);}
     var emberRing=mesh(new THREE.TorusGeometry(0.66,0.07,6,16),em,0,1.35,0);emberRing.rotation.x=Math.PI/2;g.add(emberRing);
+  }
+  // Spectral anatomy pass: rib arcs, shoulder plates and a glowing core.
+  var ribMat=stdMat(p.glow,0.42,{emissive:p.glow,emissiveIntensity:0.52,transparent:true,opacity:0.76});
+  for(var rib=0;rib<3;rib++){
+    var arc=mesh(new THREE.TorusGeometry(0.42+rib*0.11,0.035,5,18,Math.PI),ribMat,0,1.35+rib*0.24,0.02);
+    arc.rotation.x=Math.PI/2;arc.rotation.z=Math.PI;g.add(arc);arc.castShadow=false;
+  }
+  var core=mesh(new THREE.OctahedronGeometry(kind==='brute'?0.23:0.16,1),em,0,1.72,0.48);
+  core.scale.set(1,1.25,0.65);g.add(core);core.castShadow=false;
+  for(var armorSide=-1;armorSide<=1;armorSide+=2){
+    var plate=mesh(new THREE.SphereGeometry(kind==='brute'?0.3:0.22,9,7),ribMat,armorSide*(kind==='brute'?0.68:0.52),1.92,0,1.15,0.62,0.72);
+    plate.rotation.z=-armorSide*0.18;g.add(plate);plate.castShadow=false;
   }
   // Ground warning ring makes the enemy's attack wind-up readable before impact.
   var warningMat=new THREE.MeshBasicMaterial({color:0xff4b3e,transparent:true,opacity:0.82,depthWrite:false,side:THREE.DoubleSide});
@@ -1635,10 +1661,20 @@ function makeTorch(){
   return g;
 }
 function makeBed(){
-  var g=new THREE.Group();
-  var roll=mesh(new THREE.CylinderGeometry(0.34,0.34,2.0,10),stdMat(0xc7a46a,0.95),0,0.26,0,1,1,0.55);roll.rotation.x=Math.PI/2;g.add(roll);
-  g.add(mesh(new THREE.BoxGeometry(0.62,0.1,1.2),stdMat(0xa33a3a,0.9),0,0.43,0.35));
-  g.add(mesh(new THREE.SphereGeometry(0.24,10,8),stdMat(0xf1e6cf,0.9),0,0.42,-0.75,1,0.5,0.8));
+  var g=new THREE.Group(),wood=stdMat(0x765033,0.92),rope=stdMat(0xb99869,0.9),blanket=stdMat(0x9f3940,0.88),linen=stdMat(0xf1e6cf,0.92);
+  // Raised timber cot with cross-braces, bedroll, stitched blanket and shaped pillow.
+  for(var side=-1;side<=1;side+=2){
+    g.add(mesh(new THREE.BoxGeometry(0.12,0.22,2.15),wood,side*0.39,0.14,0));
+    for(var end=-1;end<=1;end+=2)g.add(mesh(new THREE.BoxGeometry(0.14,0.34,0.14),wood,side*0.39,0.17,end*0.92));
+    g.add(mesh(new THREE.BoxGeometry(0.06,0.06,1.95),rope,side*0.39,0.31,0));
+  }
+  g.add(mesh(new THREE.BoxGeometry(0.9,0.12,0.14),wood,0,0.18,-0.94));
+  g.add(mesh(new THREE.BoxGeometry(0.9,0.12,0.14),wood,0,0.18,0.94));
+  g.add(mesh(new THREE.BoxGeometry(0.66,0.18,1.92),stdMat(0xc7a46a,0.95),0,0.37,0));
+  g.add(mesh(new THREE.BoxGeometry(0.62,0.1,1.15),blanket,0,0.49,0.32));
+  for(var stitch=0;stitch<5;stitch++)g.add(mesh(new THREE.BoxGeometry(0.018,0.012,0.92),rope,-0.24+stitch*0.12,0.548,0.34));
+  g.add(mesh(new THREE.SphereGeometry(0.24,12,9),linen,0,0.48,-0.73,1,0.5,0.82));
+  g.add(mesh(new THREE.BoxGeometry(0.48,0.025,0.035),rope,0,0.58,-0.73));
   return g;
 }
 
