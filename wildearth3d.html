@@ -1838,7 +1838,7 @@ requestAnimationFrame(function(){setTimeout(function(){try{updateWorldStreaming(
 /* ---------- title menu / world selection ---------- */
 var mainMenu=$('mainMenu'),menuOpen=true;
 var pauseOpen=false,dead=false,respawnTimer=0,deathSpawnChoice="base";
-function togglePause(force){if(dead||mainMenu.hidden===false)return;if(bagOpen){if(force!==false)toggleBag();return;}pauseOpen=typeof force==='boolean'?force:!pauseOpen;$('pausePanel').hidden=!pauseOpen;menuOpen=pauseOpen;if(pauseOpen){save();$('pauseStatus').textContent='Game paused · progress saved';}else{last=performance.now();requestAnimationFrame(frame);}}
+function togglePause(force){if(dead||mainMenu.hidden===false)return;if(bagOpen){if(force!==false)toggleBag();return;}pauseOpen=typeof force==='boolean'?force:!pauseOpen;$('pausePanel').hidden=!pauseOpen;menuOpen=pauseOpen;if(pauseOpen){save();$('pauseStatus').textContent='Game paused · progress saved';}else{last=performance.now();scheduleFrame();}}
 function refreshWorldMenu(){var sel=$('worldSelect');sel.innerHTML='';worldList.forEach(function(w){var op=document.createElement('option');op.value=w.id;op.textContent=w.name;sel.appendChild(op);});sel.value=selectedWorldId;$('worldSeedInfo').textContent='World seed: '+worldSeed+(seedOverride!==null?' · temporary URL override':'');}
 refreshWorldMenu();
 function syncCustomizationControls(){var mats=player.g.userData.customMaterials;if(!mats)return;var skin=$('skinTone'),outfit=$('outfitColor');if(skin&&!skin.dataset.ready){skin.value='0x'+mats.skin.color.getHexString();skin.dataset.ready='1';}if(outfit)outfit.value='0x'+mats.cloth.color.getHexString();}
@@ -1882,7 +1882,7 @@ $('playSelected').addEventListener('click',function(){
   selectedWorldId=nextId;
   if(!persistWorldList())return;
   if(selectedWorldId!==activeWorldId){$('worldSeedInfo').textContent='Loading '+(worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0]).name+'…';location.reload();return;}
-  mainMenu.hidden=true;menuOpen=false;last=performance.now();requestAnimationFrame(frame);
+  mainMenu.hidden=true;menuOpen=false;last=performance.now();scheduleFrame();
   say('Welcome to '+(worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0]).name+'. Your adventure continues.',4);
 });
 $('createWorldToggle').addEventListener('click',function(){
@@ -3298,14 +3298,16 @@ function playerDamage(amount,label){
 }
 
 /* ---------- loop ---------- */
-var last=performance.now(),pageActive=true;
+var last=performance.now(),pageActive=true,frameScheduled=false;
+function scheduleFrame(){if(pageActive&&!frameScheduled){frameScheduled=true;requestAnimationFrame(frame);}}
 function frame(now){
+  frameScheduled=false;
   if(!pageActive)return;
   try{
     var dt=Math.min(0.05,(now-last)/1000);last=now;
     var perfStart=performance.now();if(!menuOpen)update(dt);updateCamera();if(menuOpen)updateCharacterPreview(dt);if(!menuOpen)updateFloats(dt);var updateCost=performance.now()-perfStart;
     var renderStart=performance.now();renderer.render(scene,camera);var renderCost=performance.now()-renderStart;recordPerformance(performance.now()-perfStart,updateCost,renderCost);
-    requestAnimationFrame(frame);
+    scheduleFrame();
   }catch(error){
     pageActive=false;
     showGameError(error&&error.stack?error.stack:error);
@@ -3314,15 +3316,15 @@ function frame(now){
 document.addEventListener('visibilitychange',function(){
   pageActive=!document.hidden;
   if(!pageActive)save();
-  if(pageActive){last=performance.now();requestAnimationFrame(frame);}
+  if(pageActive){last=performance.now();scheduleFrame();}
 });
 window.addEventListener('pagehide',function(){save()});
 cv.addEventListener('webglcontextlost',function(e){e.preventDefault();pageActive=false;showGameError('The browser lost the WebGL graphics context. Close other tabs, then reload.');});
-cv.addEventListener('webglcontextrestored',function(){pageActive=true;applyRenderProfile(renderLevel);streamDirty=true;last=performance.now();requestAnimationFrame(frame);});
+cv.addEventListener('webglcontextrestored',function(){pageActive=true;applyRenderProfile(renderLevel);streamDirty=true;last=performance.now();scheduleFrame();});
 window.addEventListener('beforeunload',save);
 updateHud();
 say(loaded?'Welcome back. Your base was saved.':'Left stick moves. Drag the right side to look. Hold Gather near trees, rocks and bushes. You start with 5 Capture Balls: get near a wild creature and tap Catch to throw one. Open the Bag to craft more.',7);
-requestAnimationFrame(frame);
+scheduleFrame();
 })();
 </script>
 </body>
