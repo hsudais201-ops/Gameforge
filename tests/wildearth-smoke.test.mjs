@@ -1061,3 +1061,11 @@ test('WILDEARTH keeps the reference survival loop while extending it with advanc
   assert.ok(html.includes('id="inventoryScreen"'));
   assert.ok(html.includes('id="craftingScreen"'));
 });
+
+test('companions coordinate their attacks on the Night Herald instead of splitting party damage', () => {
+  assert.ok(gameScript.includes('guardScore=Infinity'));
+  assert.ok(gameScript.includes('var threatScore=wd-(candidate.boss?5:0)'));
+  assert.ok(gameScript.includes('threatScore<guardScore'));
+  assert.ok(gameScript.includes('guardDist=wd;guardScore=threatScore'));
+  assert.ok(gameScript.includes('if(guard&&guardDist<3.1&&t.guardCd<=0)'));
+});
