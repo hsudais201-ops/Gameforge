@@ -1941,8 +1941,10 @@ function makeBall(id){
   return g;
 }
 var sparkGeo=new THREE.SphereGeometry(0.07,5,4),sparkMats={};
+function disposeObject3D(root){if(!root||!root.traverse)return;root.traverse(function(o){if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(function(m){m.dispose()});else o.material.dispose();}});}
 function burst(x,y,z,color,n){
   var mt=sparkMats[color]||(sparkMats[color]=new THREE.MeshBasicMaterial({color:color,fog:false}));
+  while(sparks.length+n>500){var oldSpark=sparks.shift();if(oldSpark&&oldSpark.m)scene.remove(oldSpark.m);}
   for(var i=0;i<n;i++){
     var m=new THREE.Mesh(sparkGeo,mt);m.position.set(x,y,z);scene.add(m);
     var a=random()*6.283,sp=rand(1.5,4);
@@ -2647,7 +2649,7 @@ function update(dt){
 
   for(i=shots.length-1;i>=0;i--){
     var sh=shots[i],sc=sh.c;
-    if(wild.indexOf(sc)<0){scene.remove(sh.m);shots.splice(i,1);continue}
+    if(wild.indexOf(sc)<0){scene.remove(sh.m);disposeObject3D(sh.m);shots.splice(i,1);continue}
     sh.t+=dt;
     if(sh.phase===0){
       var u0=Math.min(1,sh.t/0.5);
@@ -2666,7 +2668,7 @@ function update(dt){
       if(ph>=1.15){
         sh.wob++;
         if(sh.wob>=sh.wobbles){
-          scene.remove(sh.m);shots.splice(i,1);
+          scene.remove(sh.m);disposeObject3D(sh.m);shots.splice(i,1);
           sc.m.g.visible=true;sc.held=false;
           var rar=RAR[SPECIES[sc.sp].r];
           if(sh.ok){
