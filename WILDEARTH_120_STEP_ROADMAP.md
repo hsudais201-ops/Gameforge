@@ -191,6 +191,8 @@ This is the execution tracker for the next development stages. A checked item me
 
 - Browser preflight: added a visible startup fallback for missing Three.js/WebGL, WebGL2/WebGL/experimental-WebGL detection, and a prefixed/requestAnimationFrame fallback. Regression tests cover audio and gamepad capability guards.
 
+- Device profiling support: added an optional 120-frame performance monitor reporting FPS, average/p95 frame time, update time, render-submit time, draw calls, and triangles; diagnostic exports now include these metrics. Actual Chromebook measurements remain pending.
+
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
 - World/build foundations: added optional world-seed entry and reproducibility display; building pieces already snap to a consistent 3-metre grid and are now covered by smoke tests.
