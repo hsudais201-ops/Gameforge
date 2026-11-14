@@ -149,6 +149,9 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 119. Add browser compatibility checks and release build validation.
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
+- Localization foundation: sound captions now use a persisted English/Urdu text table with a language selector; the existing subtitle enable/disable preference remains persisted.
+- Runtime cleanup: floating combat text is capped at 60 DOM nodes and removed safely; streamed instance buffers now mark only the changed mesh dirty, avoiding redundant GPU uploads.
+
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
 - World/build foundations: added optional world-seed entry and reproducibility display; building pieces already snap to a consistent 3-metre grid and are now covered by smoke tests.
