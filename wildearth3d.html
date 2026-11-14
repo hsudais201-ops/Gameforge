@@ -3146,7 +3146,13 @@ function update(dt){
     t.speed=0;t.defending=!!guard;
     if(dl>0.6){
       var sp2=Math.min(guard?7.5:9,dl*(guard?2.5:2.2));
-      t.x+=ddx/dl*sp2*dt;t.z+=ddz/dl*sp2*dt;t.speed=Math.min(1,sp2/6);
+      // Companions use the same world collision volumes as the player and wildlife.
+      // Resolve walls, closed gates, trees, rocks and campfire clearance before committing movement.
+      var companionNext={x:t.x+ddx/dl*sp2*dt,z:t.z+ddz/dl*sp2*dt};
+      pushOutBoxes(companionNext,0.72);
+      if(Math.abs(companionNext.x)<HALF-8&&Math.abs(companionNext.z)<HALF-8&&heightAt(companionNext.x,companionNext.z)>WATER+0.2){
+        t.x=companionNext.x;t.z=companionNext.z;t.speed=Math.min(1,sp2/6);
+      }else{t.speed=0;}
       var ty2=Math.atan2(ddx,ddz),dy2=ty2-t.yaw;dy2=Math.atan2(Math.sin(dy2),Math.cos(dy2));t.yaw+=dy2*Math.min(1,dt*8);
     }else if(guard){
       var faceX=guard.x-t.x,faceZ=guard.z-t.z,faceY=Math.atan2(faceX,faceZ),faceD=faceY-t.yaw;
