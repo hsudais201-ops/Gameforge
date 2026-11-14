@@ -1473,18 +1473,18 @@ function pickSpecies(x,z){
 }
 function catchRate(sp,id){if(location.hash==='#sure')return 1;return clamp(RAR[SPECIES[sp].r].rate*(id==='great'?1.5:1),0.05,0.95)}
 function makeCreature(sp){
-  var S=SPECIES[sp],g=new THREE.Group(),legs=[],s;
+  var S=SPECIES[sp],g=new THREE.Group(),legs=[],ears=[],eyes=[],s;
   var mat=stdMat(S.c,S.rough,{flatShading:!!S.flat,metalness:sp===2?0.25:0});
   var dark=stdMat(0x1c1c1c,0.5),white=stdMat(0xffffff,0.3);
   var lowPoly=sp===3;
-  g.add(mesh(new THREE.SphereGeometry(0.6,lowPoly?7:20,lowPoly?5:14),mat,0,0.85,0,1,0.85,1.3));
+  var torso=mesh(new THREE.SphereGeometry(0.6,lowPoly?7:20,lowPoly?5:14),mat,0,0.85,0,1,0.85,1.3);g.add(torso);
   var head=new THREE.Group();head.position.set(0,1.25,0.8);g.add(head);
   head.add(mesh(new THREE.SphereGeometry(0.4,lowPoly?7:18,lowPoly?5:12),mat,0,0,0));
   head.add(mesh(new THREE.SphereGeometry(0.2,12,10),mat,0,-0.1,0.33,1,0.8,1.2));
   head.add(mesh(new THREE.SphereGeometry(0.06,8,6),dark,0,-0.06,0.55));
   for(s=-1;s<=1;s+=2){
-    head.add(mesh(new THREE.SphereGeometry(0.095,10,8),white,s*0.17,0.08,0.3));
-    head.add(mesh(new THREE.SphereGeometry(0.055,8,6),dark,s*0.17,0.08,0.37));
+    var eyeWhite=mesh(new THREE.SphereGeometry(0.095,10,8),white,s*0.17,0.08,0.3);head.add(eyeWhite);eyes.push(eyeWhite);
+    var eyePupil=mesh(new THREE.SphereGeometry(0.055,8,6),dark,s*0.17,0.08,0.37);head.add(eyePupil);eyes.push(eyePupil);
     var ear;
     if(sp===0){ear=mesh(new THREE.SphereGeometry(0.15,10,8),mat,s*0.27,0.32,-0.02,1,1.3,0.7)}
     else if(sp===1){ear=mesh(new THREE.ConeGeometry(0.13,0.42,6),mat,s*0.2,0.5,0)}
@@ -1501,7 +1501,7 @@ function makeCreature(sp){
       var a2=mesh(new THREE.CylinderGeometry(0.025,0.035,0.4,6),am,s*0.3,0.8,0);a2.rotation.z=-s*0.9;head.add(a2);
       var a3=mesh(new THREE.CylinderGeometry(0.02,0.03,0.3,6),am,s*0.2,0.95,-0.1);a3.rotation.z=s*0.5;head.add(a3);
     }else{ear=mesh(new THREE.ConeGeometry(0.12,0.5,5),mat,s*0.22,0.45,0);ear.rotation.z=-s*0.35}
-    head.add(ear);
+    head.add(ear);ears.push(ear);
   }
   var tail=new THREE.Group();tail.position.set(0,0.95,-0.78);g.add(tail);
   if(sp===0){tail.add(mesh(new THREE.SphereGeometry(0.32,14,10),mat,0,0.1,-0.15))}
@@ -1554,7 +1554,7 @@ function makeCreature(sp){
     lg.add(mesh(new THREE.SphereGeometry(0.12,8,6),sp===3?mat:dark,0,-0.55,0.03,1,0.7,1.3));
     g.add(lg);legs.push(lg);
   }
-  return {g:g,legs:legs,head:head,tail:tail};
+  return {g:g,legs:legs,head:head,tail:tail,ears:ears,eyes:eyes,torso:torso};
 }
 function makeWraith(kind){
   var g=new THREE.Group(),palette={
@@ -3522,7 +3522,8 @@ function animCreature(c,dt){
   c.walk+=dt*(4+c.speed*8);
   c.attackAnim=Math.max(0,(c.attackAnim||0)-dt);
   c.hitTimer=Math.max(0,(c.hitTimer||0)-dt);
-  var amp=c.speed*0.7,m=c.m,attack=c.attackAnim>0?Math.sin((1-c.attackAnim/0.38)*Math.PI):0;
+  var m=c.m,attack=c.attackAnim>0?Math.sin((1-c.attackAnim/0.38)*Math.PI):0;
+  var moving=c.speed>0.08&&c.state!=='rest',amp=moving?c.speed*0.7:0;
   var rainAffinity=[0.8,0.15,0.25,0.9,0.1,0.85,0.2,0.75][c.sp]||0.2;
   var rainPose=clamp(rainLevel*rainAffinity,0,1);
   var creatureScale=c.isJuvenile?(c.growthScale||0.72):1;
@@ -3530,16 +3531,16 @@ function animCreature(c,dt){
   m.g.scale.setScalar(creatureScale*damagePulse);
   m.g.position.set(c.x,c.y,c.z);m.g.rotation.y=c.yaw;
   for(var i=0;i<4;i++)m.legs[i].rotation.x=Math.sin(c.walk*1.6+(i===0||i===3?0:Math.PI))*amp+(attack>0.4&&i%2===0?-attack*0.32:0);
-  m.g.position.y+=Math.abs(Math.sin(c.walk*1.6))*0.06*c.speed+attack*0.08-rainPose*0.035;
+  var gait=Math.abs(Math.sin(c.walk*1.6))*0.06*c.speed*(moving?1:0.12);\n  var breath=Math.sin(clock*(c.state==='rest'?1.15:2.05)+(c.personalityPhase||0));\n  m.torso.scale.y=1+breath*(c.state==='rest'?0.022:0.012);\n  m.g.position.y+=gait+attack*0.08-rainPose*0.035+(c.state==='rest'?Math.sin(clock*1.15)*0.018:0);
   m.g.rotation.x=(c.defending?0.035:0)+attack*0.08+rainPose*0.025;
-  m.tail.rotation.y=Math.sin(clock*3+c.walk)*0.35*(1-rainPose*0.22)+(c.state==='alert'?0.22:0)+(c.state==='rest'?-0.12:0)+attack*0.45;
+  var tailMood=c.state==='alert'?0.22:(c.state==='rest'?-0.12:0);\n  m.tail.rotation.y=Math.sin(clock*(c.state==='rest'?1.1:3)+c.walk)*0.35*(1-rainPose*0.22)+tailMood+attack*0.45;\n  m.tail.rotation.x=Math.sin(clock*1.7+(c.personalityPhase||0))*0.045+(c.state==='rest'?0.08:0);\n  for(var ei=0;ei<m.ears.length;ei++){var earSide=ei===0?-1:1;m.ears[ei].rotation.z+=(Math.sin(clock*1.8+(c.personalityPhase||0)+ei*1.7)*0.018+(c.state==='alert'?-earSide*0.08:0)-m.ears[ei].rotation.z)*Math.min(1,dt*5);}\n  var blink=Math.pow(Math.max(0,Math.sin(clock*0.73+(c.personalityPhase||0)*2.1)),28);\n  for(var eye=0;eye<m.eyes.length;eye++)m.eyes[eye].scale.y=1-blink*0.92;
   // A lowered head sells grazing; resting creatures make slower, softer idle motions.
   var headLook=(c.state==='graze'?0.48:(c.state==='rest'?0.12:0))+rainPose*0.055;
   var lookSpeed=c.state==='rest'?0.65:1.7;
   m.head.rotation.x=Math.sin(clock*lookSpeed+c.x)*0.06+headLook+(c.state==='alert'?-0.18:0)+attack*0.22;
   // Curious individuals make small, irregular head turns while calm; shy animals keep a tighter gaze.
   var curiosity=(c.curiosity||0.5),lookWave=Math.sin(clock*(0.72+curiosity*0.65)+(c.personalityPhase||0));
-  m.head.rotation.y=lookWave*(0.025+curiosity*0.075)*(c.state==='alert'?0.25:1);
+  m.head.rotation.y=lookWave*(0.025+curiosity*0.075)*(c.state==='alert'?0.25:1);\n  m.head.rotation.z=Math.sin(clock*0.52+(c.personalityPhase||0))*0.018+(c.state==='alert'?0.025:0);
 }
 function animPlayer(dt){
   player.g.position.set(P.x,P.y,P.z);
