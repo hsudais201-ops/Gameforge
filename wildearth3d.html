@@ -39,11 +39,10 @@
   #mapPanel{position:fixed;inset:0;z-index:54;display:flex;align-items:center;justify-content:center;padding:12px;background:#030a07cc;backdrop-filter:blur(7px)}
   #mapPanel[hidden]{display:none}
   .mapCard{width:min(560px,96vw);max-height:90vh;overflow:auto;padding:16px;border:1px solid #a6c09b66;border-radius:16px;background:linear-gradient(145deg,#1a3025,#0c1813)}
-  .mapGrid{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:2px;width:min(100%,390px);aspect-ratio:1;margin:12px auto;background:#09130e;padding:5px;border-radius:8px}
-  .mapCell{min-width:0;border-radius:2px;background:#17231c}
-  .mapCell.seen{background:#45634a}
-  .mapCell.landmark{background:#c49a54}
-  .mapCell.player{background:#f3f0c5;box-shadow:0 0 5px #fff}
+  .mapCanvas{display:block;width:min(100%,520px);aspect-ratio:1;height:auto;margin:12px auto;background:#10202a;border:1px solid #8ea98a66;border-radius:10px;image-rendering:pixelated}
+  #miniMapWrap{position:fixed;right:max(12px,env(safe-area-inset-right));top:calc(max(10px,env(safe-area-inset-top)) + 72px);z-index:7;width:126px;padding:5px;border:1px solid #c4d6bd88;border-radius:13px;background:rgba(5,14,12,.78);box-shadow:0 5px 18px #0008;pointer-events:none}
+  #miniMap{display:block;width:116px;height:116px;border-radius:9px;background:#14232b}
+  #miniMapLabel{text-align:center;font:700 9px system-ui;letter-spacing:.12em;color:#d9e8d4;padding-top:3px}
   .mapLegend{display:flex;flex-wrap:wrap;gap:10px;font-size:10px;color:#c9d7c4}
   .mapLegend span:before{content:'';display:inline-block;width:8px;height:8px;margin-right:4px;border-radius:2px;background:#45634a}
   .mapLegend .keyLand:before{background:#c49a54}.mapLegend .keyPlayer:before{background:#f3f0c5}
@@ -298,7 +297,8 @@
   </div>
   <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div><div id="cavePrompt" hidden><span id="cavePromptText">Cave entrance</span><button id="caveAction" type="button">Enter Cave</button></div><div id="baseActions" hidden><span id="basePieceName">Nearby structure</span><button id="upgradeBasePiece" type="button">Upgrade</button><button id="dismantleBasePiece" type="button">Dismantle</button></div>
 </div>
-<div id="mapPanel" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle"><div class="mapCard"><button class="mapClose" id="mapClose" type="button">Close ✕</button><strong id="mapTitle">WORLD MAP</strong><p class="questIntro">Unexplored areas remain hidden. Explore the world to reveal the map and discover landmarks.</p><div class="mapLegend"><span>Explored</span><span class="keyLand">Landmark</span><span class="keyPlayer">You</span></div><div id="mapGrid" class="mapGrid" aria-label="Exploration map"></div><div id="landmarkList"></div></div></div>
+<div id="miniMapWrap" aria-label="2D minimap"><canvas id="miniMap" width="232" height="232"></canvas><div id="miniMapLabel">LOCAL MAP</div></div>
+<div id="mapPanel" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle"><div class="mapCard"><button class="mapClose" id="mapClose" type="button">Close ✕</button><strong id="mapTitle">WORLD MAP · 600 × 600 M</strong><p class="questIntro">Explore to reveal terrain. Colors show woodland, forest, desert, gravel, beaches, ocean and highlands.</p><div class="mapLegend"><span>Explored terrain</span><span class="keyLand">Landmark</span><span class="keyPlayer">You</span></div><canvas id="mapCanvas" class="mapCanvas" width="600" height="600" aria-label="Top-down 2D world map"></canvas><div id="landmarkList"></div></div></div>
 <div id="questPanel" hidden role="dialog" aria-modal="true" aria-labelledby="questTitle"><div class="questCard"><div class="questHead"><strong id="questTitle">QUEST JOURNAL</strong><button id="questClose" type="button">Close ✕</button></div><p class="questIntro">Track your journey. Objectives complete automatically as you explore, build, craft and survive. Progress is saved with this world.</p><div id="questList"></div><div id="questSummary" class="questIntro" aria-live="polite"></div><h3 class="questSectionTitle">FIELD TUTORIAL</h3><div id="tutorialList"></div><h3 class="questSectionTitle">MAIN STORY · A NEW DAWN</h3><div id="mainQuest"></div></div></div>
 <div id="pausePanel" hidden><div class="pauseCard"><div class="pauseBrand">PAUSED</div><p>Your adventure is safely paused.</p><button id="pauseResume" class="pauseAction primary">▶ Resume Game</button><button id="pauseSave" class="pauseAction">Save World</button><button id="pauseSettings" class="pauseAction">⚙ Settings</button><button id="pauseMainMenu" class="pauseAction">Return to Main Menu</button><div id="pauseStatus" role="status" aria-live="polite">Autosave is active.</div></div></div>
 <div id="pauseBtn" aria-label="Pause game"><button id="pauseToggle" type="button">Ⅱ Pause</button></div>
@@ -393,7 +393,7 @@ var isMobile=!!(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches
 // Treat modest Chromebook-class hardware as low-end even when the browser reports a desktop pointer.
 var hardwareCores=Number(navigator.hardwareConcurrency)||0,deviceMemoryGB=Number(navigator.deviceMemory)||0;
 var isLowEnd=isMobile||(hardwareCores>0&&hardwareCores<=4)||(deviceMemoryGB>0&&deviceMemoryGB<=4);
-var WORLD=300,HALF=WORLD/2,WATER=-1.2,DAY=240,OLD_KEY='mfwilds3d_v1';
+var WORLD=600,HALF=WORLD/2,WATER=-1.2,DAY=240,OLD_KEY='mfwilds3d_v1';
 var WORLD_LIST_KEY='mfwilds3d_world_list_v1',SELECTED_WORLD_KEY='mfwilds3d_selected_world_v1',CHARACTER_KEY='mfwilds3d_character_v1';
 var worldList=[];try{worldList=JSON.parse(localStorage.getItem(WORLD_LIST_KEY)||'[]');if(!Array.isArray(worldList))worldList=[];}catch(e){worldList=[];}
 function seedFromString(value){var h=2166136261,t=String(value||'world');for(var i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0)||1;}
@@ -435,18 +435,28 @@ function heightAt(x,z){
   return y-e*e*22;
 }
 var BIOMES=[
-  {id:'meadow',name:'Sunlit Meadow',temp:0.62,moisture:0.42,ground:0x6d9b3e,accent:0x477a31},
-  {id:'forest',name:'Mosswood Forest',temp:0.55,moisture:0.72,ground:0x416d3b,accent:0x294f32},
-  {id:'highland',name:'Windscar Highlands',temp:0.28,moisture:0.25,ground:0x858b83,accent:0x626d70},
-  {id:'marsh',name:'Whispering Marsh',temp:0.72,moisture:0.94,ground:0x657c4b,accent:0x3e6048},
-  {id:'frost',name:'Frostfall Ridge',temp:0.08,moisture:0.38,ground:0xb8c6c5,accent:0x82989b}
+  {id:'meadow',name:'Sunlit Meadow',temp:0.62,moisture:0.42,ground:0x6d9b3e,accent:0x477a31,map:'#78a84e'},
+  {id:'woodland',name:'Ancient Woodland',temp:0.58,moisture:0.56,ground:0x527d3b,accent:0x345c30,map:'#477a3d'},
+  {id:'forest',name:'Mosswood Forest',temp:0.55,moisture:0.72,ground:0x416d3b,accent:0x294f32,map:'#285b38'},
+  {id:'highland',name:'Windscar Highlands',temp:0.28,moisture:0.25,ground:0x858b83,accent:0x626d70,map:'#858d91'},
+  {id:'marsh',name:'Whispering Marsh',temp:0.72,moisture:0.94,ground:0x657c4b,accent:0x3e6048,map:'#687d4e'},
+  {id:'frost',name:'Frostfall Ridge',temp:0.08,moisture:0.38,ground:0xb8c6c5,accent:0x82989b,map:'#c4d5d7'},
+  {id:'desert',name:'Sunscorched Desert',temp:0.96,moisture:0.12,ground:0xc9a45f,accent:0xa9783d,map:'#d7b36d'},
+  {id:'gravel',name:'Shatterstone Barrens',temp:0.34,moisture:0.2,ground:0x858078,accent:0x5d5b58,map:'#77736d'},
+  {id:'sand',name:'Golden Shore',temp:0.72,moisture:0.3,ground:0xd8c18a,accent:0xb89b65,map:'#ddc58a'},
+  {id:'ocean',name:'Open Ocean',temp:0.48,moisture:1,ground:0x315e78,accent:0x24475e,map:'#285d7a'}
 ];
 function biomeAt(x,z){
-  var elevation=heightAt(x,z),moisture=fbm(x*0.009+173,z*0.009-91),heat=fbm(x*0.006-47,z*0.006+211);
-  if(elevation>11.5||heat<0.24)return BIOMES[4];
-  if(elevation>7.2)return BIOMES[2];
-  if(moisture>0.63&&elevation<5.2)return BIOMES[3];
-  if(moisture>0.48)return BIOMES[1];
+  var elevation=heightAt(x,z),moisture=fbm(x*0.009+173,z*0.009-91),heat=fbm(x*0.006-47,z*0.006+211),detail=fbm(x*0.034+19,z*0.034-37);
+  if(elevation<WATER+0.35)return BIOMES[9];
+  if(elevation<WATER+2.1)return BIOMES[8];
+  if(elevation>11.5||heat<0.24)return BIOMES[5];
+  if(elevation>7.2)return BIOMES[3];
+  if(heat>0.68&&moisture<0.39)return BIOMES[6];
+  if(moisture<0.29&&detail>0.48)return BIOMES[7];
+  if(moisture>0.68&&elevation<5.2)return BIOMES[4];
+  if(moisture>0.56)return BIOMES[2];
+  if(moisture>0.43)return BIOMES[1];
   return BIOMES[0];
 }
 var SEASONS=[{id:'spring',name:'Spring',temperature:0.04,water:0x3b8294,sky:0xe0c9a5},{id:'summer',name:'Summer',temperature:0.16,water:0x287c9d,sky:0xffd59b},{id:'autumn',name:'Autumn',temperature:-0.02,water:0x386b78,sky:0xe7a06e},{id:'winter',name:'Winter',temperature:-0.24,water:0x789eaa,sky:0xc4d7e8}];
@@ -696,7 +706,7 @@ tgeo.rotateX(-Math.PI/2);
   var tp=tgeo.attributes.position,n=tp.count,i;
   for(i=0;i<n;i++)tp.setY(i,heightAt(tp.getX(i),tp.getZ(i)));
   var col=new Float32Array(n*3);
-  var cSand=new THREE.Color(0xc9b98a),cRock=new THREE.Color(0x7a7e80),cDirt=new THREE.Color(0x6f5b3d);
+  var cSand=new THREE.Color(0xd8c18a),cRock=new THREE.Color(0x7a7e80),cDirt=new THREE.Color(0x6f5b3d),cDesert=new THREE.Color(0xc9a45f),cGravel=new THREE.Color(0x858078);
   var cG1=new THREE.Color(0x477a31),cG2=new THREE.Color(0x6d9b3e),cHi=new THREE.Color(0x8a9a6a),c=new THREE.Color();
   for(i=0;i<n;i++){
     var x=tp.getX(i),z=tp.getZ(i),y=tp.getY(i);
@@ -704,6 +714,9 @@ tgeo.rotateX(-Math.PI/2);
     var nz=vnoise(x*0.12+9,z*0.12+9),fine=vnoise(x*0.9,z*0.9);
     var biome=biomeAt(x,z),baseBiome=new THREE.Color(biome.ground),accentBiome=new THREE.Color(biome.accent);
     c.copy(baseBiome).lerp(accentBiome,nz*0.48);
+    if(biome.id==='desert')c.lerp(cDesert,0.35+fine*0.18);
+    if(biome.id==='gravel')c.lerp(cGravel,0.28+fine*0.22);
+    if(biome.id==='sand')c.lerp(cSand,0.38);
     if(y>8)c.lerp(cHi,clamp((y-8)/6,0,0.7));
     if(sl>1.5)c.lerp(cDirt,clamp((sl-1.5)/1.2,0,1));
     if(sl>2.6)c.lerp(cRock,clamp((sl-2.6)/1.4,0,1));
@@ -785,7 +798,7 @@ function scatter(kind,type,count,minS,maxS,rad,hp){
     if(Math.hypot(x,z)<12)continue;
     var y=heightAt(x,z),biome=biomeAt(x,z);
     if(y<WATER+0.5||y>14)continue;
-    var habitatChance=kind==='pine'?(biome.id==='forest'?0.88:0.24):kind==='oak'?(biome.id==='meadow'||biome.id==='marsh'?0.82:0.22):kind==='birch'?(biome.id==='frost'||biome.id==='highland'?0.8:0.18):kind==='bush'?(biome.id==='meadow'||biome.id==='marsh'?0.86:0.38):(biome.id==='highland'||biome.id==='frost'?0.78:0.34);
+    var habitatChance=kind==='pine'?(biome.id==='forest'||biome.id==='woodland'?0.88:0.12):kind==='oak'?(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.82:0.12):kind==='birch'?(biome.id==='frost'||biome.id==='highland'?0.8:0.18):kind==='bush'?(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.86:0.18):(biome.id==='highland'||biome.id==='frost'||biome.id==='gravel'?0.78:0.2);
     if(R()>habitatChance)continue;
     if((kind==='rock'||kind==='copperOre'||kind==='ironOre'||kind==='crystalOre'||kind==='tinOre'||kind==='goldOre')?false:(Math.abs(heightAt(x+2,z)-y)+Math.abs(heightAt(x,z+2)-y)>3.2))continue;
     var s=minS+R()*(maxS-minS);
@@ -1811,7 +1824,7 @@ function load(){
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
     (d.chests||[]).forEach(function(c){addStructure('chest',c.x,c.z);var chest=chests[chests.length-1];if(Array.isArray(c.slots))chest.slots=c.slots.slice(0,18).map(function(it){return it&&ITEMS[it.id]&&typeof it.n==='number'&&Math.floor(it.n)>0?{id:it.id,n:Math.min(ITEMS[it.id].max,Math.floor(it.n))}:null});});
-    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'].indexOf(a)>=0}):[];questCompletedIds=Array.isArray(d.questCompletedIds)?d.questCompletedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];questAbandonedIds=Array.isArray(d.questAbandonedIds)?d.questAbandonedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];discoveredLandmarks=Array.isArray(d.discoveredLandmarks)?d.discoveredLandmarks.filter(function(a){return ['base_camp','whispering_grove','stonefall_ridge','moonwater_pool','old_watch'].indexOf(a)>=0}):[];exploredCells=Array.isArray(d.exploredCells)?d.exploredCells.filter(function(a){return typeof a==='number'&&a>=0&&a<900}):[];
+    clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'].indexOf(a)>=0}):[];questCompletedIds=Array.isArray(d.questCompletedIds)?d.questCompletedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];questAbandonedIds=Array.isArray(d.questAbandonedIds)?d.questAbandonedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];discoveredLandmarks=Array.isArray(d.discoveredLandmarks)?d.discoveredLandmarks.filter(function(a){return ['base_camp','whispering_grove','stonefall_ridge','moonwater_pool','old_watch'].indexOf(a)>=0}):[];exploredCells=Array.isArray(d.exploredCells)?d.exploredCells.filter(function(a){return typeof a==='number'&&a>=0&&a<3600}):[];if(Array.isArray(d.exploredCells)&&d.exploredCells.every(function(a){return a<900;})){exploredCells=d.exploredCells.map(function(oldCell){var ox=oldCell%30,oz=Math.floor(oldCell/30),wx=-150+ox*10+5,wz=-150+oz*10+5;return mapCellFor(wx,wz);});}
     if(recovered)setTimeout(function(){say('Recovered your world from its backup save.',5)},500);
     return true;
   }catch(e){return false}
@@ -3094,7 +3107,8 @@ var LANDMARKS=[
   {id:'moonwater_pool',name:'Moonwater Pool',x:28,z:-68,lore:'Still water reflects the night sky. Wildlife gathers here when the forest grows quiet.'},
   {id:'old_watch',name:'The Old Watch',x:-72,z:-58,lore:'A forgotten lookout faces the distant wilds. Its silent stones hint at a danger once watched from afar.'}
 ];
-function mapCellFor(x,z){var cx=clamp(Math.floor((x+150)/10),0,29),cz=clamp(Math.floor((z+150)/10),0,29);return cz*30+cx}
+var MAP_CELLS=60,MAP_CELL_SIZE=WORLD/MAP_CELLS,miniMapLastDraw=0;
+function mapCellFor(x,z){var cx=clamp(Math.floor((x+HALF)/MAP_CELL_SIZE),0,MAP_CELLS-1),cz=clamp(Math.floor((z+HALF)/MAP_CELL_SIZE),0,MAP_CELLS-1);return cz*MAP_CELLS+cx}
 function updateExplorationMap(){
   var cell=mapCellFor(P.x,P.z),changed=false;
   if(exploredCells.indexOf(cell)<0){exploredCells.push(cell);changed=true}
@@ -3108,20 +3122,31 @@ function updateExplorationMap(){
   }
   if(changed)save();
 }
+function biomeMapColor(x,z){return biomeAt(x,z).map||'#52634b';}
+function drawPlayerArrow(ctx,x,y,size,angle){ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(0,-size);ctx.lineTo(size*0.68,size*0.72);ctx.lineTo(0,size*0.38);ctx.lineTo(-size*0.68,size*0.72);ctx.closePath();ctx.fillStyle='#fff4a8';ctx.strokeStyle='#18231c';ctx.lineWidth=2;ctx.fill();ctx.stroke();ctx.restore();}
+function renderMiniMap(){
+  var now=performance.now();if(now-miniMapLastDraw<420)return;miniMapLastDraw=now;
+  var canvas=$('miniMap'),ctx=canvas.getContext('2d');if(!ctx)return;
+  var size=canvas.width,range=72,cells=24,step=range*2/cells,px=size/2,cellPx=size/cells;
+  ctx.clearRect(0,0,size,size);ctx.fillStyle='#14232b';ctx.fillRect(0,0,size,size);
+  ctx.save();ctx.beginPath();ctx.arc(px,px,size*0.48,0,Math.PI*2);ctx.clip();
+  for(var rz=0;rz<cells;rz++)for(var rx=0;rx<cells;rx++){var wx=P.x-range+(rx+0.5)*step,wz=P.z-range+(rz+0.5)*step;ctx.fillStyle=biomeMapColor(wx,wz);ctx.fillRect(rx*cellPx,rz*cellPx,cellPx+1,cellPx+1);}
+  ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,size);ctx.moveTo(0,px);ctx.lineTo(size,px);ctx.stroke();
+  drawPlayerArrow(ctx,px,px,12,P.face);ctx.restore();ctx.strokeStyle='#d5e7d0';ctx.lineWidth=4;ctx.beginPath();ctx.arc(px,px,size*0.48,0,Math.PI*2);ctx.stroke();
+}
 function renderWorldMap(){
-  var seen={},html='',playerCell=mapCellFor(P.x,P.z),marks={};
+  var canvas=$('mapCanvas'),ctx=canvas.getContext('2d');if(!ctx)return;
+  var seen={},cell=canvas.width/MAP_CELLS;
   for(var i=0;i<exploredCells.length;i++)seen[exploredCells[i]]=true;
-  for(var j=0;j<LANDMARKS.length;j++)if(discoveredLandmarks.indexOf(LANDMARKS[j].id)>=0)marks[mapCellFor(LANDMARKS[j].x,LANDMARKS[j].z)]=LANDMARKS[j].name;
-  for(var c=0;c<900;c++){
-    var cls='mapCell'+(seen[c]?' seen':'')+(marks[c]?' landmark':'')+(c===playerCell?' player':'');
-    html+='<span class="'+cls+'" title="'+(c===playerCell?'Your position':(marks[c]|| (seen[c]?'Explored':'Unexplored'))) +'"></span>';
+  ctx.fillStyle='#101b20';ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(var cz=0;cz<MAP_CELLS;cz++)for(var cx=0;cx<MAP_CELLS;cx++){
+    var idx=cz*MAP_CELLS+cx,x=-HALF+(cx+0.5)*MAP_CELL_SIZE,z=-HALF+(cz+0.5)*MAP_CELL_SIZE;
+    ctx.fillStyle=seen[idx]?biomeMapColor(x,z):'#172127';ctx.fillRect(cx*cell,cz*cell,cell+0.4,cell+0.4);
   }
-  $('mapGrid').innerHTML=html;
+  for(var j=0;j<LANDMARKS.length;j++)if(discoveredLandmarks.indexOf(LANDMARKS[j].id)>=0){var l=LANDMARKS[j],lx=(l.x+HALF)/WORLD*canvas.width,lz=(l.z+HALF)/WORLD*canvas.height;ctx.fillStyle='#f1bd61';ctx.beginPath();ctx.arc(lx,lz,5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#3b2813';ctx.lineWidth=2;ctx.stroke();}
+  var px=(P.x+HALF)/WORLD*canvas.width,pz=(P.z+HALF)/WORLD*canvas.height;drawPlayerArrow(ctx,px,pz,9,P.face);
   var list='<strong>Discovered landmarks ('+discoveredLandmarks.length+'/'+LANDMARKS.length+')</strong><br>';
-  for(var k=0;k<LANDMARKS.length;k++){
-    var l=LANDMARKS[k],found=discoveredLandmarks.indexOf(l.id)>=0;
-    list+=found?('✦ <b>'+l.name+'</b> — '+l.lore+'<br>'):'? Unknown location<br>';
-  }
+  for(var k=0;k<LANDMARKS.length;k++){var lm=LANDMARKS[k],found=discoveredLandmarks.indexOf(lm.id)>=0;list+=found?('✦ <b>'+lm.name+'</b> — '+lm.lore+'<br>'):'? Unknown location<br>';}
   $('landmarkList').innerHTML=list;
 }
 $('mapOpen').addEventListener('click',function(){updateExplorationMap();renderWorldMap();$('mapPanel').hidden=false;});
@@ -3222,6 +3247,7 @@ function baseRatings(){
   return {comfort:Math.min(100,Math.round(comfort)),protection:Math.min(100,Math.round(protection))};
 }
 function updateHud(){
+  renderMiniMap();
   $('hp').style.width=clamp(P.hp,0,100)+'%';
   $('food').style.width=clamp(P.food,0,100)+'%';
   $('stamina').style.width=clamp(P.stamina,0,100)+'%';
