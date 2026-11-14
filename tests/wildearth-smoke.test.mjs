@@ -367,7 +367,11 @@ test('season cycle changes environmental temperature, water palette, and HUD sea
   assert.ok(gameScript.includes('function seasonInfo()'));
   assert.ok(gameScript.includes('temperature:-0.24'));
   assert.ok(gameScript.includes('seasonInfo().temperature'));
-  assert.ok(gameScript.includes('water.material.color.setHex(season.water)'));
+  assert.ok(gameScript.includes('var SEASONS=['));
+  assert.ok(gameScript.includes('return SEASONS[index]||SEASONS[0]'));
+  assert.ok(gameScript.includes('var season=seasonInfo()||SEASONS[0]'));
+  assert.ok(gameScript.includes('Number.isFinite(season.water)?season.water:SEASONS[0].water'));
+  assert.ok(gameScript.includes('if(water&&water.material&&water.material.color)'));
   assert.ok(gameScript.includes("+' · '+seasonInfo().name"));
 });
 
