@@ -817,7 +817,7 @@ test('new wraith types drop their signature materials and existing wraiths can d
   assert.ok(loot.includes("mob.kind==='emberwisp'"));
   assert.ok(loot.includes("gain('frostShard'"));
   assert.ok(loot.includes("gain('emberCore'"));
-  assert.ok(loot.includes('random()<0.14'));
+  assert.ok(loot.includes('rareRoll<0.14'));
   for(const id of ['frostShard','emberCore']) {
     assert.ok(gameScript.includes(id+':{n:'));
     assert.ok(gameScript.includes(id+':\'<svg'));
