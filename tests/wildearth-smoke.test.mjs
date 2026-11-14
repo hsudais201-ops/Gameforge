@@ -1204,3 +1204,21 @@ test('terrain vertex colors include layered micro-variation without external tex
   assert.ok(gameScript.includes('if(biome.id===\'volcanic\'&&micro>0.68)'));
   assert.ok(gameScript.includes('var v=0.86+0.22*fine+(micro-0.5)*0.045'));
 });
+
+
+test('low-poly tree meshes include layered pine boughs, bark grooves and oak root flares', () => {
+  const pine=gameScript.slice(gameScript.indexOf('function buildPine()'),gameScript.indexOf('function buildOak()'));
+  const oak=gameScript.slice(gameScript.indexOf('function buildOak()'),gameScript.indexOf('function buildRock()'));
+  assert.match(pine,/CylinderGeometry\(0\.025,0\.055,4\.35,4\)/);
+  assert.match(pine,/var reach=rad\*0\.76/);
+  assert.match(oak,/CylinderGeometry\(0\.045,0\.16,1\.15,5\)/);
+  assert.match(oak,/var ka=k\/7\*6\.283/);
+});
+
+test('rock meshes add layered mineral facets and restrained moss patches', () => {
+  const rock=gameScript.slice(gameScript.indexOf('function buildRock()'),gameScript.indexOf('function buildOre('));
+  assert.match(rock,/var strata=\[0x626a70,0x969b9c,0x68736f,0x858b8b\]/);
+  assert.match(rock,/new THREE\.DodecahedronGeometry\(0\.12\+\(i%3\)\*0\.035\)/);
+  assert.match(rock,/new THREE\.SphereGeometry\(0\.24,6,4\)/);
+  assert.match(rock,/return merge\(parts\)/);
+});
