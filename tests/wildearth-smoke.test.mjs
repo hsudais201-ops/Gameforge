@@ -891,3 +891,32 @@ test('elemental weapons deal their own damage and armor reduces incoming damage'
   assert.ok(gameScript.includes('function equipSelectedArmor()'));
   assert.ok(gameScript.includes("id!=='frostarmor'&&id!=='emberarmor'"));
 });
+
+test('desert expansion adds cactus resources and a discoverable sandstone castle', () => {
+  assert.ok(gameScript.includes("id:'desert',name:'Sunscorched Desert'"));
+  assert.ok(gameScript.includes('function buildCactus()'));
+  assert.ok(gameScript.includes("scatter('cactus','bush'"));
+  assert.ok(gameScript.includes("biomeAt(cx,cz).id!=='desert'"));
+  assert.ok(gameScript.includes('function buildDesertCastle()'));
+  assert.ok(gameScript.includes("id:'sunspire_castle',name:'Sunspire Desert Castle'"));
+  assert.ok(gameScript.includes("'sunspire_castle'].indexOf(a)>=0"));
+  assert.ok(gameScript.includes("awardXP(l.id==='sunspire_castle'?60:15"));
+});
+
+test('firefly count is reduced for mobile and desktop', () => {
+  assert.ok(gameScript.includes('var FF=isMobile?18:32'));
+  assert.ok(!gameScript.includes('var FF=isMobile?60:110'));
+});
+
+test('player levels, persists upgrades, and exposes a caught-creature index', () => {
+  assert.ok(gameScript.includes('level:1,xp:0,statPoints:0,stats:{vitality:0,power:0,tamer:0}'));
+  assert.ok(gameScript.includes('function awardXP(amount,reason)'));
+  assert.ok(gameScript.includes('function upgradePlayerStat(stat)'));
+  assert.ok(gameScript.includes("progress:{level:P.level,xp:P.xp,statPoints:P.statPoints,stats:P.stats,caught:catchIndex}"));
+  assert.ok(gameScript.includes("awardXP(25+(SPECIES[sc.sp].r==='rare'?15"));
+  assert.ok(gameScript.includes("data-stat-upgrade"));
+  assert.ok(gameScript.includes("id=\"creatureIndex\""));
+  assert.ok(gameScript.includes("CAUGHT ×'+catchIndex[ci]"));
+  assert.ok(gameScript.includes("P.stats.tamer)||0)*0.025"));
+  assert.ok(gameScript.includes("P.stats.power)||0)*0.75"));
+});
