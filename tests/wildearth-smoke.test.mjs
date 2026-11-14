@@ -985,3 +985,22 @@ test('Palworld-inspired inventory includes working category filters and a compan
   assert.ok(gameScript.includes('team.forEach(function(t,ti)'));
   assert.ok(html.includes('.partyCard'));
 });
+
+test('inventory is rebuilt as a full-screen character, backpack, party and crafting experience', () => {
+  assert.ok(html.includes('class="wildInventory"'));
+  assert.ok(html.includes('class="wildCharacterPanel"'));
+  assert.ok(html.includes('class="wildBackpackPanel"'));
+  assert.ok(html.includes('class="wildPartyPanel"'));
+  assert.ok(html.includes('id="inventoryScreen"'));
+  assert.ok(html.includes('id="craftingScreen"'));
+  assert.ok(html.includes('data-bag-tab="inventory"'));
+  assert.ok(html.includes('data-bag-tab="crafting"'));
+  assert.ok(html.includes('id="armorHead"'));
+  assert.ok(html.includes('id="armorChest"'));
+  assert.ok(html.includes('id="armorLegs"'));
+  assert.ok(html.includes('id="armorFeet"'));
+  assert.ok(gameScript.includes('function setBagTab(tab)'));
+  assert.ok(gameScript.includes("$('craftingScreen').hidden=tab!=='crafting'"));
+  assert.ok(html.includes('.wildCharacterSilhouette'));
+  assert.ok(html.includes('.wildRecipeBody'));
+});
