@@ -3,20 +3,38 @@ import { json, getSessionUser, requestAllowed, rateLimit } from "../../lib/auth.
 const MAX_PROJECT_BYTES = 1024 * 1024;
 const MAX_PROJECTS_PER_USER = 200;
 
+function validId(value) {
+  return typeof value === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(value);
+}
+
 function validProject(project) {
   if (!project || typeof project !== "object" || Array.isArray(project)) return false;
-  if (typeof project.id !== "string" || project.id.length > 80) return false;
+  if (!validId(project.id)) return false;
   if (typeof project.name !== "string" || !project.name.trim() || project.name.length > 48) return false;
   if (typeof project.genre !== "string" || project.genre.length > 40) return false;
-  if (!Array.isArray(project.scenes) || project.scenes.length > 100) return false;
+  if (!Array.isArray(project.scenes) || project.scenes.length < 1 || project.scenes.length > 100) return false;
+  const sceneIds = new Set();
   for (const scene of project.scenes) {
-    if (!scene || typeof scene.id !== "string" || typeof scene.name !== "string" || !Array.isArray(scene.objects) || scene.objects.length > 2000) return false;
+    if (!scene || !validId(scene.id) || sceneIds.has(scene.id)) return false;
+    if (typeof scene.name !== "string" || !scene.name.trim() || scene.name.length > 48) return false;
+    if (!Array.isArray(scene.objects) || scene.objects.length > 2000) return false;
+    sceneIds.add(scene.id);
+    const objectIds = new Set();
     for (const object of scene.objects) {
-      if (!object || typeof object.id !== "string" || typeof object.kind !== "string" || typeof object.name !== "string") return false;
-      if (!["Player", "Platform", "Coin", "Enemy"].includes(object.kind)) return false;
-      if (!Number.isFinite(object.x) || !Number.isFinite(object.y)) return false;
+      if (!object || !validId(object.id) || objectIds.has(object.id)) return false;
+      if (typeof object.kind !== "string" || typeof object.name !== "string" || !object.name.trim() || object.name.length > 48) return false;
+      if (!["Player", "Platform", "Coin", "Enemy", "Hazard", "Decoration"].includes(object.kind)) return false;
+      if (!Number.isFinite(object.x) || object.x < 0 || object.x > 95) return false;
+      if (!Number.isFinite(object.y) || object.y < 0 || object.y > 90) return false;
+      if (object.width !== undefined && (!Number.isFinite(object.width) || object.width < 8 || object.width > 200)) return false;
+      if (object.height !== undefined && (!Number.isFinite(object.height) || object.height < 8 || object.height > 160)) return false;
+      if (object.visible !== undefined && typeof object.visible !== "boolean") return false;
+      if (object.collisionEnabled !== undefined && typeof object.collisionEnabled !== "boolean") return false;
+      if (object.collisionMode !== undefined && !["solid", "trigger"].includes(object.collisionMode)) return false;
+      objectIds.add(object.id);
     }
   }
+  if (project.currentSceneId !== undefined && !sceneIds.has(project.currentSceneId)) return false;
   return true;
 }
 
@@ -26,7 +44,10 @@ export async function onRequestGet({ request, env }) {
   const rows = await env.DB.prepare("SELECT project_id, project_json, updated_at FROM projects WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?")
     .bind(user.id, MAX_PROJECTS_PER_USER).all();
   const projects = (rows.results || []).flatMap(row => {
-    try { return [JSON.parse(row.project_json)]; } catch { return []; }
+    try {
+      const project = JSON.parse(row.project_json);
+      return validProject(project) ? [project] : [];
+    } catch { return []; }
   });
   return json({ projects });
 }
