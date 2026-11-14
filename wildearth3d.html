@@ -1275,12 +1275,32 @@ function buildJungleBroadleaf(){
   return merge(parts);
 }
 function buildLog(){
-  return merge([
-    {geo:new THREE.CylinderGeometry(0.3,0.33,3.2,8),c:0x5a3d24,m:T(0,0.3,0,0,0,Math.PI/2),flat:true},
-    {geo:new THREE.CylinderGeometry(0.27,0.27,0.04,8),c:0xc9a06a,m:T(1.61,0.3,0,0,0,Math.PI/2)},
-    {geo:new THREE.CylinderGeometry(0.27,0.27,0.04,8),c:0xc9a06a,m:T(-1.61,0.3,0,0,0,Math.PI/2)},
+  var parts=[
+    {geo:new THREE.CylinderGeometry(0.3,0.35,3.2,9),c:0x5a3d24,m:T(0,0.3,0,0,0,Math.PI/2),flat:true},
+    {geo:new THREE.CylinderGeometry(0.27,0.27,0.045,9),c:0xc9a06a,m:T(1.61,0.3,0,0,0,Math.PI/2)},
+    {geo:new THREE.CylinderGeometry(0.27,0.27,0.045,9),c:0xc9a06a,m:T(-1.61,0.3,0,0,0,Math.PI/2)},
+    {geo:new THREE.CylinderGeometry(0.19,0.19,0.018,9),c:0x9b7046,m:T(1.642,0.3,0,0,0,Math.PI/2)},
+    {geo:new THREE.CylinderGeometry(0.19,0.19,0.018,9),c:0x9b7046,m:T(-1.642,0.3,0,0,0,Math.PI/2)},
+    {geo:new THREE.CylinderGeometry(0.11,0.11,0.02,8),c:0xead0a0,m:T(1.655,0.3,0,0,0,Math.PI/2)},
+    {geo:new THREE.CylinderGeometry(0.11,0.11,0.02,8),c:0xead0a0,m:T(-1.655,0.3,0,0,0,Math.PI/2)},
     {geo:new THREE.SphereGeometry(0.28,6,4),c:0x5f8f3a,m:T(0.3,0.5,0.05,0,0,0,1.6,0.35,0.9),wobble:0.3}
-  ]);
+  ];
+  for(var i=0;i<7;i++){var a=i/7*6.283;parts.push({geo:new THREE.CylinderGeometry(0.025,0.045,2.85,4),c:i%2?0x765333:0x493322,m:T(0,0.3+Math.cos(a)*0.22,Math.sin(a)*0.22,0,0,Math.PI/2),flat:true});}
+  for(var j=0;j<3;j++){var x=-0.8+j*0.8;parts.push({geo:new THREE.SphereGeometry(0.075,5,4),c:0x38271c,m:T(x,0.56,0.04,0,0,0,1.2,0.45,0.8)});}
+  return merge(parts);
+}
+function buildLeafLitter(){
+  var parts=[],colors=[0x8b5a32,0xa66b37,0x6f7138,0xb58a4b,0x76503a,0xc18b45];
+  for(var i=0;i<13;i++){var a=hash(i,71)*6.283,r=0.12+hash(i,72)*0.55,len=0.22+hash(i,73)*0.24,w=0.055+hash(i,74)*0.045,x=Math.cos(a)*r,z=Math.sin(a)*r;
+    parts.push({geo:new THREE.SphereGeometry(1,5,3),c:colors[i%colors.length],m:T(x,0.035+hash(i,75)*0.025,z,0,hash(i,76)*3.14,hash(i,77)*0.35,len,w,0.08),flat:true});
+    if(i%4===0)parts.push({geo:new THREE.CylinderGeometry(0.012,0.018,0.28,4),c:0x65472e,m:T(x,0.035,z,0,0,hash(i,78)*3.14),flat:true});
+  }
+  return merge(parts);
+}
+function buildDryLitter(){
+  var parts=[],colors=[0xc5a45f,0xa8874b,0xd2b76f,0x927747];
+  for(var i=0;i<9;i++){var a=hash(i,81)*6.283,r=0.1+hash(i,82)*0.42,len=0.2+hash(i,83)*0.28;parts.push({geo:new THREE.ConeGeometry(0.055,len,3),c:colors[i%4],m:T(Math.cos(a)*r,len*0.035,Math.sin(a)*r,0,hash(i,84)*3.14,Math.sin(a)*0.15,1,0.18,1),flat:true});}
+  return merge(parts);
 }
 function placeInstanced(geo,count,ok,sMin,sMax,castSh,yFix){
   var im=new THREE.InstancedMesh(geo,matVC,count),k=0,tries=0,positions=[],baseMatrices=[];
@@ -1310,6 +1330,8 @@ function placeInstanced(geo,count,ok,sMin,sMax,castSh,yFix){
   placeInstanced(buildReeds(),Math.round(260*mf),function(x,z,y){return y>WATER-0.3&&y<WATER+0.5},0.8,1.3);
   placeInstanced(buildLily(),Math.round(90*mf),function(x,z,y){return y<WATER-0.35&&y>WATER-1.3},0.8,1.4,false,WATER+0.03);
   placeInstanced(buildLog(),Math.round(34*mf),function(x,z,y){return grassy(x,z,y)&&Math.hypot(x,z)>10},0.9,1.4,true);
+  placeInstanced(buildLeafLitter(),Math.round(230*mf),function(x,z,y){var id=biomeAt(x,z).id;return grassy(x,z,y)&&(id==='forest'||id==='woodland'||id==='jungle'||id==='marsh')},0.8,1.35,false);
+  placeInstanced(buildDryLitter(),Math.round(115*mf),function(x,z,y){var id=biomeAt(x,z).id;return grassy(x,z,y)&&(id==='desert'||id==='savanna'||id==='meadow')},0.8,1.3,false);
   // Sparse biome signature plants add strong regional identity without dense extra draw calls.
   placeInstanced(buildDesertTuft(),Math.round(72*mf),function(x,z,y){var id=biomeAt(x,z).id;return id==='desert'||id==='savanna'},0.8,1.35,false);
   placeInstanced(buildSnowShrub(),Math.round(54*mf),function(x,z,y){var id=biomeAt(x,z).id;return id==='frost'||id==='tundra'||id==='highland'},0.75,1.2,false);
