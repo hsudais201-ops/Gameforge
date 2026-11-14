@@ -248,7 +248,7 @@ test('creatures have food preferences, hunger needs, and trust-based catch bonus
 
 
 test('melee attacks require a valid forward-facing hit arc and show hit confirmation', () => {
-  for (const marker of ['function inWeaponArc(o,range,threshold)', 'inWeaponArc(o,5,0.25)', 'inWeaponArc(o,3.4,0.35)', 'burst(w.x,w.y+1.2,w.z,0xc9a8ff,6)', 'dealt.toFixed(1)']) {
+  for (const marker of ['function inWeaponArc(o,range,threshold)', 'inWeaponArc(o,5,0.25)', 'inWeaponArc(o,3.4,0.35)', 'burst(w.x,w.y+1.2,w.z,weapon.color,weapon.id===\'frostblade\'||weapon.id===\'emberblade\'?12:6)', 'dealt.toFixed(1)']) {
     assert.ok(gameScript.includes(marker), 'missing melee validation marker: ' + marker);
   }
 });
@@ -780,7 +780,7 @@ test('mob signature drops unlock legendary Nightfall Blade and Wraithguard recip
   assert.ok(gameScript.includes('wearTool(weapon.id,1)'));
   assert.ok(gameScript.includes("id==='heraldblade'||id==='frostblade'||id==='emberblade'?'ironbar'"),'elemental blades must use iron ingots for repairs');
   assert.ok(gameScript.includes('heraldblade:320'));
-  assert.ok(gameScript.includes("id==='ironpick'||id==='ironsword'||id==='heraldblade'?'ironbar'"));
+  assert.ok(gameScript.includes("id==='ironpick'||id==='ironsword'||id==='heraldblade'||id==='frostblade'||id==='emberblade'?'ironbar'"));
   assert.ok(gameScript.includes("wraithguard:'Wraithguard'"));
 });
 
@@ -802,8 +802,8 @@ test('Frost and ember attacks apply short status effects that affect movement an
   assert.ok(gameScript.includes('function applyWraithStatus(mob){'));
   assert.ok(gameScript.includes("mob.kind==='frostreaver'"));
   assert.ok(gameScript.includes("mob.kind==='emberwisp'"));
-  assert.ok(gameScript.includes('frostSlowTimer=Math.max(frostSlowTimer,2.4)'));
-  assert.ok(gameScript.includes('emberBurnTimer=Math.max(emberBurnTimer,3.2)'));
+  assert.ok(gameScript.includes("frostSlowTimer=Math.max(frostSlowTimer,2.4*(equippedArmor==='frostarmor'?0.35:1))"));
+  assert.ok(gameScript.includes("emberBurnTimer=Math.max(emberBurnTimer,3.2*(equippedArmor==='emberarmor'?0.35:1))"));
   assert.ok(gameScript.includes('frostSlowTimer>0?0.58:1'));
   assert.ok(gameScript.includes('emberBurnTimer>0'));
   assert.ok(gameScript.includes("playerDamage(1.1,'Burning')"));
