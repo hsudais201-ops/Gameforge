@@ -271,3 +271,23 @@ test('sound captions are accessible, configurable, persisted, and independent of
   assert.ok(gameScript.includes("showSoundCaption(kind);"));
   assert.ok(gameScript.includes("saveAudioPrefs();"));
 });
+
+
+test('sound captions have persisted English and Urdu localization tables', () => {
+  assert.match(html, /id="captionLanguage"/);
+  assert.match(html, /id="subtitleLine"/);
+  for (const marker of ["captionLanguage:'en'", "savedAudio.captionLanguage==='ur'", 'captions={en:', 'ur:{gather:', "audioPrefs.captionLanguage=this.value==='ur'?'ur':'en'"]) {
+    assert.ok(gameScript.includes(marker), 'missing caption localization marker: ' + marker);
+  }
+});
+
+test('floating combat text has a hard DOM-node cap and safe removal', () => {
+  assert.ok(gameScript.includes('if(floats.length>=60)'));
+  assert.ok(gameScript.includes('oldest.el.parentNode.removeChild(oldest.el)'));
+  assert.ok(gameScript.includes('if(f.el.parentNode)f.el.parentNode.removeChild(f.el)'));
+});
+
+test('streamed instance matrices only mark changed mesh buffers dirty', () => {
+  assert.ok(gameScript.includes('var meshChanged=false,im=streamedMeshes[m]'));
+  assert.ok(gameScript.includes('if(meshChanged)im.instanceMatrix.needsUpdate=true'));
+});
