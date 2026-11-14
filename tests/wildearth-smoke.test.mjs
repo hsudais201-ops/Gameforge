@@ -450,3 +450,31 @@ test('river channels and ponds are connected to swimming, oxygen, and surface-wa
     assert.ok(gameScript.includes(marker), 'missing river system marker: '+marker);
   }
 });
+
+
+test('long-session save migration and world-streaming stress loops remain bounded and deterministic', () => {
+  const migrationStart = gameScript.indexOf('function migrateInventorySlots(');
+  const migrationEnd = gameScript.indexOf('\nfunction load()', migrationStart);
+  assert.ok(migrationStart >= 0 && migrationEnd > migrationStart);
+  const migrate = new Function(gameScript.slice(migrationStart, migrationEnd) + ';return migrateInventorySlots;')();
+  const itemDefs = {wood:{max:50},ball:{max:20},stone:{max:50}};
+  let slots = Array.from({length:36}, (_,i) => i===0?{id:'wood',n:50}:null);
+  for (let i=0;i<2000;i++) {
+    const snapshot = JSON.parse(JSON.stringify({version:5,slots,clock:i*10,structures:[]}));
+    slots = migrate(snapshot.slots,itemDefs,36,9);
+    assert.equal(slots.length,36);
+    assert.equal(slots[0].id,'wood');
+    assert.equal(slots[0].n,50);
+  }
+  const streamStart=gameScript.indexOf('function streamChunkActive(');
+  const streamEnd=gameScript.indexOf('\nfunction updateWorldStreaming',streamStart);
+  assert.ok(streamStart>=0&&streamEnd>streamStart);
+  const active=new Function(gameScript.slice(streamStart,streamEnd)+';return streamChunkActive;')();
+  let visible=0;
+  for(let i=0;i<5000;i++){
+    const px=Math.sin(i*0.013)*145,pz=Math.cos(i*0.017)*145;
+    for(let j=0;j<12;j++)if(active((j-6)*32,(j%5-2)*32,px,pz,85,32))visible++;
+  }
+  assert.ok(visible>0);
+  assert.ok(gameScript.includes('var meshChanged=false,im=streamedMeshes[m]'));
+});
