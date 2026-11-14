@@ -1568,6 +1568,10 @@ function makeWraith(kind){
     for(var ei=0;ei<4;ei++){var flame=mesh(new THREE.ConeGeometry(0.17,0.72,5),em,Math.cos(ei*Math.PI/2)*0.55,1.55,Math.sin(ei*Math.PI/2)*0.55);flame.rotation.z=Math.cos(ei*Math.PI/2)*0.45;flame.rotation.x=Math.sin(ei*Math.PI/2)*0.45;g.add(flame);}
     var emberRing=mesh(new THREE.TorusGeometry(0.66,0.07,6,16),em,0,1.35,0);emberRing.rotation.x=Math.PI/2;g.add(emberRing);
   }
+  // Ground warning ring makes the enemy's attack wind-up readable before impact.
+  var warningMat=new THREE.MeshBasicMaterial({color:0xff4b3e,transparent:true,opacity:0.82,depthWrite:false,side:THREE.DoubleSide});
+  var warningRing=new THREE.Mesh(new THREE.TorusGeometry(kind==='brute'?1.8:1.35,0.055,6,28),warningMat);
+  warningRing.rotation.x=Math.PI/2;warningRing.position.y=-0.42;warningRing.visible=false;warningRing.renderOrder=3;g.add(warningRing);g.userData.attackWarning=warningRing;
   g.traverse(function(o){o.castShadow=false});
   return g;
 }
@@ -3280,6 +3284,12 @@ function update(dt){
     if(nearFire(s.x,s.z,9))s.hp-=2*dt;
     s.g.position.set(s.x,s.y+0.5+Math.sin(clock*3+s.ph)*0.25,s.z);
     s.g.rotation.y=Math.atan2(sx,sz);
+    // Expand and brighten the ground ring as the wind-up approaches impact.
+    var attackWarning=s.g.userData&&s.g.userData.attackWarning;
+    if(attackWarning){
+      attackWarning.visible=s.windup>0;
+      if(s.windup>0){var warningProgress=1-clamp(s.windup/(s.boss?(s.phase===3?0.28:0.52):0.42),0,1);attackWarning.scale.setScalar(0.78+warningProgress*0.38);attackWarning.material.opacity=0.45+warningProgress*0.5;}
+    }
     var pulse=s.windup>0?1+Math.sin((0.42-s.windup)*24)*0.1:(s.lunge>0?1.14:1);
     s.g.scale.setScalar((s.baseScale||1)*(s.hit>0?1.12:pulse));
     if(s.hp<=0){
