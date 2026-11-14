@@ -664,3 +664,11 @@ test('low and balanced graphics reduce environmental shadow workload without cha
   assert.ok(gameScript.includes('detailShadowMeshes[di].castShadow=profile.detailShadows'));
   assert.ok(gameScript.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))'));
 });
+
+
+test('night firefly simulation updates at a capped cadence instead of every rendered frame', () => {
+  assert.ok(gameScript.includes('fireflyUpdateAccumulator=0'));
+  assert.ok(gameScript.includes('fireflyUpdateAccumulator>=1/15'));
+  assert.ok(gameScript.includes('fireflyUpdateAccumulator%=1/15'));
+  assert.ok(gameScript.includes('ffGeo.attributes.position.needsUpdate=true'));
+});
