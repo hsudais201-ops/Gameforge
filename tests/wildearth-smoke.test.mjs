@@ -246,3 +246,17 @@ test('versioned save defaults and recovery paths remain compatible', () => {
   assert.match(gameScript, /SAVE_KEY\+'_backup'/);
   assert.match(gameScript, /validSave\(localStorage\.getItem\(OLD_KEY\)\)/);
 });
+
+
+test('touch combat aim assist gently aligns nearby targets inside a limited cone', () => {
+  assert.ok(gameScript.includes('function applyTouchAimAssist(targets,range,cone)'));
+  assert.ok(gameScript.includes('if(!isMobile)return false'));
+  assert.ok(gameScript.includes('applyTouchAimAssist(wraiths,5,0.82)'));
+  assert.ok(gameScript.includes('applyTouchAimAssist(wild,3.4,0.82)'));
+});
+
+test('tool tiers change resource gathering cooldowns as well as mining damage', () => {
+  assert.ok(gameScript.includes("P.cool=pickLevel===3?0.30:(pickLevel===2?0.38:(pickLevel===1?0.46:0.55))"));
+  assert.ok(gameScript.includes("if(r.type==='tree'&&axe)P.cool=0.34"));
+  assert.ok(gameScript.includes("Math.max(1,pickLevel)"));
+});
