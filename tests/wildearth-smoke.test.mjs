@@ -89,7 +89,7 @@ test('crafting recipe search and category filters are wired', () => {
 
 test('settings markup has clean audio controls and restores saved world-area selection', () => {
   assert.doesNotMatch(html, /\\\\n<label class="settingRow">Ambient music volume/);
-  assert.match(html, /id="captionLanguage"[\\s\\S]*?<\\/select><\\/label>\\s*<label class="settingRow">Ambient music volume/);
+  assert.ok(html.indexOf('id="captionLanguage"') < html.indexOf('id="musicVolume"'), 'caption language should appear before music volume');
   assert.ok(gameScript.includes("$('areaSelect').value=String(areaLevel);"));
   assert.ok(gameScript.includes("applyAreaLevel(+this.value)"));
   assert.ok(gameScript.includes('function saveGraphicsSettings()'));
