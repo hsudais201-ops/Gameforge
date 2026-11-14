@@ -27,6 +27,12 @@ node --test tests/wildearth-smoke.test.mjs
 
 The test suite checks script syntax and critical UI wiring, deterministic seeds, save migration, combat, survival, building, accessibility, browser fallbacks and bounded stress loops. Passing source tests does not establish device compatibility or stable frame rates.
 
+## Latest automated verification
+
+- GitHub Actions run [#142](https://github.com/hsudais201-ops/Gameforge/actions/runs/43560542030) completed successfully on 2026-11-14.
+- Result: **59 tests passed, 0 failed** on commit `d3a5602a66a11c583335b8c32c2ae3e552705430`.
+- Scope: Node.js source-level smoke/regression checks. This is not a substitute for browser gameplay, physical Chromebook profiling, controller testing, or release acceptance.
+
 ## Required target-device test matrix
 
 1. On the Dell Chromebook 11 (3180), open the game in a current supported Chromium browser.
