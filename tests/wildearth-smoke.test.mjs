@@ -773,14 +773,14 @@ test('mob signature drops unlock legendary Nightfall Blade and Wraithguard recip
     assert.ok(gameScript.includes(id+":'<svg"),'missing icon '+id);
     assert.ok(gameScript.includes(id+':1'),'missing output '+id);
   }
-  assert.ok(gameScript.includes("countOf('heraldblade')>0?6"));
-  assert.ok(gameScript.includes("equippedArmor==='wraithguard'?0.28"));
-  assert.ok(gameScript.includes("d.equippedArmor==='wraithguard'"));
+  assert.ok(gameScript.includes("id:'heraldblade',damage:6,bonus:0"));
+  assert.ok(gameScript.includes("wraithguard:0.28"));
+  assert.ok(gameScript.includes("'wraithguard','frostarmor','emberarmor'].indexOf(d.equippedArmor)>=0"));
   assert.ok(gameScript.includes("id!=='wraithguard'"));
-  assert.ok(gameScript.includes("wearTool(countOf('heraldblade')?'heraldblade'"));
+  assert.ok(gameScript.includes('wearTool(weapon.id,1)'));
   assert.ok(gameScript.includes('heraldblade:320'));
   assert.ok(gameScript.includes("id==='ironpick'||id==='ironsword'||id==='heraldblade'?'ironbar'"));
-  assert.ok(gameScript.includes("id==='wraithguard'?'Wraithguard'"));
+  assert.ok(gameScript.includes("wraithguard:'Wraithguard'"));
 });
 
 
