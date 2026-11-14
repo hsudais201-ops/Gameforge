@@ -778,6 +778,7 @@ test('mob signature drops unlock legendary Nightfall Blade and Wraithguard recip
   assert.ok(gameScript.includes("'wraithguard','frostarmor','emberarmor'].indexOf(d.equippedArmor)>=0"));
   assert.ok(gameScript.includes("id!=='wraithguard'"));
   assert.ok(gameScript.includes('wearTool(weapon.id,1)'));
+  assert.ok(gameScript.includes("id==='heraldblade'||id==='frostblade'||id==='emberblade'?'ironbar'"),'elemental blades must use iron ingots for repairs');
   assert.ok(gameScript.includes('heraldblade:320'));
   assert.ok(gameScript.includes("id==='ironpick'||id==='ironsword'||id==='heraldblade'?'ironbar'"));
   assert.ok(gameScript.includes("wraithguard:'Wraithguard'"));
