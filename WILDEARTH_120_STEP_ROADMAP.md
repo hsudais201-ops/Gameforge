@@ -145,7 +145,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 115. Add adaptive shadow and particle budgets per quality profile.
 - [x] 116. Add memory cleanup for streamed-out objects and effects.
 - [x] 117. Add mobile touch-layout and viewport regression tests.
-- [ ] 118. Add long-session save/load and world-streaming stress tests.
+- [x] 118. Add long-session save/load and world-streaming stress tests.
 - [ ] 119. Add browser compatibility checks and release build validation.
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
 
@@ -186,6 +186,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Caves: added a surface cave entrance, a bounded underground chamber with crystal formations and point lighting, an entry/exit interaction, and cave-specific ground/temperature/oxygen handling.
 
 - Rivers and ponds: added two connected flowing river channels and two ponds using lightweight mesh geometry. River/pond proximity now feeds the swimming, oxygen, temperature, and water-surface systems.
+
+- Stress QA: added 2,000 repeated save/inventory migration round trips and 5,000 player-position × chunk-visibility streaming iterations. River animation now uses immutable base vertex heights to prevent cumulative vertical drift during long sessions.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
