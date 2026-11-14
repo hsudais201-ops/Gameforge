@@ -945,7 +945,7 @@ test('save validation rejects malformed or out-of-bounds world records before lo
   const start=gameScript.indexOf('function validStructureCounts(parsed)');
   const end=gameScript.indexOf('function awardXP',start);
   assert.ok(start>=0&&end>start,'save validator must be present');
-  const validate=new Function('SPECIES','HALF',gameScript.slice(start,end)+';return validStructureCounts;')([{id:0},{id:1}],300);
+  const validate=new Function('SPECIES','HALF','NSLOTS',gameScript.slice(start,end)+';return validStructureCounts;')([{id:0},{id:1}],300,36);
   assert.equal(validate({P:{x:0,z:0},team:[{sp:0}],walls:[{x:10,z:10,t:'wall'}]}),true);
   assert.equal(validate({team:[{sp:99}]}),false,'unknown creature species must be rejected');
   assert.equal(validate({team:Array.from({length:33},()=>({sp:0}))}),false,'oversized companion lists must be rejected');
@@ -953,4 +953,8 @@ test('save validation rejects malformed or out-of-bounds world records before lo
   assert.equal(validate({walls:[{x:0,z:0,t:'unknown'}]}),false,'unknown structure types must be rejected');
   assert.equal(validate({chests:[{x:0,z:0,slots:Array(19).fill(null)}]}),false,'oversized chest inventories must be rejected');
   assert.equal(validate({fires:[{x:0,z:0,t:'lava'}]}),false,'unknown fire types must be rejected');
+  assert.equal(validate({P:{x:301,z:0}}),false,'player positions outside the world must be rejected');
+  assert.equal(validate({P:{x:0,z:-301}}),false,'player positions outside the world must be rejected');
+  assert.equal(validate({slots:Array(37).fill(null)}),false,'oversized player inventories must be rejected');
+  assert.equal(validate({slots:Array(36).fill(null)}),true,'the supported inventory size must remain loadable');
 });
