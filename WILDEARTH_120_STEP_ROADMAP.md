@@ -34,11 +34,11 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 22. Support skin tone, outfit color, eye color, and hair customization.
 - [x] 23. Support multiple hair styles and facial-hair options.
 - [x] 24. Provide character presets.
-- [ ] 25. Add a preview turntable and lighting in the customization screen.
+- [x] 25. Add a preview turntable and lighting in the customization screen.
 - [ ] 26. Add separate head, torso, legs, and accessory customization slots.
 - [ ] 27. Add cosmetic unlock tracking.
 - [x] 28. Add outfit save slots.
-- [ ] 29. Add animation preview controls in customization.
+- [x] 29. Add animation preview controls in customization.
 - [x] 30. Validate customization persistence across world changes.
 
 ## D. World generation and streaming
@@ -165,6 +165,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Seasons: five-day seasonal cycles alter environmental temperature, water palette, and the HUD season label; the season derives from saved world time.
 
 - Rare world event: after three survived nights, a glowing fallen star appears in the world. Players can discover and collect it for Lumen Crystal and Gold Ore; the one-time reward claim persists in the world save.
+
+- Character preview: added a persisted turntable toggle, dedicated preview light toggle, and Idle/Walk/Attack animation preview controls in the customization screen.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
