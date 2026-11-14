@@ -368,3 +368,11 @@ test('character customization has a persisted preview turntable, light, and anim
     assert.ok(gameScript.includes(marker), 'missing character preview marker: ' + marker);
   }
 });
+
+
+test('character customization exposes independent head, torso, leg, and accessory appearance controls', () => {
+  for (const id of ['skinTone', 'outfitColor', 'legsColor', 'accessoryColor']) assert.match(html, new RegExp('id="' + id + '"'));
+  for (const marker of ['legCloth=stdMat(0x314a40,0.92)', 'legs:legCloth', "mfwilds3d_legs", "mfwilds3d_accessory", 'm.legs.color.set(lc)', 'm.leather.color.set(ac)']) {
+    assert.ok(gameScript.includes(marker), 'missing separated appearance slot marker: ' + marker);
+  }
+});
