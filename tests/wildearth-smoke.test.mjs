@@ -1210,7 +1210,7 @@ test('low-poly tree meshes include layered pine boughs, bark grooves and oak roo
   const pine=gameScript.slice(gameScript.indexOf('function buildPine()'),gameScript.indexOf('function buildOak()'));
   const oak=gameScript.slice(gameScript.indexOf('function buildOak()'),gameScript.indexOf('function buildRock()'));
   assert.match(pine,/CylinderGeometry\(0\.025,0\.055,4\.35,4\)/);
-  assert.match(pine,/var reach=rad\*0\.76/);
+  assert.match(pine,/reach=rad\*0\.76/);
   assert.match(oak,/CylinderGeometry\(0\.045,0\.16,1\.15,5\)/);
   assert.match(oak,/var ka=k\/7\*6\.283/);
 });
