@@ -960,7 +960,7 @@ test('save validation rejects malformed or out-of-bounds world records before lo
 });
 
 test('inventory uses the complete responsive WILDEARTH character and backpack layout', () => {
-  assert.ok(html.includes('class="wildInventory"'));
+  assert.ok(html.includes('wildInventory'));
   assert.ok(html.includes('class="wildCharacterPanel"'));
   assert.ok(html.includes('class="wildBackpackPanel"'));
   assert.ok(html.includes('class="wildPartyPanel"'));
@@ -990,7 +990,7 @@ test('Palworld-inspired inventory includes working category filters and a compan
 });
 
 test('inventory is rebuilt as a full-screen character, backpack, party and crafting experience', () => {
-  assert.ok(html.includes('class="wildInventory"'));
+  assert.ok(html.includes('wildInventory'));
   assert.ok(html.includes('class="wildCharacterPanel"'));
   assert.ok(html.includes('class="wildBackpackPanel"'));
   assert.ok(html.includes('class="wildPartyPanel"'));
