@@ -805,7 +805,7 @@ test('Frost and ember attacks apply short status effects that affect movement an
   assert.ok(gameScript.includes('emberBurnTimer=Math.max(emberBurnTimer,3.2)'));
   assert.ok(gameScript.includes('frostSlowTimer>0?0.58:1'));
   assert.ok(gameScript.includes('emberBurnTimer>0'));
-  assert.ok(gameScript.includes("playerDamage(2.2*dt,'Burning')"));
+  assert.ok(gameScript.includes("playerDamage(1.1,'Burning')"));
   assert.ok(gameScript.includes('applyWraithStatus(s)'));
 });
 
