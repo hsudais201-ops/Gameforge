@@ -20,6 +20,14 @@ test('startup and menu entry points remain present', () => {
   assert.match(gameScript, /updateWorldStreaming\(true\)/, 'world streaming must initialize');
 });
 
+test('startup shows the world seed before deferred world streaming', () => {
+  assert.match(gameScript, /var earlySeedLabel=\$\('worldSeedInfo'\)/);
+  const streamCall = gameScript.indexOf('updateWorldStreaming(true)');
+  const menuRefresh = gameScript.indexOf('function refreshWorldMenu');
+  assert.ok(streamCall > menuRefresh, 'initial streaming must be scheduled after menu setup');
+  assert.match(gameScript, /requestAnimationFrame\(function\(\)\{setTimeout\(function\(\)\{try\{updateWorldStreaming\(true\)/);
+});
+
 test('seeded random generator reproduces the same sequence', () => {
   const rngStart = gameScript.indexOf('function rng(a){');
   const rngEnd = gameScript.indexOf('var R=', rngStart);
