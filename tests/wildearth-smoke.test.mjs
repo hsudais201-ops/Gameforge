@@ -486,3 +486,12 @@ test('browser compatibility preflight covers WebGL, animation-frame, audio, and 
     assert.ok(gameScript.includes(marker), 'missing browser compatibility marker: '+marker);
   }
 });
+
+
+test('performance monitor records bounded frame samples and exports CPU/render submission metrics', () => {
+  assert.match(html, /id="perfMonitorToggle"/);
+  assert.match(html, /id="perfStatus"/);
+  for (const marker of ['var perfMonitorEnabled=false,perfSamples=[]', 'function recordPerformance(frameMs,updateMs,renderMs)', 'if(perfSamples.length>120)perfSamples.shift()', 'p95FrameMs:', 'renderer.info.render.calls', 'renderer.info.render.triangles', 'performance:perfStats']) {
+    assert.ok(gameScript.includes(marker), 'missing performance instrumentation marker: '+marker);
+  }
+});
