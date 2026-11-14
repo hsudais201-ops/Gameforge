@@ -719,7 +719,7 @@ test('new tundra, jungle, savanna and volcanic biomes have distinct terrain and 
     "if(heat>0.62&&moisture>0.3&&moisture<0.58)return BIOMES[12]",
     "return BIOMES[13]",
     "biome.id==='volcanic'",
-  assert.match(gameScript,/biomeAt\\(x,z\\)\\.id==='jungle'\\|\\|biomeAt\\(x,z\\)\\.id==='marsh'/);
+    "biome.id==='jungle'",
     "biome.id==='savanna'",
     "biome.id==='tundra'"
   ]) assert.ok(gameScript.includes(rule), 'missing biome generation or visual rule '+rule);
@@ -1230,7 +1230,7 @@ test('biome signature plants provide desert, snow, volcanic and jungle vegetatio
   }
   assert.match(gameScript,/biomeAt\(x,z\)\.id==='volcanic'/);
   assert.match(gameScript,/id==='frost'\|\|id==='tundra'\|\|id==='highland'/);
-  assert.match(gameScript,/id==='jungle'\|\|id==='marsh'/);
+  assert.match(gameScript,/biomeAt\(x,z\)\.id==='jungle'\|\|biomeAt\(x,z\)\.id==='marsh'/);
   assert.match(gameScript,/Math\.round\(72\*mf\)/);
   assert.match(gameScript,/Math\.round\(30\*mf\)/);
 });
