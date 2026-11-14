@@ -315,3 +315,17 @@ test('character appearance is restored from global profile storage when a world 
   assert.ok(gameScript.includes("localStorage.getItem('mfwilds3d_skin')"));
   assert.ok(gameScript.includes("localStorage.getItem('mfwilds3d_outfit')"));
 });
+
+
+test('Night Herald boss has three escalating combat phases, a health HUD, and persistent defeat reward', () => {
+  for (const id of ['bossStatus', 'bossPhase', 'bossHealth']) assert.match(html, new RegExp('id="' + id + '"'));
+  for (const marker of ['bossDefeated:false', 'nights>=7&&nightF>0.72&&!bossDefeated', "kind:'harbinger'", 'hp>40?1:(s.hp>18?2:3)', 's.phase===3?0.28:0.52', "gain('crystal',12", 'bossDefeated=d.bossDefeated===true']) {
+    assert.ok(gameScript.includes(marker), 'missing boss encounter marker: ' + marker);
+  }
+});
+
+
+test('tool tiers have different mining cooldowns and resource damage values', () => {
+  assert.ok(gameScript.includes("P.cool=pickLevel===3?0.30:(pickLevel===2?0.38:(pickLevel===1?0.46:0.55))"));
+  assert.ok(gameScript.includes("var dmg=(r.type==='tree'&&axe)?2:((r.type==='rock'||r.type==='ore')?Math.max(1,pickLevel):1)"));
+});
