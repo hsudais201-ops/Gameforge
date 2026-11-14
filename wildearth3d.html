@@ -458,6 +458,8 @@ function applyAreaLevel(level){
   streamDirty=true;
   saveGraphicsSettings();
 }
+var AUDIO_KEY='mfwilds3d_audio_v1',audioPrefs={music:0.08,effects:0.35,subtitles:true,captionLanguage:'en'},audioCtx=null,musicBus=null,effectsBus=null;
+try{var savedAudio=JSON.parse(localStorage.getItem(AUDIO_KEY)||'{}');if(isFinite(savedAudio.music))audioPrefs.music=clamp(savedAudio.music,0,0.3);if(isFinite(savedAudio.effects))audioPrefs.effects=clamp(savedAudio.effects,0,0.8);if(typeof savedAudio.subtitles==='boolean')audioPrefs.subtitles=savedAudio.subtitles;if(savedAudio.captionLanguage==='ur')audioPrefs.captionLanguage='ur';}catch(e){}
 $('settingsBtn').addEventListener('click',function(){$('settingsPanel').hidden=false});
 $('pauseToggle').addEventListener('click',function(){togglePause()});
 $('pauseResume').addEventListener('click',function(){togglePause(false)});
@@ -1279,8 +1281,6 @@ function makeBed(){
 
 /* ---------- state ---------- */
 var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
-var AUDIO_KEY='mfwilds3d_audio_v1',audioPrefs={music:0.08,effects:0.35,subtitles:true,captionLanguage:'en'},audioCtx=null,musicBus=null,effectsBus=null;
-try{var savedAudio=JSON.parse(localStorage.getItem(AUDIO_KEY)||'{}');if(isFinite(savedAudio.music))audioPrefs.music=clamp(savedAudio.music,0,0.3);if(isFinite(savedAudio.effects))audioPrefs.effects=clamp(savedAudio.effects,0,0.8);if(typeof savedAudio.subtitles==='boolean')audioPrefs.subtitles=savedAudio.subtitles;if(savedAudio.captionLanguage==='ur')audioPrefs.captionLanguage='ur';}catch(e){}
 function saveAudioPrefs(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs));}catch(e){}}
 function initAudio(){
   if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}
