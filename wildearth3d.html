@@ -322,7 +322,10 @@ var $=function(id){
 };
 if(typeof THREE==='undefined'){$('err').style.display='flex';return}
 
-var isMobile=window.matchMedia('(pointer:coarse)').matches;
+var isMobile=!!(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);
+// Treat modest Chromebook-class hardware as low-end even when the browser reports a desktop pointer.
+var hardwareCores=Number(navigator.hardwareConcurrency)||0,deviceMemoryGB=Number(navigator.deviceMemory)||0;
+var isLowEnd=isMobile||(hardwareCores>0&&hardwareCores<=4)||(deviceMemoryGB>0&&deviceMemoryGB<=4);
 var WORLD=300,HALF=WORLD/2,WATER=-1.2,DAY=240,OLD_KEY='mfwilds3d_v1';
 var WORLD_LIST_KEY='mfwilds3d_world_list_v1',SELECTED_WORLD_KEY='mfwilds3d_selected_world_v1',CHARACTER_KEY='mfwilds3d_character_v1';
 var worldList=[];try{worldList=JSON.parse(localStorage.getItem(WORLD_LIST_KEY)||'[]');if(!Array.isArray(worldList))worldList=[];}catch(e){worldList=[];}
@@ -391,7 +394,7 @@ if(typeof window.requestAnimationFrame!=='function')window.requestAnimationFrame
 var cv=$('c'),webglAvailable=false;
 try{var glProbe=cv.getContext('webgl2')||cv.getContext('webgl')||cv.getContext('experimental-webgl');webglAvailable=!!glProbe;}catch(webglProbeError){}
 if(!window.THREE||!webglAvailable){$('webglFallback').hidden=false;$('webglFallback').textContent=!window.THREE?'The 3D engine could not load. Check your internet connection and reload.':'WILDEARTH requires WebGL. Enable hardware acceleration or try a supported browser.';throw new Error('WILDEARTH startup requires Three.js and WebGL support.');}
-var renderer;try{renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});}catch(rendererError){$('webglFallback').hidden=false;$('webglFallback').textContent='This browser could not create a WebGL 2 rendering context. Update your browser and enable hardware acceleration.';throw new Error('WILDEARTH WebGL renderer initialization failed: '+rendererError.message);}
+var renderer;try{renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!isLowEnd,powerPreference:'high-performance'});}catch(rendererError){$('webglFallback').hidden=false;$('webglFallback').textContent='This browser could not create a WebGL 2 rendering context. Update your browser and enable hardware acceleration.';throw new Error('WILDEARTH WebGL renderer initialization failed: '+rendererError.message);}
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.15;
@@ -422,7 +425,7 @@ var renderProfiles=[
   {name:'Balanced',shadows:true,fogFar:230,particleScale:0.7},
   {name:'High',shadows:true,fogFar:280,particleScale:1}
 ];
-var renderLevel=1,areaLevel=1,areaRadii=[55,85,125],SETTINGS_KEY='mfwilds3d_settings_v1';
+var renderLevel=isLowEnd?0:1,areaLevel=1,areaRadii=[55,85,125],SETTINGS_KEY='mfwilds3d_settings_v1';
 try{var savedGraphics=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');if(savedGraphics.quality!==undefined)renderLevel=clamp(savedGraphics.quality|0,0,2);if(savedGraphics.area!==undefined)areaLevel=clamp(savedGraphics.area|0,0,2);}catch(e){}
 function saveGraphicsSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({quality:renderLevel,area:areaLevel}));}catch(e){}}
 function applyRenderProfile(level){
@@ -780,7 +783,7 @@ function setStump(r,on){
 treeList.forEach(function(r,i){r.si=i;setStump(r,false)});
 scene.add(stumpIM);
 (function(){
-  var cnt=isMobile?3500:7000,im=new THREE.InstancedMesh(buildGrass(),matVC,cnt),k=0,tries=0;
+  var cnt=isLowEnd?2600:(isMobile?3500:7000),im=new THREE.InstancedMesh(buildGrass(),matVC,cnt),k=0,tries=0;
   while(k<cnt&&tries<cnt*6){
     tries++;
     var x=(R()-0.5)*(WORLD-20),z=(R()-0.5)*(WORLD-20),y=heightAt(x,z);
@@ -1648,6 +1651,18 @@ function addStructure(kind,x,z){
 }
 
 /* ---------- save / load ---------- */
+function validStructureCounts(parsed){
+  if(!parsed||typeof parsed!=='object')return false;
+  var keys=['walls','fires','beds','chests'],total=0;
+  for(var i=0;i<keys.length;i++){
+    var value=parsed[keys[i]];
+    if(value===undefined)continue;
+    if(!Array.isArray(value)||value.length>120)return false;
+    total+=value.length;
+    if(total>120)return false;
+  }
+  return true;
+}
 function save(){
   if(dead)return true;
   var snapshot;
@@ -1665,7 +1680,7 @@ function save(){
       var previous=localStorage.getItem(SAVE_KEY);
       if(previous){
         var check=JSON.parse(previous);
-        if(check&&check.P&&isFinite(check.P.x)&&isFinite(check.P.z))
+        if(check&&check.P&&isFinite(check.P.x)&&isFinite(check.P.z)&&validStructureCounts(check))
           localStorage.setItem(SAVE_KEY+'_backup',previous);
       }
     }catch(backupError){}
@@ -1695,7 +1710,7 @@ function load(){
       try{
         var parsed=JSON.parse(raw);
         if(!parsed||!parsed.P||!isFinite(parsed.P.x)||!isFinite(parsed.P.z))return null;
-        if(['walls','fires','beds','chests'].some(function(k){return parsed[k]!==undefined&&(!Array.isArray(parsed[k])||parsed[k].length>120)}))return null;
+        if(!validStructureCounts(parsed))return null;
         return parsed;
       }catch(parseError){return null}
     }
