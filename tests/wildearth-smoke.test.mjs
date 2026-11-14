@@ -724,3 +724,18 @@ test('new tundra, jungle, savanna and volcanic biomes have distinct terrain and 
     "biome.id==='tundra'"
   ]) assert.ok(gameScript.includes(rule), 'missing biome generation or visual rule '+rule);
 });
+
+test('new survival recipes are listed, craftable at the bench, and have working item effects', () => {
+  for (const id of ['berrypie','heartymeal','strongsalve']) {
+    assert.ok(gameScript.includes(id+':{') || gameScript.includes(id+':{'), 'missing recipe '+id);
+    assert.ok(gameScript.includes(id+':1'), 'missing output count '+id);
+    assert.ok(gameScript.includes(id+':'), 'missing item definition '+id);
+    assert.ok(gameScript.includes("['Survival',['salve','strongsalve','tonic','jam','berrypie','heartymeal','torch']]"));
+  }
+  assert.ok(gameScript.includes("P.food=Math.min(100,P.food+70)"));
+  assert.ok(gameScript.includes("P.food=Math.min(100,P.food+48);P.hp=Math.min(100,P.hp+22)"));
+  assert.ok(gameScript.includes("P.hp=Math.min(100,P.hp+75)"));
+  assert.ok(gameScript.includes("strongsalve:{salve:2,crystal:1,fiber:2}"));
+  assert.ok(gameScript.includes("berrypie:{berry:4,jam:1,fiber:1}"));
+  assert.ok(gameScript.includes("heartymeal:{berry:3,jam:1,wood:1}"));
+});
