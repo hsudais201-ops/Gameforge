@@ -87,6 +87,12 @@ test('crafting recipe search and category filters are wired', () => {
   assert.ok(gameScript.includes('data-craft-category'));
 });
 
+test('settings panel keeps all controls full-height and scrolls the full content', () => {
+  for (const css of ['#settingsPanel>*{flex:0 0 auto;min-height:max-content}', '#settingsPanel .settingRow{flex:0 0 auto;min-height:36px}', 'height:calc(100dvh - 20px', '-webkit-overflow-scrolling:touch', '#settingsPanel>.bagTop{position:sticky']) {
+    assert.ok(html.includes(css), 'missing full-content settings layout: '+css);
+  }
+});
+
 test('settings panel fits short and narrow screens and scrolls all controls', () => {
   for (const css of ['width:min(94vw,520px)','max-height:calc(100dvh - 20px','overflow-y:auto','overscroll-behavior:contain','grid-template-columns:minmax(0,1fr) minmax(110px,auto)','@media(max-height:560px)']) {
     assert.ok(html.includes(css), 'missing responsive settings CSS: ' + css);
