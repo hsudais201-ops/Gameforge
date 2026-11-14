@@ -753,14 +753,14 @@ var skyFill=new THREE.DirectionalLight(0x8299bd,0.12);skyFill.castShadow=false;s
 var sun=new THREE.DirectionalLight(0xffe6c5,1.08);
 sun.castShadow=true;
 sun.shadow.mapSize.set(isMobile?512:1024,isMobile?512:1024);
-sun.shadow.camera.left=-45;sun.shadow.camera.right=45;sun.shadow.camera.top=45;sun.shadow.camera.bottom=-45;
-sun.shadow.camera.near=10;sun.shadow.camera.far=150;
-sun.shadow.bias=-0.0005;sun.shadow.normalBias=0.06;
+sun.shadow.camera.left=-38;sun.shadow.camera.right=38;sun.shadow.camera.top=38;sun.shadow.camera.bottom=-38;
+sun.shadow.camera.near=5;sun.shadow.camera.far=130;
+sun.shadow.bias=-0.00035;sun.shadow.normalBias=0.045;
 scene.add(sun);scene.add(sun.target);
 
 /* ---------- manual graphics settings (resolution stays fixed) ---------- */
 var renderProfiles=[
-  {name:'Low',shadows:false,detailShadows:false,fogFar:175,particleScale:0.4},
+  {name:'Low',shadows:true,detailShadows:false,fogFar:195,particleScale:0.4},
   {name:'Balanced',shadows:true,detailShadows:false,fogFar:230,particleScale:0.7},
   {name:'High',shadows:true,detailShadows:true,fogFar:280,particleScale:1}
 ],detailShadowMeshes=[];
