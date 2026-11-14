@@ -143,7 +143,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 113. Cap renderer pixel ratio for constrained hardware.
 - [ ] 114. Profile CPU and GPU frame time on low-end Chromebook hardware.
 - [x] 115. Add adaptive shadow and particle budgets per quality profile.
-- [ ] 116. Add memory cleanup for streamed-out objects and effects.
+- [x] 116. Add memory cleanup for streamed-out objects and effects.
 - [x] 117. Add mobile touch-layout and viewport regression tests.
 - [ ] 118. Add long-session save/load and world-streaming stress tests.
 - [ ] 119. Add browser compatibility checks and release build validation.
@@ -171,6 +171,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Character appearance slots: separated head/skin, torso/outfit, leg fabric, and accessory/leather color controls; the new leg/accessory choices persist globally and are included in the three outfit presets.
 
 - Cosmetic progression: three appearance rewards unlock from Night Survivor, Wraith Slayer, and Pathfinder achievements; locked color choices remain disabled until earned, and unlock IDs persist per world.
+
+- Memory safeguards: capped transient spark meshes at 500, retained the 60-node floating-text cap, and explicitly dispose unique capture-projectile geometries/materials when projectiles leave the scene. Shared instanced world geometry remains reused rather than recreated for streamed chunks.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
