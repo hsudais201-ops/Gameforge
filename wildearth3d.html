@@ -254,7 +254,7 @@
 <div class="settingRow">Backward <button id="bindBackward" type="button">S</button></div>
 <div class="settingRow">Left <button id="bindLeft" type="button">A</button></div>
 <div class="settingRow">Right <button id="bindRight" type="button">D</button></div>
-<label class="settingRow">Invert camera vertical <input id="invertCamera" type="checkbox"></label><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
+<label class="settingRow">Invert camera vertical <input id="invertCamera" type="checkbox"></label><label class="settingRow">Performance monitor <input id="perfMonitorToggle" type="checkbox"></label><div id="perfStatus" class="settingNote" role="status">Performance monitor is off.</div><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
 <div id="bag" hidden>
   <div class="bagTop"><strong>Inventory</strong><span class="invSub">WILDEARTH survival pack</span><button id="bagSort" type="button">Sort Storage</button><button id="bagClose">✕</button></div>
@@ -518,6 +518,9 @@ applyControlPrefs();
 renderKeyBindings();
 applyAccessibility();
 
+var perfMonitorEnabled=false,perfSamples=[],perfStats={fps:0,avgFrameMs:0,p95FrameMs:0,updateMs:0,renderSubmitMs:0,drawCalls:0,triangles:0},perfLastReport=0;
+$('perfMonitorToggle').addEventListener('change',function(){perfMonitorEnabled=!!this.checked;$('perfStatus').textContent=perfMonitorEnabled?'Collecting frame timing…':'Performance monitor is off.';});
+function recordPerformance(frameMs,updateMs,renderMs){perfSamples.push({frame:frameMs,update:updateMs,render:renderMs});if(perfSamples.length>120)perfSamples.shift();if(performance.now()-perfLastReport<1000)return;perfLastReport=performance.now();var sorted=perfSamples.map(function(v){return v.frame}).sort(function(a,b){return a-b}),sum=perfSamples.reduce(function(a,v){return a+v.frame},0),u=perfSamples.reduce(function(a,v){return a+v.update},0),r=perfSamples.reduce(function(a,v){return a+v.render},0);perfStats={fps:sorted.length?Math.round(1000/(sum/sorted.length)):0,avgFrameMs:sorted.length?Math.round(sum/sorted.length*100)/100:0,p95FrameMs:sorted.length?Math.round(sorted[Math.min(sorted.length-1,Math.floor(sorted.length*0.95))]*100)/100:0,updateMs:sorted.length?Math.round(u/sorted.length*100)/100:0,renderSubmitMs:sorted.length?Math.round(r/sorted.length*100)/100:0,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};if(perfMonitorEnabled)$('perfStatus').textContent='FPS '+perfStats.fps+' · frame '+perfStats.avgFrameMs+' ms · p95 '+perfStats.p95FrameMs+' ms · update '+perfStats.updateMs+' ms · render submit '+perfStats.renderSubmitMs+' ms · draws '+perfStats.drawCalls+' · triangles '+perfStats.triangles;}
 var runtimeDiagnostics=[];
 function addDiagnostic(type,message,stack){
   runtimeDiagnostics.push({time:new Date().toISOString(),type:String(type),message:String(message||''),stack:String(stack||'').slice(0,4000)});
@@ -526,7 +529,7 @@ function addDiagnostic(type,message,stack){
 window.addEventListener('error',function(e){addDiagnostic('error',e.message,(e.error&&e.error.stack)||e.filename+':'+e.lineno)});
 window.addEventListener('unhandledrejection',function(e){addDiagnostic('unhandledrejection',e.reason&&e.reason.message||e.reason,e.reason&&e.reason.stack)});
 $('exportDiagnostics').addEventListener('click',function(){
-  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},world:{id:selectedWorldId,seed:worldSeed,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:team.length,structures:walls.length+fires.length+beds.length+chests.length,storageChests:chests.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
+  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},performance:perfStats,world:{id:selectedWorldId,seed:worldSeed,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:team.length,structures:walls.length+fires.length+beds.length+chests.length,storageChests:chests.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
   try{
     var blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
     link.href=url;link.download='wildearth-diagnostics-'+Date.now()+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000);
@@ -3157,8 +3160,8 @@ function frame(now){
   if(!pageActive)return;
   try{
     var dt=Math.min(0.05,(now-last)/1000);last=now;
-    if(!menuOpen)update(dt);updateCamera();if(menuOpen)updateCharacterPreview(dt);if(!menuOpen)updateFloats(dt);
-    renderer.render(scene,camera);
+    var perfStart=performance.now();if(!menuOpen)update(dt);updateCamera();if(menuOpen)updateCharacterPreview(dt);if(!menuOpen)updateFloats(dt);var updateCost=performance.now()-perfStart;
+    var renderStart=performance.now();renderer.render(scene,camera);var renderCost=performance.now()-renderStart;recordPerformance(performance.now()-perfStart,updateCost,renderCost);
     requestAnimationFrame(frame);
   }catch(error){
     pageActive=false;
