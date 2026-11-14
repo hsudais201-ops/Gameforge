@@ -23,8 +23,8 @@ test('startup and menu entry points remain present', () => {
 test('startup shows the world seed before deferred world streaming', () => {
   assert.match(gameScript, /var earlySeedLabel=\$\('worldSeedInfo'\)/);
   const streamCall = gameScript.indexOf('updateWorldStreaming(true)');
-  const menuRefresh = gameScript.indexOf('function refreshWorldMenu');
-  assert.ok(streamCall > menuRefresh, 'initial streaming must be scheduled after menu setup');
+  const seedLabel = gameScript.indexOf('var earlySeedLabel=$(\'worldSeedInfo\')');
+  assert.ok(seedLabel >= 0 && streamCall > seedLabel, 'the resolved seed must be shown before streaming is scheduled');
   assert.match(gameScript, /requestAnimationFrame\(function\(\)\{setTimeout\(function\(\)\{try\{updateWorldStreaming\(true\)/);
 });
 
