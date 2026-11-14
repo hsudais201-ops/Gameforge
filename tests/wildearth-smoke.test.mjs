@@ -655,8 +655,16 @@ test('performance optimizations throttle water animation and avoid redundant wor
   assert.ok(gameScript.includes('lastStreamX=P.x;lastStreamZ=P.z;lastStreamRadius=radius;streamDirty=false'));
 });
 
+test('low-end graphics retain a 512px player-centered shadow map for depth without detail-shadow workload', () => {
+  assert.ok(gameScript.includes("sun.shadow.mapSize.set(isMobile?512:1024,isMobile?512:1024)"));
+  assert.ok(gameScript.includes("sun.shadow.camera.left=-38;sun.shadow.camera.right=38;sun.shadow.camera.top=38;sun.shadow.camera.bottom=-38"));
+  assert.ok(gameScript.includes("sun.shadow.camera.near=5;sun.shadow.camera.far=130"));
+  assert.ok(gameScript.includes("{name:'Low',shadows:true,detailShadows:false,fogFar:195"));
+  assert.ok(gameScript.includes("var shadowSize=renderLevel===2?((isMobile||isLowEnd)?1024:2048):((isMobile||isLowEnd)?512:1024)"));
+});
+
 test('low and balanced graphics reduce environmental shadow workload without changing resolution', () => {
-  assert.ok(gameScript.includes("{name:'Low',shadows:false,detailShadows:false"));
+  assert.ok(gameScript.includes("{name:'Low',shadows:true,detailShadows:false,fogFar:195"));
   assert.ok(gameScript.includes("{name:'Balanced',shadows:true,detailShadows:false"));
   assert.ok(gameScript.includes("{name:'High',shadows:true,detailShadows:true"));
   assert.ok(gameScript.includes('detailShadowMeshes.push(im)'));
