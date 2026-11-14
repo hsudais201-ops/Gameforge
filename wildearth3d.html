@@ -385,6 +385,116 @@
     #bag.palBag #craftList{grid-template-columns:repeat(2,minmax(0,1fr))}
     #bag.palBag #recipeDetails{grid-column:1}
   }
+
+  /* Complete Palworld-inspired WILDEARTH inventory rebuild */
+  #bag.wildInventory{box-sizing:border-box;width:min(97vw,1240px);max-height:min(94dvh,900px);padding:0;gap:0;overflow:auto;border:1px solid #8d9b80;border-radius:5px;background:#18221e;color:#e9eadc;box-shadow:0 26px 90px #000e;font-family:inherit}
+  #bag.wildInventory[hidden],#bag.wildInventory [hidden]{display:none!important}
+  #bag.wildInventory .wildInvHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:linear-gradient(100deg,#2b382e,#1a2520 58%,#26352b);border-bottom:1px solid #819077}
+  #bag.wildInventory .wildInvBrand{display:flex;align-items:center;gap:11px;min-width:0}
+  #bag.wildInventory .wildInvMark{display:grid;place-items:center;width:38px;height:38px;border:1px solid #c2b77b;background:linear-gradient(145deg,#9d8c4b,#4b593b);color:#fff5c9;font-family:Georgia,serif;font-size:22px;font-weight:900;box-shadow:inset 0 1px #fff7}
+  #bag.wildInventory .wildInvBrand div{display:grid;gap:3px}
+  #bag.wildInventory .wildInvBrand strong{font-size:17px;letter-spacing:.16em;color:#f4f0dc}
+  #bag.wildInventory .wildInvBrand small{font-size:9px;letter-spacing:.18em;color:#b7c0a9}
+  #bag.wildInventory .wildInvHeaderActions{display:flex;gap:7px}
+  #bag.wildInventory .wildInvHeaderActions button{border:1px solid #87947b;background:#303d31;color:#f0edda;padding:8px 12px;font-size:10px;font-weight:900;letter-spacing:.1em}
+  #bag.wildInventory .wildInvHeaderActions #bagClose{font-size:16px;padding:5px 12px}
+  #bag.wildInventory .wildInvTabs{display:flex;align-items:stretch;gap:3px;padding:0 16px;background:#111a16;border-bottom:1px solid #64715f}
+  #bag.wildInventory .wildInvTabs button{padding:12px 18px;border:0;border-bottom:3px solid transparent;background:transparent;color:#aeb9a8;font-size:10px;font-weight:900;letter-spacing:.13em}
+  #bag.wildInventory .wildInvTabs button.active{border-bottom-color:#d9c779;background:#2c382c;color:#f8edc4}
+  #bag.wildInventory .wildInvTabHint{margin-left:auto;align-self:center;color:#839080;font-size:8px;letter-spacing:.12em}
+  #bag.wildInventory #bagInfo{margin:10px 14px 0;padding:7px 10px;border:1px solid #65735c;background:#101914;color:#c5cfb8;font-size:10px;line-height:1.4}
+  #bag.wildInventory .wildInvScreen{display:grid;grid-template-columns:minmax(205px,.83fr) minmax(360px,1.45fr) minmax(220px,.9fr);gap:10px;padding:12px;align-items:stretch}
+  #bag.wildInventory .wildCharacterPanel,#bag.wildInventory .wildBackpackPanel,#bag.wildInventory .wildPartyPanel,#bag.wildInventory .wildCraftWorkbench,#bag.wildInventory .wildRecipeWorkbench{min-width:0;padding:11px;border:1px solid #66745d;background:linear-gradient(155deg,#29352b,#1a241e 75%);box-shadow:inset 0 1px #ffffff12}
+  #bag.wildInventory .wildPanelTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #78836a66}
+  #bag.wildInventory .wildPanelTitle>span{font-size:10px;font-weight:900;letter-spacing:.16em;color:#eee9d2}
+  #bag.wildInventory .wildPanelTitle>small{font-size:8px;letter-spacing:.1em;color:#a5b09a}
+  #bag.wildInventory .wildCharacterStage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:205px;overflow:hidden;border:1px solid #7b886b;background:radial-gradient(ellipse at 50% 42%,#667653 0,#3b4a37 42%,#202b24 78%);box-shadow:inset 0 0 45px #0a120c99}
+  #bag.wildInventory .wildCharacterAura{position:absolute;width:150px;height:150px;top:12px;border-radius:50%;background:radial-gradient(circle,#c4c18c38,transparent 68%)}
+  #bag.wildInventory .wildCharacterSilhouette{position:relative;width:92px;height:150px;filter:drop-shadow(0 6px 4px #0008)}
+  #bag.wildInventory .wildCharHead{position:absolute;top:3px;left:34px;width:26px;height:29px;border-radius:45% 45% 38% 38%;background:linear-gradient(90deg,#b7a17c,#e0c79a 52%,#8e795c);border:2px solid #554b39}
+  #bag.wildInventory .wildCharBody{position:absolute;top:34px;left:22px;width:50px;height:67px;border:2px solid #303a30;border-radius:13px 13px 8px 8px;background:linear-gradient(90deg,#354c3c,#82906b 48%,#354637)}
+  #bag.wildInventory .wildCharArm{position:absolute;top:40px;width:17px;height:66px;border:2px solid #30392d;border-radius:10px;background:linear-gradient(90deg,#4d6048,#a18c6a)}
+  #bag.wildInventory .wildCharArm.left{left:7px;transform:rotate(9deg)}#bag.wildInventory .wildCharArm.right{right:7px;transform:rotate(-9deg)}
+  #bag.wildInventory .wildCharLeg{position:absolute;top:96px;width:20px;height:48px;border:2px solid #29332a;border-radius:5px 5px 3px 3px;background:linear-gradient(90deg,#303b32,#7c8062)}
+  #bag.wildInventory .wildCharLeg.left{left:25px;transform:rotate(2deg)}#bag.wildInventory .wildCharLeg.right{right:25px;transform:rotate(-2deg)}
+  #bag.wildInventory .wildCharacterName{position:absolute;bottom:18px;color:#f0ebd7;font-size:9px;font-weight:900;letter-spacing:.2em;text-shadow:0 2px 4px #000}
+  #bag.wildInventory .wildCharacterLevel{position:absolute;bottom:6px;color:#c5c9aa;font-size:7px;letter-spacing:.14em}
+  #bag.wildInventory .wildEquipTitle{margin-top:13px}
+  #bag.wildInventory .wildEquipmentGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  #bag.wildInventory .wildEquipSlot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;height:58px;border:1px solid #849077;background:linear-gradient(145deg,#485541,#29352b);color:#e7dfbb}
+  #bag.wildInventory .wildEquipSlot>span{font-size:19px}
+  #bag.wildInventory .wildEquipSlot small{font-size:7px;letter-spacing:.12em;color:#c4c9b5}
+  #bag.wildInventory .wildEquipStatus{min-height:26px;margin:8px 0 5px;color:#c9d2bd;font-size:9px;line-height:1.4}
+  #bag.wildInventory #equipArmor{width:100%;padding:8px;border:1px solid #9c9869;background:linear-gradient(180deg,#69734b,#394631);color:#f4edcf;font-size:9px;font-weight:900;letter-spacing:.08em}
+  #bag.wildInventory .wildItemInspect{display:flex;align-items:center;gap:10px;margin-top:11px;padding:9px;border:1px solid #89906b;background:linear-gradient(130deg,#50583d,#252f25)}
+  #bag.wildInventory .wildItemIcon{display:grid;place-items:center;flex:0 0 54px;width:54px;height:54px;border:1px solid #b4a66c;background:#19231c;font-size:35px}
+  #bag.wildInventory .wildItemIcon svg{width:42px;height:42px}
+  #bag.wildInventory .wildItemData{display:grid;gap:4px;min-width:0}
+  #bag.wildInventory .wildItemData strong{font-size:11px;color:#f4edda}
+  #bag.wildInventory .wildItemData span{font-size:9px;color:#c4cdb8;line-height:1.3}
+  #bag.wildInventory .wildItemData small{font-size:7px;color:#d5c78a;letter-spacing:.12em;font-weight:900}
+  #bag.wildInventory .wildItemActions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:6px}
+  #bag.wildInventory .wildItemActions button{min-width:0;padding:8px 2px;border:1px solid #7e8c70;background:#344333;color:#e8e8d6;font-size:8px;font-weight:900;letter-spacing:.04em}
+  #bag.wildInventory button:disabled{opacity:.35}
+  #bag.wildInventory .wildPanelHelp{margin:8px 0 0;color:#a7b29f;font-size:8px;line-height:1.5}
+  #bag.wildInventory .inventoryFilters{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 10px}
+  #bag.wildInventory .inventoryFilters button{padding:6px 7px;border:1px solid #65745e;background:#202b23;color:#bac4ad;font-size:8px;font-weight:900;letter-spacing:.08em}
+  #bag.wildInventory .inventoryFilters button.active{border-color:#d8c57e;background:#596343;color:#fff2c6}
+  #bag.wildInventory #bagGrid,#bag.wildInventory #bagHotbar{display:grid;width:100%;grid-template-columns:repeat(9,minmax(0,1fr));gap:5px}
+  #bag.wildInventory #bagGrid .slot,#bag.wildInventory #bagHotbar .slot{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:auto;min-width:0;aspect-ratio:1;border:1px solid #75836b;border-radius:2px;background:linear-gradient(145deg,#495641,#273329);box-shadow:inset 0 1px #ffffff20,inset 0 -3px #0007}
+  #bag.wildInventory #bagGrid .slot svg,#bag.wildInventory #bagHotbar .slot svg{width:70%;height:70%}
+  #bag.wildInventory #bagGrid .slot b,#bag.wildInventory #bagHotbar .slot b{position:absolute;right:4px;bottom:2px;font-size:9px;color:#fff;text-shadow:0 1px 3px #000}
+  #bag.wildInventory #bagGrid .slot i,#bag.wildInventory #bagHotbar .slot i{position:absolute;left:3px;top:2px;font-size:8px;color:#d5d6b9;font-style:normal}
+  #bag.wildInventory #bagGrid .slot.on,#bag.wildInventory #bagHotbar .slot.on{border:2px solid #f2d77e;background:linear-gradient(145deg,#737d4c,#3d5038)}
+  #bag.wildInventory #bagGrid .slot.mv,#bag.wildInventory #bagHotbar .slot.mv{border:2px solid #82d8a6;background:#28533b}
+  #bag.wildInventory .slot.filteredOut{visibility:hidden;pointer-events:none}
+  #bag.wildInventory .wildHotbarTitle{margin-top:16px}
+  #bag.wildInventory .wildBagTip{margin-top:9px;padding-top:7px;border-top:1px solid #68745c66;color:#a8b39f;font-size:8px;line-height:1.4}
+  #bag.wildInventory #bagTeam{padding:0;border:0;background:transparent;font-size:10px}
+  #bag.wildInventory #bagTeam .partyHead{display:flex;justify-content:space-between;gap:5px;margin-bottom:8px}
+  #bag.wildInventory #bagTeam .partyHead strong{font-size:10px;color:#f0e9d2;letter-spacing:.1em}
+  #bag.wildInventory #bagTeam .partyHead small{font-size:8px;color:#bdc3ac}
+  #bag.wildInventory #bagTeam .partyCards{display:grid;gap:6px}
+  #bag.wildInventory #bagTeam .partyCard{display:flex;align-items:center;gap:8px;min-width:0;padding:8px;border:1px solid #75816a;background:linear-gradient(120deg,#3b4936,#242f27)}
+  #bag.wildInventory #bagTeam .partyOrb{width:27px;height:27px;flex:0 0 27px;border:2px solid #c7c8a2;border-radius:50%;box-shadow:0 0 10px #d8d29a44}
+  #bag.wildInventory #bagTeam .partyCard span:nth-child(2){display:grid;gap:3px;min-width:0}
+  #bag.wildInventory #bagTeam .partyCard b{font-size:10px;color:#f3eddb}
+  #bag.wildInventory #bagTeam .partyCard small{font-size:8px;color:#bdc6ae}
+  #bag.wildInventory #bagTeam .partyCard em{margin-left:auto;color:#d9ca82;font-size:7px;font-style:normal;letter-spacing:.08em}
+  #bag.wildInventory #bagTeam .partyEmpty{padding:18px 8px;border:1px dashed #77826c;color:#c0c8b5;text-align:center;font-size:9px;line-height:1.5}
+  #bag.wildInventory #bagTeam .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}
+  #bag.wildInventory #bagTeam .chip{padding:4px 6px;border:1px solid #7a846c;background:#202a22;color:#d3d4bd;font-size:8px}
+  #bag.wildInventory #bagTeam .chip.off{opacity:.35}
+  #bag.wildInventory .companionCommands{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:12px}
+  #bag.wildInventory .companionCommands span{grid-column:1/-1;color:#aeb9a2;font-size:8px;letter-spacing:.1em;text-transform:uppercase}
+  #bag.wildInventory .companionCommands button{padding:7px 2px;border:1px solid #6d7b62;background:#29372a;color:#dbe0c8;font-size:8px}
+  #bag.wildInventory .companionCommands button.active{border-color:#d7c57d;background:#586243;color:#fff0bc}
+  #bag.wildInventory .wildPartyNote{margin-top:12px;padding-top:9px;border-top:1px solid #71806466;color:#aeb8a1;font-size:8px;line-height:1.5}
+  #bag.wildInventory .wildCraftScreen{display:grid;grid-template-columns:minmax(220px,.75fr) minmax(0,1.6fr);gap:12px;padding:12px}
+  #bag.wildInventory .wildCraftIntro,#bag.wildInventory .wildCraftTip{color:#b6c0aa;font-size:10px;line-height:1.5}
+  #bag.wildInventory .craftBench{display:flex;align-items:center;justify-content:center;gap:16px;margin:22px auto;padding:18px;border:1px solid #718064;background:#111b15}
+  #bag.wildInventory .craftGrid{display:grid;grid-template-columns:repeat(2,56px);gap:6px}
+  #bag.wildInventory .craftGrid button{width:56px;height:56px;border:1px solid #8a9676;background:linear-gradient(145deg,#4b5842,#263128);color:#f0e8cc;font-size:25px}
+  #bag.wildInventory .craftGrid button small{font-size:10px}
+  #bag.wildInventory .craftArrow{font-size:25px;color:#d8c67c}
+  #bag.wildInventory .craftOutput{width:70px;height:70px;border:1px solid #c7b46d;background:linear-gradient(145deg,#726a3f,#303523);color:#f4e6aa;font-size:28px}
+  #bag.wildInventory .craftCaption{padding:8px;border:1px solid #64725b;background:#202b22;color:#c1c9b2;font-size:9px;line-height:1.5}
+  #bag.wildInventory .wildCraftTip{margin-top:12px}
+  #bag.wildInventory #craftSearch,#bag.wildInventory #craftCategoryFilter,#bag.wildInventory #craftAmount{box-sizing:border-box;width:100%;margin-bottom:8px;padding:9px;border:1px solid #78846b;border-radius:0;background:#141e18;color:#f0eddb;font-size:10px}
+  #bag.wildInventory .wildRecipeBody{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(200px,.9fr);gap:10px;align-items:start}
+  #bag.wildInventory #craftList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-height:420px;overflow:auto}
+  #bag.wildInventory #craftList button{min-width:0;min-height:48px;padding:7px;border:1px solid #74816a;background:linear-gradient(145deg,#3a4836,#222e25);color:#e9ead8;text-align:left;font-size:9px}
+  #bag.wildInventory #craftList button small{display:block;margin-top:4px;color:#bac3a9;font-size:8px}
+  #bag.wildInventory #craftList button.no{opacity:.4}
+  #bag.wildInventory #craftList button.selected{outline:2px solid #d9c77d;background:#596344}
+  #bag.wildInventory #recipeDetails{padding:12px;border:1px solid #7c876d;background:#202b22}
+  #bag.wildInventory #recipeDetails>b{color:#f1e9ce;font-size:12px}
+  #bag.wildInventory #recipeDetails label,#bag.wildInventory #recipeIngredients,#bag.wildInventory #craftTotal{display:block;margin:8px 0;color:#c0c8b2;font-size:9px;line-height:1.5}
+  #bag.wildInventory #craftSelected{width:100%;padding:10px;border:1px solid #b8a96f;background:linear-gradient(180deg,#77784c,#41482e);color:#fff0c4;font-size:10px;font-weight:900;letter-spacing:.08em}
+  @media(max-width:850px){#bag.wildInventory .wildInvScreen{grid-template-columns:minmax(170px,.8fr) minmax(0,1.3fr)}#bag.wildInventory .wildPartyPanel{grid-column:1/-1}#bag.wildInventory #bagTeam .partyCards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:600px){#bag.wildInventory{width:98vw;max-height:95dvh}#bag.wildInventory .wildInvHeader{padding:10px}#bag.wildInventory .wildInvBrand strong{font-size:13px}#bag.wildInventory .wildInvBrand small{font-size:7px}#bag.wildInventory .wildInvScreen{grid-template-columns:1fr;padding:7px;gap:7px}#bag.wildInventory .wildCharacterStage{height:145px}#bag.wildInventory .wildPartyPanel{grid-column:auto}#bag.wildInventory #bagTeam .partyCards{grid-template-columns:1fr 1fr}#bag.wildInventory .wildCraftScreen{grid-template-columns:1fr;padding:8px}#bag.wildInventory .wildRecipeBody{grid-template-columns:1fr}#bag.wildInventory #craftList{max-height:250px;grid-template-columns:repeat(2,minmax(0,1fr))}#bag.wildInventory .wildInvTabs{padding:0 8px}#bag.wildInventory .wildInvTabs button{padding:10px 12px;font-size:9px}#bag.wildInventory .wildInvTabHint{display:none}}
+  @media(max-width:370px){#bag.wildInventory .wildItemActions button{font-size:7px}#bag.wildInventory .wildEquipmentGrid{gap:3px}#bag.wildInventory .wildEquipSlot{height:50px}}
+
 </style>
 </head>
 <body>
@@ -426,45 +536,66 @@
 <div class="settingRow">Right <button id="bindRight" type="button">D</button></div>
 <label class="settingRow">Invert camera vertical <input id="invertCamera" type="checkbox"></label><label class="settingRow">Performance monitor <input id="perfMonitorToggle" type="checkbox"></label><div id="perfStatus" class="settingNote" role="status">Performance monitor is off.</div><button id="runDeviceProfile" type="button">Run 30-second device profile</button><div id="deviceProfileStatus" class="settingNote" role="status" aria-live="polite">Run this on the target Chromebook with the game world loaded. Keep the same graphics profile you intend to use.</div><button id="exportDiagnostics" type="button">Export diagnostic report</button><div id="diagnosticStatus" class="settingNote" role="status">Runtime diagnostics are collected locally in this browser.</div><div class="settingNote">Graphics quality changes shadows and scene detail only. Screen resolution is fixed and is never automatically reduced based on RAM, CPU, GPU or frame rate. World areas load around your player as you explore.</div><div class="settingNote" id="worldStatus">Loading nearby world area…</div><div class="settingsActions"><button id="saveWorldBtn" type="button">Save World</button><button id="settingsCharacter" type="button">Customize Character</button><button id="settingsMenu" type="button">Main Menu</button></div><div class="settingNote" id="saveStatus" role="status" aria-live="polite">Autosave is active · every 10 seconds</div></div></div>
 <div id="hotwrap"><div id="target" hidden></div><div id="hotname"></div><div id="hotbar"></div></div>
-<div id="bag" hidden class="palBag">
-  <div class="bagTop"><div class="bagHeading"><strong>INVENTORY</strong><span class="invSub">WILDEARTH · FIELD EQUIPMENT</span></div><div class="bagTopActions"><button id="bagSort" type="button">SORT</button><button id="bagClose" type="button" aria-label="Close inventory">✕</button></div></div>
+<div id="bag" hidden class="palBag wildInventory">
+  <header class="wildInvHeader">
+    <div class="wildInvBrand"><span class="wildInvMark">W</span><div><strong>FIELD INVENTORY</strong><small>WILDEARTH · SURVIVOR PROFILE</small></div></div>
+    <div class="wildInvHeaderActions"><button id="bagSort" type="button" title="Sort backpack">SORT BAG</button><button id="bagClose" type="button" aria-label="Close inventory">✕</button></div>
+  </header>
+  <nav class="wildInvTabs" aria-label="Inventory sections">
+    <button type="button" data-bag-tab="inventory" class="active" aria-selected="true">INVENTORY</button>
+    <button type="button" data-bag-tab="crafting" aria-selected="false">CRAFTING</button>
+    <span class="wildInvTabHint">ESC · CLOSE</span>
+  </nav>
   <div id="bagInfo" role="status" aria-live="polite"></div>
-  <div class="palInventory">
-    <section class="invSide">
-      <div class="invLabel">Character</div>
-      <div class="playerPaper"><div class="paperAvatar" aria-hidden="true">🧍</div><div class="armorSlots">
-        <div class="armorSlot" id="armorHead">◈<small>Head</small></div>
-        <div class="armorSlot" id="armorChest">◇<small>Chest</small></div>
-        <div class="armorSlot" id="armorLegs">▤<small>Legs</small></div>
-        <div class="armorSlot" id="armorFeet">▥<small>Feet</small></div>
-      </div></div>
-      <div class="invLabel">Equipped armor</div><div id="equipStatus" class="equipStatus">No armor equipped</div><button id="equipArmor" type="button" disabled>Equip selected armor</button>
-      <div class="itemPreview" aria-live="polite"><div id="itemPreviewIcon" class="previewIcon">◇</div><strong id="itemPreviewName">Select an item</strong><span id="itemCount">Choose an item to view its details</span><small id="itemPreviewMeta">ITEM DETAILS</small></div>
-      <div class="quickActions"><button id="quickMove" type="button" disabled>Move / swap</button><button id="splitStack" type="button" disabled>Split stack</button><button id="quickDiscard" type="button" disabled>Discard</button><button id="repairTool" type="button">Repair Tool</button></div>
+  <div id="inventoryScreen" class="wildInvScreen">
+    <section class="wildCharacterPanel">
+      <div class="wildPanelTitle"><span>CHARACTER</span><small>YOUR SURVIVOR</small></div>
+      <div class="wildCharacterStage">
+        <div class="wildCharacterAura"></div><div class="wildCharacterSilhouette" aria-hidden="true"><span class="wildCharHead"></span><span class="wildCharBody"></span><span class="wildCharArm left"></span><span class="wildCharArm right"></span><span class="wildCharLeg left"></span><span class="wildCharLeg right"></span></div>
+        <div class="wildCharacterName">FIELD EXPLORER</div><div class="wildCharacterLevel">EQUIPMENT OVERVIEW</div>
+      </div>
+      <div class="wildPanelTitle wildEquipTitle"><span>EQUIPMENT</span><small>ARMOR SLOTS</small></div>
+      <div class="wildEquipmentGrid">
+        <div class="wildEquipSlot" id="armorHead"><span>◈</span><small>HEAD</small></div>
+        <div class="wildEquipSlot" id="armorChest"><span>◇</span><small>CHEST</small></div>
+        <div class="wildEquipSlot" id="armorLegs"><span>▤</span><small>LEGS</small></div>
+        <div class="wildEquipSlot" id="armorFeet"><span>▥</span><small>FEET</small></div>
+      </div>
+      <div id="equipStatus" class="wildEquipStatus">No armor equipped</div><button id="equipArmor" type="button" disabled> EQUIP SELECTED ARMOR </button>
+      <div class="wildItemInspect"><div id="itemPreviewIcon" class="wildItemIcon">◇</div><div class="wildItemData"><strong id="itemPreviewName">Select an item</strong><span id="itemCount">Choose an item to view its details</span><small id="itemPreviewMeta">ITEM DETAILS</small></div></div>
+      <div class="wildItemActions"><button id="quickMove" type="button" disabled>MOVE</button><button id="splitStack" type="button" disabled>SPLIT</button><button id="quickDiscard" type="button" disabled>DROP</button><button id="repairTool" type="button">REPAIR</button></div>
       <button id="bagDiscard" type="button" style="display:none">Discard selected stack</button>
-      <p class="invHelp">Select an item to inspect it. Select another slot to move, swap or combine stacks.</p>
+      <p class="wildPanelHelp">Select an item, then choose a destination slot to move, swap or combine it.</p>
     </section>
-    <section class="invCenter">
-      <div class="invSectionHead"><div class="invLabel">Backpack</div><span>27 STORAGE SLOTS</span></div>
-      <div class="inventoryFilters" role="group" aria-label="Filter backpack items"><button type="button" data-inv-filter="all" class="active">All</button><button type="button" data-inv-filter="gear">Gear</button><button type="button" data-inv-filter="materials">Materials</button><button type="button" data-inv-filter="food">Food</button><button type="button" data-inv-filter="capture">Capture</button><button type="button" data-inv-filter="building">Building</button></div>
-      <div id="bagGrid"></div>
-      <div class="invSectionHead hotbarHeading"><div class="invLabel">Quick access</div><span>1–9</span></div>
-      <div id="bagHotbar"></div>
-      <div class="inventoryFootnote">Drag or tap to move items · Matching stacks combine automatically</div>
+    <section class="wildBackpackPanel">
+      <div class="wildPanelTitle"><span>BACKPACK</span><small>27 SLOTS · STORAGE</small></div>
+      <div class="inventoryFilters" role="group" aria-label="Filter backpack items"><button type="button" data-inv-filter="all" class="active">ALL</button><button type="button" data-inv-filter="gear">GEAR</button><button type="button" data-inv-filter="materials">MATERIALS</button><button type="button" data-inv-filter="food">FOOD</button><button type="button" data-inv-filter="capture">CAPTURE</button><button type="button" data-inv-filter="building">BUILDING</button></div>
+      <div id="bagGrid" class="wildItemGrid"></div>
+      <div class="wildPanelTitle wildHotbarTitle"><span>QUICK ACCESS</span><small>KEYS 1–9</small></div>
+      <div id="bagHotbar" class="wildItemGrid"></div>
+      <div class="wildBagTip">Tap an item to select · Tap another slot to move · Same items stack automatically</div>
     </section>
-    <section class="bagCraft">
-      <div class="invLabel">Party companions</div><div id="bagTeam"></div>
-      <div class="invLabel">Crafting station</div>
-      <strong>Manual crafting</strong>
+    <aside class="wildPartyPanel">
+      <div class="wildPanelTitle"><span>YOUR PARTY</span><small>COMPANIONS</small></div>
+      <div id="bagTeam"></div>
+      <div class="wildPartyNote">Your companions travel with you and respond to your active command.</div>
+    </aside>
+  </div>
+  <section id="craftingScreen" class="wildCraftScreen" hidden>
+    <div class="wildCraftWorkbench">
+      <div class="wildPanelTitle"><span>WORKBENCH</span><small>MANUAL ASSEMBLY</small></div>
+      <p class="wildCraftIntro">Place materials into the work grid to discover a valid recipe, or select a known recipe from the list.</p>
       <div class="craftBench"><div id="benchGrid" class="craftGrid"><button data-benchcell="0" type="button">+</button><button data-benchcell="1" type="button">+</button><button data-benchcell="2" type="button">+</button><button data-benchcell="3" type="button">+</button></div><span class="craftArrow">→</span><button id="benchOutput" class="craftOutput" type="button" disabled>◇</button></div>
       <div id="benchHint" class="craftCaption">Select an item, then add it to a crafting cell.</div>
-      <div class="recipeHeading">Recipes</div>
+      <div class="wildCraftTip">Select a backpack stack first, then tap a workbench cell to add one unit.</div>
+    </div>
+    <div class="wildRecipeWorkbench">
+      <div class="wildPanelTitle"><span>CRAFTING RECIPES</span><small>AVAILABLE BLUEPRINTS</small></div>
       <input id="craftSearch" type="search" placeholder="Search recipes or ingredients" aria-label="Search crafting recipes">
       <select id="craftCategoryFilter" aria-label="Filter recipe category"><option value="all">All categories</option><option value="Capture">Capture</option><option value="Tools">Tools</option><option value="Armor">Armor</option><option value="Metallurgy">Metallurgy</option><option value="Survival">Survival</option><option value="Building">Building</option></select>
-      <div id="craftList"></div>
-      <div id="recipeDetails"><b id="recipeSelected">Select a recipe</b><div id="recipeIngredients"></div><label for="craftAmount">Amount to craft</label><input id="craftAmount" type="number" min="1" max="99" value="1" inputmode="numeric"><div id="craftTotal"></div><button id="craftSelected" type="button" disabled>Craft selected recipe</button></div>
-    </section>
-  </div>
+      <div class="wildRecipeBody"><div id="craftList"></div><div id="recipeDetails"><b id="recipeSelected">Select a recipe</b><div id="recipeIngredients"></div><label for="craftAmount">Amount to craft</label><input id="craftAmount" type="number" min="1" max="99" value="1" inputmode="numeric"><div id="craftTotal"></div><button id="craftSelected" type="button" disabled>CRAFT SELECTED RECIPE</button></div></div>
+    </div>
+  </section>
 </div>
 <div id="joy"><div id="stick"></div></div>
 <div id="btns">
@@ -1727,6 +1858,9 @@ function slotClick(i){
 }
 $('bagTeam').addEventListener('click',function(e){var b=e.target.closest('[data-team-mode]');if(b)setCompanionMode(b.getAttribute('data-team-mode'));});
 $('bag').addEventListener('click',function(e){var f=e.target.closest('[data-inv-filter]');if(f)setInventoryFilter(f.getAttribute('data-inv-filter'));});
+var activeBagTab='inventory';
+function setBagTab(tab){if(tab!=='inventory'&&tab!=='crafting')return;activeBagTab=tab;$('inventoryScreen').hidden=tab!=='inventory';$('craftingScreen').hidden=tab!=='crafting';var tabs=$('bag').querySelectorAll('[data-bag-tab]');for(var ti=0;ti<tabs.length;ti++){var on=tabs[ti].getAttribute('data-bag-tab')===tab;tabs[ti].classList.toggle('active',on);tabs[ti].setAttribute('aria-selected',on?'true':'false');}}
+$('bag').addEventListener('click',function(e){var tab=e.target.closest('[data-bag-tab]');if(tab)setBagTab(tab.getAttribute('data-bag-tab'));});
 function sortStorageInventory(){
   var items=[];
   for(var i=HOT;i<NSLOTS;i++)if(slots[i])items.push({id:slots[i].id,n:slots[i].n});
