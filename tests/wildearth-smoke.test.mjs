@@ -434,3 +434,12 @@ test('interface localization uses persisted English and Urdu text tables for cor
   }
   assert.ok(gameScript.includes("gameText('baseComfort')"));
 });
+
+
+test('cave entrance and underground chamber support entry, bounded movement, lighting, and exit', () => {
+  assert.match(html, /id="cavePrompt"/);
+  assert.match(html, /id="caveAction"/);
+  for (const marker of ['function addCaveEntrance(x,z)', 'function enterCave(cave)', 'function exitCave()', 'var initialCave=addCaveEntrance(-52,42)', 'caveMode?activeCave.floorY', "if(caveMode&&activeCave){P.x=clamp", "new THREE.PointLight(0x3ecde8"]) {
+    assert.ok(gameScript.includes(marker), 'missing cave system marker: '+marker);
+  }
+});
