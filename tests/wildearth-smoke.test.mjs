@@ -300,3 +300,18 @@ test('swimming adjusts third-person camera framing and enables underwater visual
   assert.ok(gameScript.includes('underwater?Math.min(cam.dist,7.2):cam.dist'));
   assert.ok(gameScript.includes("tint.classList.toggle('active',underwater)"));
 });
+
+
+test('three outfit save slots persist and restore validated appearance selections', () => {
+  for (const id of ['outfitSlot', 'saveOutfitSlot', 'loadOutfitSlot']) assert.match(html, new RegExp('id="' + id + '"'));
+  for (const marker of ['mfwilds3d_outfit_slots_v1', 'function readCurrentOutfit()', 'function validSelectValue(', 'all[$(\'outfitSlot\').value]=readCurrentOutfit()', "el.dispatchEvent(new Event('change'))", "applyCharacterStyle(look.character)"]) {
+    assert.ok(gameScript.includes(marker), 'missing outfit-slot marker: ' + marker);
+  }
+});
+
+test('character appearance is restored from global profile storage when a world loads', () => {
+  assert.ok(gameScript.includes('function restoreCharacterAppearance()'));
+  assert.match(gameScript, /restoreCharacterAppearance\(\);/);
+  assert.ok(gameScript.includes("localStorage.getItem('mfwilds3d_skin')"));
+  assert.ok(gameScript.includes("localStorage.getItem('mfwilds3d_outfit')"));
+});
