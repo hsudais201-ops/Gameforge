@@ -106,7 +106,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 82. Add placement preview and collision-aware placement.
 - [x] 83. Add bedroll respawn and safe spawn validation.
 - [x] 84. Add snap points and grid-aligned building.
-- [ ] 85. Add doors, gates, and roof pieces.
+- [x] 85. Add doors, gates, and roof pieces.
 - [ ] 86. Add structural integrity and support rules.
 - [ ] 87. Add storage, workbench, and cooking stations.
 - [ ] 88. Add base comfort and protection ratings.
@@ -173,6 +173,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Cosmetic progression: three appearance rewards unlock from Night Survivor, Wraith Slayer, and Pathfinder achievements; locked color choices remain disabled until earned, and unlock IDs persist per world.
 
 - Memory safeguards: capped transient spark meshes at 500, retained the 60-node floating-text cap, and explicitly dispose unique capture-projectile geometries/materials when projectiles leave the scene. Shared instanced world geometry remains reused rather than recreated for streamed chunks.
+
+- Building pieces: added craftable wooden doors, gates, and pitched roof sections. Doors/gates toggle open and closed, update collision behavior, and preserve open state in world saves.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
