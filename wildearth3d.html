@@ -705,9 +705,10 @@ scatter('bush','bush',(isMobile?70:110),0.8,1.3,0,1);
 var _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_p=new THREE.Vector3(),_s=new THREE.Vector3();
 var streamedMeshes=[],streamDirty=true,streamTimer=0;
 function registerStreamMesh(im,positions,baseMatrices){im.userData.streamPositions=positions;im.userData.baseMatrices=baseMatrices;im.userData.streamVisible=[];streamedMeshes.push(im);}
+function streamChunkActive(x,z,playerX,playerZ,radius,chunkSize){var cx=Math.floor(x/chunkSize)*chunkSize+chunkSize/2,cz=Math.floor(z/chunkSize)*chunkSize+chunkSize/2,dx=cx-playerX,dz=cz-playerZ;return dx*dx+dz*dz<=(radius+chunkSize*0.72)*(radius+chunkSize*0.72)}
 function updateWorldStreaming(force){
   var radius=areaRadii[areaLevel],radius2=radius*radius,chunkSize=32,changed=0;
-  function active(x,z){var cx=Math.floor(x/chunkSize)*chunkSize+chunkSize/2,cz=Math.floor(z/chunkSize)*chunkSize+chunkSize/2;var dx=cx-P.x,dz=cz-P.z;return dx*dx+dz*dz<=(radius+chunkSize*0.72)*(radius+chunkSize*0.72)}
+  function active(x,z){return streamChunkActive(x,z,P.x,P.z,radius,chunkSize)}
   for(var m=0;m<streamedMeshes.length;m++){
     var meshChanged=false,im=streamedMeshes[m],pos=im.userData.streamPositions,base=im.userData.baseMatrices,vis=im.userData.streamVisible;
     for(var n=0;n<pos.length;n++){
@@ -1520,7 +1521,7 @@ var riverMaterial=new THREE.MeshStandardMaterial({color:0x2788a8,emissive:0x0c35
 function buildRiver(points){
   var curve=new THREE.CatmullRomCurve3(points.map(function(p){return new THREE.Vector3(p[0],heightAt(p[0],p[1])+0.12,p[1]);})),samples=90,positions=[],indices=[],line=[];
   for(var i=0;i<=samples;i++){var u=i/samples,pt=curve.getPoint(u),tan=curve.getTangent(u),len=Math.hypot(tan.x,tan.z)||1,px=-tan.z/len,pz=tan.x/len,w=1.15;line.push({x:pt.x,z:pt.z});positions.push(pt.x+px*w,pt.y,pt.z+pz*w,pt.x-px*w,pt.y,pt.z-pz*w);if(i<samples){var k=i*2;indices.push(k,k+1,k+2,k+1,k+3,k+2);}}
-  var geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();var meshRiver=new THREE.Mesh(geo,riverMaterial);meshRiver.frustumCulled=false;scene.add(meshRiver);riverMeshes.push(meshRiver);riverLines.push(line);
+  var geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();var meshRiver=new THREE.Mesh(geo,riverMaterial);meshRiver.frustumCulled=false;scene.add(meshRiver);riverMeshes.push({mesh:meshRiver,base:new Float32Array(positions)});riverLines.push(line);
 }
 function buildPond(x,z,radius){
   var y=heightAt(x,z)+0.16,mat=new THREE.MeshStandardMaterial({color:0x2c8eae,emissive:0x0b3344,emissiveIntensity:0.3,transparent:true,opacity:0.78,roughness:0.18,side:THREE.DoubleSide}),meshPond=new THREE.Mesh(new THREE.CircleGeometry(radius,28),mat);
@@ -1533,7 +1534,7 @@ function riverDepthAt(x,z){
   return best;
 }
 function updateRivers(){
-  for(var m=0;m<riverMeshes.length;m++){var attr=riverMeshes[m].geometry.attributes.position,arr=attr.array;for(var i=0;i<arr.length;i+=3){var wave=Math.sin(clock*2.2+i*0.025)*0.018;arr[i+1]+=wave;}attr.needsUpdate=true;riverMeshes[m].geometry.computeVertexNormals();}
+  for(var m=0;m<riverMeshes.length;m++){var entry=riverMeshes[m],attr=entry.mesh.geometry.attributes.position,arr=attr.array,base=entry.base;for(var i=0;i<arr.length;i+=3)arr[i+1]=base[i+1]+Math.sin(clock*2.2+i*0.025)*0.018;attr.needsUpdate=true;}
 }
 
 riverPaths.forEach(buildRiver);buildPond(34,18,4.2);buildPond(-12,-8,3.6);
