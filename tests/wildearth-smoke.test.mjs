@@ -132,7 +132,7 @@ test('procedural biomes drive terrain materials, resource placement, and wildlif
 });
 
 test('swimming has slower movement, buoyancy, oxygen drain, and drowning damage', () => {
-  for (const marker of ['P.swimming=!caveMode&&waterDepth>0.55', 'P.y+=(WATER-0.45-P.y)', 'P.oxygen=Math.max(0,P.oxygen-dt*8)', "playerDamage(4*dt,'Drowning')", '(P.swimming?0.58:1)']) {
+  for (const marker of ['P.swimming=!caveMode&&waterDepth>0.55', 'waterSurface-0.45-P.y', 'P.oxygen=Math.max(0,P.oxygen-dt*8)', "playerDamage(4*dt,'Drowning')", '(P.swimming?0.58:1)']) {
     assert.ok(gameScript.includes(marker), 'missing swimming marker: ' + marker);
   }
 });
