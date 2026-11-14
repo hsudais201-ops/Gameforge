@@ -260,3 +260,14 @@ test('tool tiers change resource gathering cooldowns as well as mining damage', 
   assert.ok(gameScript.includes("if(r.type==='tree'&&axe)P.cool=0.34"));
   assert.ok(gameScript.includes("Math.max(1,pickLevel)"));
 });
+
+
+test('sound captions are accessible, configurable, persisted, and independent of audio playback', () => {
+  assert.match(html, /id="subtitleLine" role="status" aria-live="polite"/);
+  assert.match(html, /id="subtitlesToggle"/);
+  assert.ok(gameScript.includes("subtitles:true"));
+  assert.ok(gameScript.includes("savedAudio.subtitles==='boolean'"));
+  assert.ok(gameScript.includes("function showSoundCaption(kind)"));
+  assert.ok(gameScript.includes("showSoundCaption(kind);"));
+  assert.ok(gameScript.includes("saveAudioPrefs();"));
+});
