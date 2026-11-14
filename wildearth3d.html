@@ -489,10 +489,10 @@ scene.add(sun);scene.add(sun.target);
 
 /* ---------- manual graphics settings (resolution stays fixed) ---------- */
 var renderProfiles=[
-  {name:'Low',shadows:false,fogFar:175,particleScale:0.4},
-  {name:'Balanced',shadows:true,fogFar:230,particleScale:0.7},
-  {name:'High',shadows:true,fogFar:280,particleScale:1}
-];
+  {name:'Low',shadows:false,detailShadows:false,fogFar:175,particleScale:0.4},
+  {name:'Balanced',shadows:true,detailShadows:false,fogFar:230,particleScale:0.7},
+  {name:'High',shadows:true,detailShadows:true,fogFar:280,particleScale:1}
+],detailShadowMeshes=[];
 var renderLevel=isLowEnd?0:1,areaLevel=1,areaRadii=[55,85,125],areaRadius=85,SETTINGS_KEY='mfwilds3d_settings_v1';
 try{var savedGraphics=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');if(savedGraphics.quality!==undefined)renderLevel=clamp(savedGraphics.quality|0,0,2);if(savedGraphics.areaRadius!==undefined)areaRadius=clamp(Number(savedGraphics.areaRadius)||85,40,160);else if(savedGraphics.area!==undefined)areaRadius=areaRadii[clamp(savedGraphics.area|0,0,2)];areaLevel=areaRadius<70?0:areaRadius<110?1:2;}catch(e){}
 function saveGraphicsSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({quality:renderLevel,area:areaLevel,areaRadius:areaRadius}));}catch(e){}}
@@ -509,6 +509,7 @@ function applyRenderProfile(level){
     }
   }else if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
   renderer.shadowMap.needsUpdate=true;
+  for(var di=0;di<detailShadowMeshes.length;di++)detailShadowMeshes[di].castShadow=profile.detailShadows;
   scene.fog.far=profile.fogFar;
   applyWeatherBudget();
   $('qualitySelect').value=String(renderLevel);
@@ -805,11 +806,13 @@ scatter('goldOre','ore',(isMobile?4:7),0.9,1.25,1.0,9);
 scatter('bush','bush',(isMobile?70:110),0.8,1.3,0,1);
 
 var _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_p=new THREE.Vector3(),_s=new THREE.Vector3();
-var streamedMeshes=[],streamDirty=true,streamTimer=0;
+var streamedMeshes=[],streamDirty=true,streamTimer=0,lastStreamX=NaN,lastStreamZ=NaN,lastStreamRadius=0;
 function registerStreamMesh(im,positions,baseMatrices){im.userData.streamPositions=positions;im.userData.baseMatrices=baseMatrices;im.userData.streamVisible=[];streamedMeshes.push(im);}
 function streamChunkActive(x,z,playerX,playerZ,radius,chunkSize){var cx=Math.floor(x/chunkSize)*chunkSize+chunkSize/2,cz=Math.floor(z/chunkSize)*chunkSize+chunkSize/2,dx=cx-playerX,dz=cz-playerZ;return dx*dx+dz*dz<=(radius+chunkSize*0.72)*(radius+chunkSize*0.72)}
 function updateWorldStreaming(force){
-  var radius=areaRadius,radius2=radius*radius,chunkSize=32,changed=0;
+  var radius=areaRadius,chunkSize=32,changed=0;
+  var dxPlayer=P.x-lastStreamX,dzPlayer=P.z-lastStreamZ;
+  if(!force&&!streamDirty&&radius===lastStreamRadius&&dxPlayer*dxPlayer+dzPlayer*dzPlayer<64)return;
   function active(x,z){return streamChunkActive(x,z,P.x,P.z,radius,chunkSize)}
   for(var m=0;m<streamedMeshes.length;m++){
     var meshChanged=false,im=streamedMeshes[m],pos=im.userData.streamPositions,base=im.userData.baseMatrices,vis=im.userData.streamVisible;
@@ -829,7 +832,7 @@ function updateWorldStreaming(force){
   }
   for(var wi=0;wi<wild.length;wi++){var w=wild[wi];w.m.g.visible=active(w.x,w.z);}
   $('worldStatus').textContent='Active render distance: '+areaRadius+' m · '+streamedMeshes.length+' streamed detail groups';
-  streamDirty=false;
+  lastStreamX=P.x;lastStreamZ=P.z;lastStreamRadius=radius;streamDirty=false;
 }
 
 function setInst(r,shake,hidden){
@@ -842,13 +845,13 @@ function setInst(r,shake,hidden){
 Object.keys(meshSpecs).forEach(function(k){
   var sp=meshSpecs[k];
   var im=new THREE.InstancedMesh(sp.geo,matVC,Math.max(1,sp.n));
-  im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;
+  im.castShadow=renderProfiles[renderLevel].detailShadows;im.receiveShadow=false;im.frustumCulled=false;detailShadowMeshes.push(im);
   sp.list.forEach(function(r){r.mesh=im;setInst(r,0,false)});
   scene.add(im);
 });
 var treeList=res.filter(function(r){return r.type==='tree'});
 var stumpIM=new THREE.InstancedMesh(buildStump(),matVC,Math.max(1,treeList.length));
-stumpIM.castShadow=true;stumpIM.receiveShadow=true;stumpIM.frustumCulled=false;
+stumpIM.castShadow=renderProfiles[renderLevel].detailShadows;stumpIM.receiveShadow=false;stumpIM.frustumCulled=false;detailShadowMeshes.push(stumpIM);
 function setStump(r,on){
   _e.set(0,r.ry,0);_q.setFromEuler(_e);_p.set(r.x,r.y,r.z);
   var k=on?r.s:0.0001;_s.set(k,k,k);_m.compose(_p,_q,_s);
@@ -1633,6 +1636,7 @@ function riverDepthAt(x,z){
   for(var j=0;j<ponds.length;j++)if(Math.hypot(x-ponds[j].x,z-ponds[j].z)<ponds[j].r)best=Math.max(best,0.95);
   return best;
 }
+var riverUpdateAccumulator=0;
 function updateRivers(){
   for(var m=0;m<riverMeshes.length;m++){var entry=riverMeshes[m],attr=entry.mesh.geometry.attributes.position,arr=attr.array,base=entry.base;for(var i=0;i<arr.length;i+=3)arr[i+1]=base[i+1]+Math.sin(clock*2.2+i*0.025)*0.018;attr.needsUpdate=true;}
 }
@@ -2421,7 +2425,8 @@ var hudT=0,saveT=0,flick=0,sprintEmptyNotified=false,hungerWarned=false;
 function update(dt){
   if(dead){respawnTimer=Math.max(0,respawnTimer-dt);var secs=Math.ceil(respawnTimer);$("deathCountdown").textContent=respawnTimer>0?"Respawning in "+secs+" second"+(secs===1?"":"s")+"…":"Ready to return";if(respawnTimer<=0)finishRespawn();return;}
   clock+=dt;flick+=dt;
-  updateRivers();
+  riverUpdateAccumulator+=dt;
+  if(riverUpdateAccumulator>=1/12){updateRivers();riverUpdateAccumulator%=1/12;}
   if(!rareEvent&&!rareEventClaimed&&nights>=3&&nightF>0.7)spawnRareEvent();
   if(rareEvent){rareEvent.phase+=dt*1.7;rareEvent.g.position.y=rareEvent.y+1.2+Math.sin(rareEvent.phase)*0.22;rareEvent.g.rotation.y+=dt*0.65;if(Math.hypot(P.x-rareEvent.x,P.z-rareEvent.z)<2.25){rareEventClaimed=true;scene.remove(rareEvent.g);rareEvent.g.traverse(function(o){if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(function(m){m.dispose()});else o.material.dispose();}});rareEvent=null;gain('crystal',8,P.x,P.y+2.4,P.z,'#8beaff');gain('goldOre',3,P.x,P.y+2.8,P.z,'#f6d47a');say('Lumen Heart recovered! Rare star-metal rewards added.',6);save();}}
   updateWeather(dt);
