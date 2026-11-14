@@ -60,7 +60,7 @@ test('world seed is stored per world and can be overridden for reproduction', ()
 });
 
 test('save compatibility keeps legacy inventory migration paths', () => {
-  assert.match(gameScript, /version:5/);
+  assert.match(gameScript, /version:6/);
   assert.match(gameScript, /oldSlots\.length===30/);
   assert.match(gameScript, /mfwilds3d_v2/);
   assert.match(gameScript, /mfwilds3d_v1/);
