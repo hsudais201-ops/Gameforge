@@ -229,7 +229,7 @@
     <span class="pill">Health<span class="bar"><i id="hp" style="background:#e8574f"></i></span></span>
     <span class="pill">Food<span class="bar"><i id="food" style="background:#e9b44c"></i></span></span>
     <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
-    <span class="pill" id="time"></span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
+    <span class="pill" id="time"></span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="baseRating">Base comfort 0 · protection 0</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
   </div>
   <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div>
 </div>
@@ -1167,6 +1167,8 @@ function makeChest(){var g=new THREE.Group(),wood=stdMat(0x80552f,0.94),trim=std
 function makeDoor(){var g=new THREE.Group(),wood=stdMat(0x80552f,0.92),trim=stdMat(0xc39a58,0.65,{metalness:0.3}),iron=stdMat(0x68747a,0.45,{metalness:0.65});g.add(mesh(new THREE.BoxGeometry(2.55,2.82,0.16),wood,0,0,0));for(var i=-1;i<=1;i++)g.add(mesh(new THREE.BoxGeometry(0.1,2.85,0.2),trim,i*0.82,0,0));g.add(mesh(new THREE.BoxGeometry(0.14,0.14,0.1),iron,0.9,-0.05,0.13));g.add(mesh(new THREE.BoxGeometry(2.5,0.12,0.2),trim,0,-1.32,0));return g;}
 function makeGate(){var g=new THREE.Group(),wood=stdMat(0x765033,0.95),iron=stdMat(0x71818a,0.4,{metalness:0.65});g.add(mesh(new THREE.BoxGeometry(2.65,0.18,0.18),wood,0,1.35,0));g.add(mesh(new THREE.BoxGeometry(2.65,0.18,0.18),wood,0,-1.35,0));for(var i=-2;i<=2;i++)g.add(mesh(new THREE.BoxGeometry(0.12,2.7,0.14),iron,i*0.52,0,0));return g;}
 function makeRoof(){var g=new THREE.Group(),wood=stdMat(0x8a633e,0.92),dark=stdMat(0x5a4028,0.96);var left=mesh(new THREE.BoxGeometry(2.2,0.14,3.2),wood,-0.55,0.08,0);left.rotation.z=-0.28;g.add(left);var right=mesh(new THREE.BoxGeometry(2.2,0.14,3.2),wood,0.55,0.08,0);right.rotation.z=0.28;g.add(right);g.add(mesh(new THREE.BoxGeometry(0.16,0.22,3.25),dark,0,0.23,0));return g;}
+function makeWorkbench(){var g=new THREE.Group(),wood=stdMat(0x825b35,0.94),metal=stdMat(0x7d8589,0.5,{metalness:0.6});g.add(mesh(new THREE.BoxGeometry(1.8,0.18,1.1),wood,0,0.95,0));for(var x=-1;x<=1;x+=2)for(var z=-1;z<=1;z+=2)g.add(mesh(new THREE.BoxGeometry(0.14,0.95,0.14),wood,x*0.72,0.45,z*0.42));g.add(mesh(new THREE.BoxGeometry(0.6,0.08,0.32),metal,0,1.08,0.1));g.add(mesh(new THREE.BoxGeometry(0.08,0.38,0.08),metal,0.32,1.28,-0.2));return g;}
+function makeCookpot(){var g=new THREE.Group(),stone=stdMat(0x6b7477,0.9),pot=stdMat(0x39464b,0.45,{metalness:0.65}),glow=stdMat(0xff9c43,0.4,{emissive:0xff6a19,emissiveIntensity:1.2});for(var i=0;i<3;i++){var a=i*2.094;g.add(mesh(new THREE.CylinderGeometry(0.08,0.12,0.55,6),stone,Math.cos(a)*0.48,0.25,Math.sin(a)*0.48));}g.add(mesh(new THREE.CylinderGeometry(0.52,0.42,0.42,12),pot,0,0.68,0));g.add(mesh(new THREE.TorusGeometry(0.48,0.055,8,16),pot,0,0.9,0));g.add(mesh(new THREE.SphereGeometry(0.22,8,6),glow,0,0.44,0));return g;}
 function makeWall(){
   var g=new THREE.Group();
   /* A wall is a thin panel, not a full 3x3x3 cube. */
@@ -1266,11 +1268,11 @@ var ITEMS={
   copperOre:{n:'Copper Ore',max:30},ironOre:{n:'Iron Ore',max:30},crystal:{n:'Lumen Crystal',max:20},tinOre:{n:'Tin Ore',max:30},goldOre:{n:'Gold Ore',max:20},copperbar:{n:'Copper Ingot',max:30},ironbar:{n:'Iron Ingot',max:30},tinbar:{n:'Tin Ingot',max:30},goldbar:{n:'Gold Ingot',max:20},crystalcore:{n:'Lumen Core',max:10},copperpick:{n:'Copper Pickaxe',max:1},ironpick:{n:'Iron Pickaxe',max:1},coppersword:{n:'Copper Sword',max:1},ironsword:{n:'Iron Sword',max:1},copperarmor:{n:'Copper Armor',max:1},ironarmor:{n:'Iron Armor',max:1},tonic:{n:'Vitality Tonic',max:8},
   ball:{n:'Capture Ball',max:20},great:{n:'Great Ball',max:10},wall:{n:'Wall block',max:20},fire:{n:'Campfire',max:5},
   torch:{n:'Torch',max:10},axe:{n:'Stone Axe',max:1},pick:{n:'Stone Pickaxe',max:1},salve:{n:'Healing Salve',max:10},
-  jam:{n:'Berry Jam',max:10},treat:{n:'Creature Treat',max:10},stonewall:{n:'Stone wall',max:20},floor:{n:'Wood floor',max:20},bed:{n:'Bedroll',max:2},chest:{n:'Storage Chest',max:8},door:{n:'Wood Door',max:10},gate:{n:'Wood Gate',max:10},roof:{n:'Wood Roof',max:20}
+  jam:{n:'Berry Jam',max:10},treat:{n:'Creature Treat',max:10},stonewall:{n:'Stone wall',max:20},floor:{n:'Wood floor',max:20},bed:{n:'Bedroll',max:2},chest:{n:'Storage Chest',max:8},door:{n:'Wood Door',max:10},gate:{n:'Wood Gate',max:10},roof:{n:'Wood Roof',max:20},workbench:{n:'Workbench',max:4},cookpot:{n:'Cooking Pot',max:4}
 };
-var PLACEABLE={wall:1,stonewall:1,floor:1,fire:1,torch:1,bed:1,chest:1,door:1,gate:1,roof:1};
+var PLACEABLE={wall:1,stonewall:1,floor:1,fire:1,torch:1,bed:1,chest:1,door:1,gate:1,roof:1,workbench:1,cookpot:1};
 var GRID={wall:1,stonewall:1,floor:1,door:1,gate:1,roof:1};
-var GOFF={wall:1.0,stonewall:1.0,floor:0.1,fire:0.25,torch:0.85,bed:0.15,chest:0.05,door:1.5,gate:1.5,roof:3.05};
+var GOFF={wall:1.0,stonewall:1.0,floor:0.1,fire:0.25,torch:0.85,bed:0.15,chest:0.05,door:1.5,gate:1.5,roof:3.05,workbench:0.55,cookpot:0.35};
 var ICON={
   wood:'<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="9" rx="4" fill="#a9784a"/><ellipse cx="18" cy="12.5" rx="3" ry="4.5" fill="#d9b07a"/><ellipse cx="18" cy="12.5" rx="1.3" ry="2.2" fill="#a9784a"/></svg>',
   stone:'<svg viewBox="0 0 24 24"><polygon points="4,17 7,8 14,5 20,10 20,17 12,20" fill="#9aa0a6"/><polygon points="7,8 14,5 12,12" fill="#c3c8cc"/></svg>',
@@ -1545,10 +1547,10 @@ function tryBreed(c,dt){
 }
 function addStructure(kind,x,z){
   var y=heightAt(x,z),o;
-  if(kind==='wall'||kind==='stonewall'||kind==='floor'||kind==='door'||kind==='gate'||kind==='roof'){
+  if(kind==='wall'||kind==='stonewall'||kind==='floor'||kind==='door'||kind==='gate'||kind==='roof'||kind==='workbench'||kind==='cookpot'){
     o={x:x,z:z,y:y,t:kind==='wall'?'wall':(kind==='stonewall'?'stone':kind),open:false};
-    o.g=kind==='wall'?makeWall():(kind==='stonewall'?makeStoneWall():(kind==='floor'?makeFloor():(kind==='door'?makeDoor():(kind==='gate'?makeGate():makeRoof()))));
-    o.g.position.set(x,y+(kind==='floor'?0.06:(kind==='roof'?3.05:(kind==='door'||kind==='gate'?1.5:1.0))),z);scene.add(o.g);walls.push(o);
+    o.g=kind==='wall'?makeWall():(kind==='stonewall'?makeStoneWall():(kind==='floor'?makeFloor():(kind==='door'?makeDoor():(kind==='gate'?makeGate():(kind==='roof'?makeRoof():(kind==='workbench'?makeWorkbench():makeCookpot()))))));
+    o.g.position.set(x,y+(kind==='floor'?0.06:(kind==='roof'?3.05:(kind==='door'||kind==='gate'?1.5:(kind==='roof'?3.05:(kind==='workbench'?0.55:(kind==='cookpot'?0.35:1.0)))))),z);scene.add(o.g);walls.push(o);
   }else if(kind==='torch'){
     o={x:x,z:z,y:y,t:'torch',k:0.55};o.g=makeTorch();o.g.position.set(x,y,z);scene.add(o.g);fires.push(o);
   }else if(kind==='bed'){
@@ -1608,6 +1610,7 @@ function load(){
       try{
         var parsed=JSON.parse(raw);
         if(!parsed||!parsed.P||!isFinite(parsed.P.x)||!isFinite(parsed.P.z))return null;
+        if(['walls','fires','beds','chests'].some(function(k){return parsed[k]!==undefined&&(!Array.isArray(parsed[k])||parsed[k].length>120)}))return null;
         return parsed;
       }catch(parseError){return null}
     }
@@ -1628,7 +1631,7 @@ function load(){
       var m=makeCreature(t.sp);m.g.position.set(P.x,P.y,P.z);scene.add(m.g);
       team.push({sp:t.sp,m:m,x:P.x+rand(-3,3),z:P.z+rand(-3,3),y:P.y,work:rand(3,9),yaw:0,walk:0,speed:0});
     });
-    (d.walls||[]).forEach(function(w){var kind=w.t==='stone'?'stonewall':(w.t==='floor'?'floor':(w.t==='door'||w.t==='gate'||w.t==='roof'?w.t:'wall'));addStructure(kind,w.x,w.z);if(w.open&&(kind==='door'||kind==='gate')){walls[walls.length-1].open=true;walls[walls.length-1].g.rotation.y=Math.PI/2;}});
+    (d.walls||[]).forEach(function(w){var kind=w.t==='stone'?'stonewall':(w.t==='floor'?'floor':(w.t==='door'||w.t==='gate'||w.t==='roof'||w.t==='workbench'||w.t==='cookpot'?w.t:'wall'));addStructure(kind,w.x,w.z);if(w.open&&(kind==='door'||kind==='gate')){walls[walls.length-1].open=true;walls[walls.length-1].g.rotation.y=Math.PI/2;}});
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
     (d.chests||[]).forEach(function(c){addStructure('chest',c.x,c.z);var chest=chests[chests.length-1];if(Array.isArray(c.slots))chest.slots=c.slots.slice(0,18).map(function(it){return it&&ITEMS[it.id]&&typeof it.n==='number'&&Math.floor(it.n)>0?{id:it.id,n:Math.min(ITEMS[it.id].max,Math.floor(it.n))}:null});});
@@ -1828,7 +1831,7 @@ function pop(x,y,z,text,color){
 var _v=new THREE.Vector3();
 function pushOutBoxes(e,r){
   for(var i=0;i<walls.length;i++){
-    var w=walls[i];if(w.t==='floor'||((w.t==='door'||w.t==='gate')&&w.open))continue;
+    var w=walls[i];if(w.t==='floor'||w.t==='roof'||w.t==='workbench'||w.t==='cookpot'||((w.t==='door'||w.t==='gate')&&w.open))continue;
     var cx=clamp(e.x,w.x-1.5,w.x+1.5),cz=clamp(e.z,w.z-0.18,w.z+0.18);
     var dx=e.x-cx,dz=e.z-cz,d=Math.hypot(dx,dz);
     if(d<r){if(d===0){dx=1;dz=0;d=1}var o=(r-d)/d;e.x+=dx*o;e.z+=dz*o}
@@ -1975,11 +1978,11 @@ var RECIPES={
   coppersword:{copperbar:3,wood:1,fiber:1},ironsword:{ironbar:3,wood:1,crystalcore:1},
   copperarmor:{copperbar:5,ironbar:1,fiber:3},ironarmor:{ironbar:6,goldbar:1,crystalcore:1},tonic:{berry:3,crystal:1,fiber:2},
   salve:{berry:3,fiber:2},jam:{berry:5,fiber:1},torch:{wood:1,fiber:1},
-  wall:{wood:2},stonewall:{stone:3},floor:{wood:2},door:{wood:6,fiber:2},gate:{wood:5,stone:2},roof:{wood:5,fiber:1},fire:{wood:2,stone:1},bed:{wood:4,fiber:4},chest:{wood:12,stone:4}
+  wall:{wood:2},stonewall:{stone:3},floor:{wood:2},door:{wood:6,fiber:2},gate:{wood:5,stone:2},roof:{wood:5,fiber:1},workbench:{wood:8,stone:3},cookpot:{stone:6,ironbar:1},fire:{wood:2,stone:1},bed:{wood:4,fiber:4},chest:{wood:12,stone:4}
 };
-var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,copperarmor:1,ironarmor:1,tonic:1,salve:1,jam:1,torch:2,wall:1,stonewall:1,floor:2,door:1,gate:1,roof:1,fire:1,bed:1,chest:1};
-var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',chest:'Storage Chest',door:'Wood Door',gate:'Wood Gate',roof:'Wood Roof',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',tonic:'Vitality Tonic'};
-var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword']],['Armor',['copperarmor','ironarmor']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','tonic','jam','torch']],['Building',['wall','stonewall','floor','door','gate','roof','fire','bed','chest']]];
+var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,copperarmor:1,ironarmor:1,tonic:1,salve:1,jam:1,torch:2,wall:1,stonewall:1,floor:2,door:1,gate:1,roof:1,workbench:1,cookpot:1,fire:1,bed:1,chest:1};
+var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',chest:'Storage Chest',door:'Wood Door',gate:'Wood Gate',roof:'Wood Roof',workbench:'Workbench',cookpot:'Cooking Pot',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',tonic:'Vitality Tonic'};
+var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword']],['Armor',['copperarmor','ironarmor']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','tonic','jam','torch']],['Building',['wall','stonewall','floor','door','gate','roof','workbench','cookpot','fire','bed','chest']]];
 var selectedRecipe=null;
 function updateRecipePanel(){var k=selectedRecipe,a=Math.max(1,Math.min(99,parseInt($('craftAmount').value,10)||1));$('craftAmount').value=a;if(!k){$('craftSelected').disabled=true;return;}var r=RECIPES[k],lines=[],ok=true;for(var id in r){var need=r[id]*a,have=countOf(id);lines.push((ITEMS[id]?ITEMS[id].n:id)+': '+have+' / '+need);if(have<need)ok=false;}$('recipeSelected').textContent=NAMES[k]+' ×'+((OUT[k]||1)*a);$('recipeIngredients').innerHTML=lines.join('<br>');var unique=['axe','pick','copperpick','ironpick','coppersword','ironsword','copperarmor','ironarmor'].indexOf(k)>=0;if(unique&&(countOf(k)>0||a>1))ok=false;if(!canAdd(k,(OUT[k]||1)*a))ok=false;$('craftTotal').textContent=ok?'Ready to craft.':'Insufficient ingredients, space, or item already owned.';$('craftSelected').disabled=!ok;var bs=$('craftList').querySelectorAll('[data-craft]');for(var j=0;j<bs.length;j++)bs[j].classList.toggle('selected',bs[j].getAttribute('data-craft')===k);}
 function buildCraftUI(){
@@ -2034,6 +2037,7 @@ function placePos(id){
 function doUse(){
   var nearbyChest=nearestOf(chests,P.x,P.z,4.8);
   if(nearbyChest){openChest(nearbyChest);return;}
+  var nearbyStation=nearestOf(walls,P.x,P.z,4.2,function(w){return w.t==='workbench'||w.t==='cookpot';});if(nearbyStation){if(nearbyStation.t==='workbench'){toggleBag();say('Workbench ready. Open crafting recipes.',3);}else{if(countOf('berry')>=5&&countOf('fiber')>=1&&canAdd('jam',1)){craft('jam',1);say('Fresh berry jam cooked.',3);}else say('Cooking pot needs 5 berries and 1 fiber to make jam.',3);}return;}
   var nearbyEntry=nearestOf(walls,P.x,P.z,4.2,function(w){return w.t==='door'||w.t==='gate';});if(nearbyEntry){nearbyEntry.open=!nearbyEntry.open;nearbyEntry.g.rotation.y=nearbyEntry.open?P.face+Math.PI/2:0;say((nearbyEntry.t==='door'?'Door ':'Gate ')+(nearbyEntry.open?'opened.':'closed.'),2);save();return;}
   var s=slots[hotSel];
   if(!s){say('Select an item in the hotbar. Open the Bag to move items there.');return}
@@ -2127,6 +2131,8 @@ function bedHasSafeExit(x,z){return !!safeRespawnPoint(x,z);}
 function doPlace(id){
   var p=placePos(id),i;
   if(heightAt(p.x,p.z)<WATER+0.3){say('You cannot build in the water.');return}
+  if(walls.length+fires.length+beds.length+chests.length>=120){say('Base structure limit reached (120 pieces). Dismantle or upgrade your base before building more.');return}
+  if(id==='roof'&&!walls.some(function(w){return Math.hypot(w.x-p.x,w.z-p.z)<=3.2&&(w.t==='wall'||w.t==='stone'||w.t==='door'||w.t==='gate')})){say('A roof needs a supporting wall, door, or gate nearby.');return}
   if(GRID[id]){
     for(i=0;i<walls.length;i++){if(walls[i].x===p.x&&walls[i].z===p.z&&(walls[i].t===id||((walls[i].t==='floor')===(id==='floor')&&id!=='roof'))){say('A block is already there.');return}}
     if(id!=='floor'&&Math.max(Math.abs(p.x-P.x),Math.abs(p.z-P.z))<2.4){say('Step back, you are in the way.');return}
@@ -2148,7 +2154,7 @@ var ghost={};
 (function(){
   var gm=stdMat(0xffffff,0.8,{transparent:true,opacity:0.35}),gf=stdMat(0xffb347,0.8,{transparent:true,opacity:0.5});
   var wallGhost=new THREE.BoxGeometry(3,3.0,0.3);
-  var defs={wall:[wallGhost,gm],stonewall:[wallGhost,gm],floor:[new THREE.BoxGeometry(3,0.2,3),gm],door:[new THREE.BoxGeometry(2.7,2.9,0.2),gm],gate:[new THREE.BoxGeometry(2.7,2.9,0.2),gm],roof:[new THREE.BoxGeometry(3.2,0.2,3.2),gm],fire:[new THREE.CylinderGeometry(0.9,0.9,0.5,14),gf],torch:[new THREE.CylinderGeometry(0.12,0.12,1.7,8),gf],bed:[new THREE.BoxGeometry(1.1,0.3,2),gm],chest:[new THREE.BoxGeometry(1.4,1.25,0.98),gm]};
+  var defs={wall:[wallGhost,gm],stonewall:[wallGhost,gm],floor:[new THREE.BoxGeometry(3,0.2,3),gm],workbench:[new THREE.BoxGeometry(1.8,1.1,1.1),gm],cookpot:[new THREE.CylinderGeometry(0.5,0.4,0.9,10),gm],door:[new THREE.BoxGeometry(2.7,2.9,0.2),gm],gate:[new THREE.BoxGeometry(2.7,2.9,0.2),gm],roof:[new THREE.BoxGeometry(3.2,0.2,3.2),gm],fire:[new THREE.CylinderGeometry(0.9,0.9,0.5,14),gf],torch:[new THREE.CylinderGeometry(0.12,0.12,1.7,8),gf],bed:[new THREE.BoxGeometry(1.1,0.3,2),gm],chest:[new THREE.BoxGeometry(1.4,1.25,0.98),gm]};
   for(var k in defs){var m=new THREE.Mesh(defs[k][0],defs[k][1]);m.visible=false;scene.add(m);ghost[k]=m}
 })();
 
@@ -2979,6 +2985,13 @@ $('questList').addEventListener('click',function(e){
 $('questOpen').addEventListener('click',function(){renderQuestJournal();$('questPanel').hidden=false;});
 $('questClose').addEventListener('click',function(){$('questPanel').hidden=true;});
 $('questPanel').addEventListener('click',function(e){if(e.target===$('questPanel'))$('questPanel').hidden=true;});
+function baseRatings(){
+  var comfort=0,protection=0;
+  walls.forEach(function(w){var d=Math.hypot(w.x-P.x,w.z-P.z);if(d>30)return;if(w.t==='stone'||w.t==='wall')protection+=w.t==='stone'?7:4;if(w.t==='roof')comfort+=4;if(w.t==='workbench')comfort+=7;if(w.t==='cookpot')comfort+=8;if(w.t==='door'||w.t==='gate')protection+=3;});
+  fires.forEach(function(f){if(Math.hypot(f.x-P.x,f.z-P.z)<=30)comfort+=f.t==='torch'?2:7;});
+  beds.forEach(function(b){if(Math.hypot(b.x-P.x,b.z-P.z)<=30)comfort+=9;});
+  return {comfort:Math.min(100,Math.round(comfort)),protection:Math.min(100,Math.round(protection))};
+}
 function updateHud(){
   $('hp').style.width=clamp(P.hp,0,100)+'%';
   $('food').style.width=clamp(P.food,0,100)+'%';
@@ -2999,6 +3012,7 @@ function updateHud(){
   var phase=nightF>0.6?'Night':(nightF>0.15?(Math.cos(t*Math.PI*2+0.65)>0?'Dusk':'Dawn'):'Day');
   $('time').textContent='Day '+(Math.floor(clock/DAY)+1)+' · '+phase+' · '+seasonInfo().name;
   $('biomeStatus').textContent=biomeAt(P.x,P.z).name;
+  var base=baseRatings();$('baseRating').textContent='Base comfort '+base.comfort+' · protection '+base.protection;
   renderInv(false);
   checkAchievements();
   updateExplorationMap();
