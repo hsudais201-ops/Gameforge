@@ -1548,6 +1548,17 @@ function save(){
     return false;
   }
 }
+function migrateInventorySlots(oldSlots,itemDefs,slotCount,hotbarCount){
+  var migrated=Array.from({length:slotCount},function(){return null;});
+  var oldLayout=oldSlots.length===30;
+  for(var q=0;q<slotCount;q++){
+    var oldIndex=oldLayout&&q>=hotbarCount?q-3:q;
+    var item=oldSlots[oldIndex];
+    if(item&&item.id==='cage')item={id:'ball',n:item.n};
+    migrated[q]=(item&&itemDefs[item.id]&&typeof item.n==='number'&&item.n>0)?{id:item.id,n:Math.min(item.n,itemDefs[item.id].max)}:null;
+  }
+  return migrated;
+}
 function load(){
   try{
     var s=localStorage.getItem(SAVE_KEY),d=null,recovered=false;
@@ -1568,8 +1579,7 @@ function load(){
     if(!d)return false;
     P.x=d.P.x;P.z=d.P.z;companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
-      var oldLayout=d.slots.length===30;
-      for(var q=0;q<NSLOTS;q++){var oldIndex=oldLayout&&q>=HOT?q-3:q;var it=d.slots[oldIndex];if(it&&it.id==='cage')it={id:'ball',n:it.n};slots[q]=(it&&ITEMS[it.id]&&typeof it.n==='number'&&it.n>0)?{id:it.id,n:Math.min(it.n,ITEMS[it.id].max)}:null}
+      slots=migrateInventorySlots(d.slots,ITEMS,NSLOTS,HOT);
       hotSel=clamp(d.hot|0,0,HOT-1);
       equippedArmor=(d.equippedArmor==='ironarmor'||d.equippedArmor==='copperarmor')?d.equippedArmor:null;
     }else if(d.inv){for(var k in d.inv){var kk=k==='cage'?'ball':k;if(ITEMS[kk]&&d.inv[k]>0)addItem(kk,d.inv[k])}}
