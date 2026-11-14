@@ -478,3 +478,11 @@ test('long-session save migration and world-streaming stress loops remain bounde
   assert.ok(visible>0);
   assert.ok(gameScript.includes('var meshChanged=false,im=streamedMeshes[m]'));
 });
+
+
+test('browser compatibility preflight covers WebGL, animation-frame, audio, and gamepad fallbacks', () => {
+  assert.match(html, /id="webglFallback"/);
+  for (const marker of ["window.requestAnimationFrame!=='function'", 'window.webkitRequestAnimationFrame', "cv.getContext('webgl2')", "cv.getContext('webgl')", 'window.AudioContext||window.webkitAudioContext', 'navigator.getGamepads']) {
+    assert.ok(gameScript.includes(marker), 'missing browser compatibility marker: '+marker);
+  }
+});
