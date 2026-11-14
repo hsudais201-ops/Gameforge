@@ -1083,7 +1083,7 @@ test('Escape closes the topmost open game menu before attempting to pause', () =
 
 test('graphics upgrades color output and increases shadow quality without changing display resolution', () => {
   assert.ok(gameScript.includes('renderer.outputEncoding=THREE.sRGBEncoding'));
-  assert.ok(gameScript.includes('renderLevel===2?(isMobile?1024:2048):(isMobile?512:1024)'));
+  assert.ok(gameScript.includes('renderLevel===2?((isMobile||isLowEnd)?1024:2048):((isMobile||isLowEnd)?512:1024)'));
   assert.ok(gameScript.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))'));
   assert.ok(gameScript.includes('renderer.setSize(vw,vh,false)'));
 });
