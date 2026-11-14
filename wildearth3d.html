@@ -1799,6 +1799,8 @@ function addStructure(kind,x,z){
 /* ---------- save / load ---------- */
 function validStructureCounts(parsed){
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return false;
+  if(parsed.P!==undefined&&(!parsed.P||typeof parsed.P!=='object'||Array.isArray(parsed.P)||!isFinite(parsed.P.x)||!isFinite(parsed.P.z)||Math.abs(parsed.P.x)>HALF||Math.abs(parsed.P.z)>HALF))return false;
+  if(parsed.slots!==undefined&&(!Array.isArray(parsed.slots)||parsed.slots.length>NSLOTS))return false;
   var keys=['walls','fires','beds','chests'],total=0;
   for(var i=0;i<keys.length;i++){
     var value=parsed[keys[i]];
@@ -1822,7 +1824,6 @@ function validStructureCounts(parsed){
       if(!member||!Number.isInteger(member.sp)||member.sp<0||member.sp>=SPECIES.length)return false;
     }
   }
-  if(parsed.slots!==undefined&&!Array.isArray(parsed.slots))return false;
   if(parsed.progress!==undefined&&(!parsed.progress||typeof parsed.progress!=='object'||Array.isArray(parsed.progress)))return false;
   return true;
 }
