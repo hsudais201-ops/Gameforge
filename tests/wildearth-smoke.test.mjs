@@ -608,10 +608,10 @@ test('loaded and backed-up saves enforce the global 120-piece structure limit', 
   const start = gameScript.indexOf('function validStructureCounts(');
   const end = gameScript.indexOf('function save()', start);
   assert.ok(start >= 0 && end > start, 'shared structure validator must exist');
-  const validator = new Function(gameScript.slice(start, end) + ';return validStructureCounts;')();
-  assert.equal(validator({walls:Array(120).fill({}),fires:[],beds:[],chests:[]}), true);
-  assert.equal(validator({walls:Array(100).fill({}),fires:Array(21).fill({})}), false);
-  assert.equal(validator({walls:Array(121).fill({})}), false);
+  const validator = new Function('SPECIES','HALF',gameScript.slice(start, end) + ';return validStructureCounts;')([{id:0}],300);
+  assert.equal(validator({walls:Array(120).fill({x:0,z:0,t:'wall'}),fires:[],beds:[],chests:[]}), true);
+  assert.equal(validator({walls:Array(100).fill({x:0,z:0,t:'wall'}),fires:Array(21).fill({x:0,z:0,t:'fire'})}), false);
+  assert.equal(validator({walls:Array(121).fill({x:0,z:0,t:'wall'})}), false);
   assert.equal(validator({walls:'corrupt'}), false);
   assert.ok(gameScript.includes('validStructureCounts(parsed)'));
   assert.match(gameScript, /validStructureCounts\(check\)/);
