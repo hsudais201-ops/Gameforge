@@ -272,7 +272,7 @@
     </section>
     <section class="invRight">
       <div class="invLabel">Quick actions</div>
-      <div class="quickActions"><button id="quickMove" type="button" disabled>Move / swap</button><button id="splitStack" type="button" disabled>Split stack</button><button id="quickDiscard" type="button" disabled>Discard</button></div>
+      <div class="quickActions"><button id="quickMove" type="button" disabled>Move / swap</button><button id="splitStack" type="button" disabled>Split stack</button><button id="quickDiscard" type="button" disabled>Discard</button><button id="repairTool" type="button">Repair Tool</button></div>
       <p class="invHelp">Tap an item, then tap another slot to move it. Matching stacks combine automatically.</p>
     </section>
   </div>
@@ -1302,6 +1302,7 @@ var ICON={
 };
 var slots=[];for(var si0=0;si0<NSLOTS;si0++)slots.push(null);
 var equippedArmor=null,benchCells=[null,null,null,null],benchResult=null;
+var TOOL_MAX={axe:80,pick:90,copperpick:140,ironpick:220,coppersword:110,ironsword:180},toolDurability={};
 function countOf(id){var n=0;for(var i=0;i<NSLOTS;i++){if(slots[i]&&slots[i].id===id)n+=slots[i].n}if(equippedArmor===id)n++;return n}
 function canAdd(id,n){
   var room=0,max=ITEMS[id].max;
@@ -1319,6 +1320,9 @@ function takeItem(id,n){
     if(slots[i]&&slots[i].id===id){var t=Math.min(n,slots[i].n);slots[i].n-=t;n-=t;if(slots[i].n<=0)slots[i]=null}
   }
 }
+function toolDurabilityNow(id){if(!TOOL_MAX[id])return 0;if(!isFinite(toolDurability[id]))toolDurability[id]=TOOL_MAX[id];return clamp(toolDurability[id],0,TOOL_MAX[id]);}
+function wearTool(id,amount){if(!TOOL_MAX[id]||countOf(id)<=0)return;var left=toolDurabilityNow(id)-amount;toolDurability[id]=Math.max(0,left);if(left<=0){for(var i=0;i<NSLOTS;i++)if(slots[i]&&slots[i].id===id)slots[i]=null;delete toolDurability[id];say(ITEMS[id].n+' broke. Repair or craft another one.',4);playSfx('warning');}renderInv(true);}
+function repairSelectedTool(){var index=moveFrom>=0?moveFrom:hotSel,item=slots[index];if(!item||!TOOL_MAX[item.id]){say('Select a tool or weapon to repair.',2);return;}var id=item.id,max=TOOL_MAX[id],current=toolDurabilityNow(id);if(current>=max){say('This tool is already in perfect condition.',2);return;}var material=id==='ironpick'||id==='ironsword'?'ironbar':(id==='copperpick'||id==='coppersword'?'copperbar':'stone'),woodCost=2,matCost=1;if(countOf('wood')<woodCost||countOf(material)<matCost){say('Repair needs '+woodCost+' Wood and 1 '+ITEMS[material].n+'.',3);return;}takeItem('wood',woodCost);takeItem(material,matCost);toolDurability[id]=max;renderInv(true);save();say(ITEMS[id].n+' repaired to 100%.',3);}
 function gain(id,n,x,y,z,color){
   var left=addItem(id,n),got=n-left;
   if(got>0)pop(x,y,z,'+'+got+' '+ITEMS[id].n.toLowerCase(),color);
@@ -1326,7 +1330,7 @@ function gain(id,n,x,y,z,color){
 }
 function slotHtml(i){
   var s=slots[i],c='slot'+(i<HOT?' hot':'')+(i===hotSel?' on':'')+(i===moveFrom?' mv':'');
-  return '<div class="'+c+'" data-slot="'+i+'" draggable="'+(!!s)+'"'+(s?' data-id="'+s.id+'" title="'+ITEMS[s.id].n+'"':'')+'>'+(i<HOT?'<i>'+(i+1)+'</i>':'')+(s?(ICON[s.id]||ICON.stone)+'<b>'+s.n+'</b>':'')+'</div>';
+  return '<div class="'+c+'" data-slot="'+i+'" draggable="'+(!!s)+'"'+(s?' data-id="'+s.id+'" title="'+ITEMS[s.id].n+(TOOL_MAX[s.id]?' · Durability '+Math.round(toolDurabilityNow(s.id))+'/'+TOOL_MAX[s.id]:'')+'"':'')+'>'+(i<HOT?'<i>'+(i+1)+'</i>':'')+(s?(ICON[s.id]||ICON.stone)+'<b>'+s.n+'</b>':'')+'</div>';
 }
 function renderInv(force){
   var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.length+'|'+companionMode;
@@ -1542,7 +1546,7 @@ function save(){
   var snapshot;
   try{
     snapshot=JSON.stringify({
-      version:5,worldSeed:worldSeed,bossDefeated:bossDefeated,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
+      version:5,worldSeed:worldSeed,bossDefeated:bossDefeated,toolDurability:toolDurability,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
@@ -1594,7 +1598,7 @@ function load(){
     }
     if(!d)d=validSave(localStorage.getItem(OLD_KEY));
     if(!d)return false;
-    P.x=d.P.x;P.z=d.P.z;bossDefeated=d.bossDefeated===true;companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
+    P.x=d.P.x;P.z=d.P.z;bossDefeated=d.bossDefeated===true;toolDurability={};if(d.toolDurability&&typeof d.toolDurability==='object')Object.keys(TOOL_MAX).forEach(function(id){if(isFinite(d.toolDurability[id]))toolDurability[id]=clamp(d.toolDurability[id],0,TOOL_MAX[id]);});companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
       slots=migrateInventorySlots(d.slots,ITEMS,NSLOTS,HOT);
       hotSel=clamp(d.hot|0,0,HOT-1);
@@ -1783,6 +1787,7 @@ $('bag').addEventListener('click',function(e){
   if(e.target.closest('#bagClose')){toggleBag();return}
   if(e.target.closest('#bagDiscard')&&moveFrom>=0){slots[moveFrom]=null;moveFrom=-1;renderInv(true)}
   if(e.target.closest('#quickMove')&&moveFrom>=0){var qm=moveFrom,empty=-1;for(var qi=HOT;qi<NSLOTS;qi++)if(!slots[qi]){empty=qi;break;}if(empty<0)for(qi=0;qi<HOT;qi++)if(!slots[qi]){empty=qi;break;}if(empty<0)say('No empty inventory slot available.');else{slots[empty]=slots[qm];slots[qm]=null;moveFrom=-1;renderInv(true);say('Stack moved to an empty slot.');}}
+  if(e.target.closest('#repairTool')){repairSelectedTool();return;}
   if(e.target.closest('#quickDiscard')){var qd=moveFrom;if(qd>=0&&slots[qd]){slots[qd]=null;moveFrom=-1;renderInv(true);say('Stack discarded.')}}
 });
 
@@ -1867,9 +1872,9 @@ function doGather(){
   if(!applyTouchAimAssist(wraiths,5,0.82))applyTouchAimAssist(wild,3.4,0.82);
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5,function(o){return inWeaponArc(o,5,0.25)});
-  if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var dealt=Math.max(1,weaponLevel*(w.damageTaken||1));w.hp-=dealt;w.hit=0.25;burst(w.x,w.y+1.2,w.z,0xc9a8ff,6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),'#c9a8ff');return}
+  if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var dealt=Math.max(1,weaponLevel*(w.damageTaken||1));w.hp-=dealt;wearTool(countOf('ironsword')?'ironsword':(countOf('coppersword')?'coppersword':'axe'),1);w.hit=0.25;burst(w.x,w.y+1.2,w.z,0xc9a8ff,6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),'#c9a8ff');return}
   var prey=nearestOf(wild,P.x,P.z,3.4,function(o){return !o.held&&inWeaponArc(o,3.4,0.35)});
-  if(prey){var huntWeapon=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var preyDamage=12+huntWeapon*7;prey.hp=Math.max(0,prey.hp-preyDamage);prey.hitTimer=0.22;prey.attackAnim=0.38;prey.flee=Math.max(prey.flee,2.6);prey.state='flee';prey.alertT=1.2;P.face=Math.atan2(prey.x-P.x,prey.z-P.z);burst(prey.x,prey.y+1.1,prey.z,SPECIES[prey.sp].c,5);pop(prey.x,prey.y+2.1,prey.z,'-'+preyDamage,'#ffd08a');
+  if(prey){var huntWeapon=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var preyDamage=12+huntWeapon*7;prey.hp=Math.max(0,prey.hp-preyDamage);wearTool(countOf('ironsword')?'ironsword':(countOf('coppersword')?'coppersword':'axe'),1);prey.hitTimer=0.22;prey.attackAnim=0.38;prey.flee=Math.max(prey.flee,2.6);prey.state='flee';prey.alertT=1.2;P.face=Math.atan2(prey.x-P.x,prey.z-P.z);burst(prey.x,prey.y+1.1,prey.z,SPECIES[prey.sp].c,5);pop(prey.x,prey.y+2.1,prey.z,'-'+preyDamage,'#ffd08a');
     if(prey.hp<=0){var preyIndex=wild.indexOf(prey);if(prey.parent)prey.parent.young=null;if(prey.secondParent)prey.secondParent.young=null;if(prey.young){prey.young.parent=null;prey.young.secondParent=null;}scene.remove(prey.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[prey.sp].w,prey.sp===3?3:2,prey.x,prey.y+1.2,prey.z,'#d8c6a1');say(SPECIES[prey.sp].n+' has been defeated.');}
     return;
   }
@@ -1884,6 +1889,7 @@ function doGather(){
   else if(r.type==='ore'||r.type==='rock')P.cool=pickLevel===3?0.30:(pickLevel===2?0.38:(pickLevel===1?0.46:0.55));
   var dmg=(r.type==='tree'&&axe)?2:((r.type==='rock'||r.type==='ore')?Math.max(1,pickLevel):1);
   r.hp-=dmg;r.hit=0.28;
+  if(r.type==='tree'&&axe)wearTool('axe',1);else if((r.type==='ore'||r.type==='rock')&&pickLevel>0)wearTool(pickLevel===3?'ironpick':(pickLevel===2?'copperpick':'pick'),1);
   burst(r.x,r.y+1.2,r.z,r.type==='tree'?0x8a5a3a:(r.type==='rock'?0xb4bac0:(r.type==='ore'?(r.kind==='copperOre'?0xc87942:(r.kind==='ironOre'?0xaebbc4:0x72d9ef)):LEAF.bush)),3);
   if(r.hp<=0){
     r.hit=0;r.dead=60;setInst(r,0,true);startFall(r);
