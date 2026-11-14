@@ -15,7 +15,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 07. Add automated smoke tests for startup, menu, and world entry.
 - [x] 08. Add a deterministic test seed for reproducible bug reports.
 - [x] 09. Add structured runtime diagnostics and an exportable error report.
-- [ ] 10. Add a versioned save migration test suite.
+- [x] 10. Add a versioned save migration test suite.
 
 ## B. Player, controls, and camera
 - [x] 11. Maintain the detailed player model and its animation rig.
@@ -144,7 +144,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [ ] 114. Profile CPU and GPU frame time on low-end Chromebook hardware.
 - [x] 115. Add adaptive shadow and particle budgets per quality profile.
 - [ ] 116. Add memory cleanup for streamed-out objects and effects.
-- [ ] 117. Add mobile touch-layout and viewport regression tests.
+- [x] 117. Add mobile touch-layout and viewport regression tests.
 - [ ] 118. Add long-session save/load and world-streaming stress tests.
 - [ ] 119. Add browser compatibility checks and release build validation.
 - [ ] 120. Publish a tested release build with known limitations and patch notes.
