@@ -1165,3 +1165,16 @@ test('roof, workbench and cookpot models include additional construction and too
   assert.ok(gameScript.includes('Crafting tools: hammer, chisel, saw blade and a small parts tray.'));
   assert.ok(gameScript.includes('new THREE.TorusGeometry(0.32,0.025,6,12)'));
 });
+
+test('creature models expose animated ears, eyes and torso for low-cost expressive idle motion', () => {
+  assert.ok(gameScript.includes('ears.push(ear)'));
+  assert.ok(gameScript.includes('eyes.push(eyeWhite)'));
+  assert.ok(gameScript.includes('return {g:g,legs:legs,head:head,tail:tail,ears:ears,eyes:eyes,torso:torso}'));
+});
+
+test('creature animation includes breathing, blinking, ear reactions and relaxed resting gait', () => {
+  assert.ok(gameScript.includes('var blink=Math.pow(Math.max(0,Math.sin(clock*0.73')));
+  assert.ok(gameScript.includes("c.state==='rest'?1.15:2.05"));
+  assert.ok(gameScript.includes('m.ears[ei].rotation.z'));
+  assert.ok(gameScript.includes("c.state!=='rest'"));
+});
