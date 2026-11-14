@@ -958,7 +958,26 @@ function T(x,y,z,rx,ry,rz,sx,sy,sz){
   m.compose(new THREE.Vector3(x,y,z),q,new THREE.Vector3(sx||1,sy===undefined?(sx||1):sy,sz===undefined?(sx||1):sz));
   return m;
 }
-var matVC=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.95,metalness:0});
+// Tileable micro-surface maps give rocks, bark and props tactile definition without large assets.
+function makeSurfaceDetailMap(){
+  var canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;
+  var ctx=canvas.getContext('2d'),img=ctx.createImageData(128,128);
+  for(var y=0;y<128;y++)for(var x=0;x<128;x++){
+    var u=x/128*6.283,v=y/128*6.283;
+    var broad=Math.sin(u*3+Math.sin(v*2))*0.24+Math.sin(v*5+u*1.5)*0.16;
+    var grain=Math.sin(u*19+v*13)*0.09+Math.sin(u*31-v*27)*0.055;
+    var fleck=Math.sin(u*47+Math.sin(v*23))*0.035;
+    var value=Math.max(0,Math.min(255,Math.round(142+(broad+grain+fleck)*150)));
+    var at=(y*128+x)*4;img.data[at]=value;img.data[at+1]=value;img.data[at+2]=value;img.data[at+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  var tex=new THREE.CanvasTexture(canvas);tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;
+  tex.repeat.set(3,3);tex.magFilter=THREE.LinearFilter;tex.minFilter=THREE.LinearMipmapLinearFilter;
+  tex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());tex.needsUpdate=true;
+  return tex;
+}
+var surfaceDetailMap=makeSurfaceDetailMap();
+var matVC=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.93,roughnessMap:surfaceDetailMap,bumpMap:surfaceDetailMap,bumpScale:0.016,metalness:0});
 
 /* ---------- terrain ---------- */
 var SEG=isMobile?110:150;
