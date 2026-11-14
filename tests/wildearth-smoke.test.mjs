@@ -44,7 +44,7 @@ test('world seed is stored per world and can be overridden for reproduction', ()
 
 test('save compatibility keeps legacy inventory migration paths', () => {
   assert.match(gameScript, /version:5/);
-  assert.match(gameScript, /d\.slots\.length===30/);
+  assert.match(gameScript, /oldSlots\.length===30/);
   assert.match(gameScript, /mfwilds3d_v2/);
   assert.match(gameScript, /mfwilds3d_v1/);
 });
@@ -132,7 +132,7 @@ test('procedural biomes drive terrain materials, resource placement, and wildlif
 });
 
 test('swimming has slower movement, buoyancy, oxygen drain, and drowning damage', () => {
-  for (const marker of ['P.swimming=waterDepth>0.55', 'P.y+=(WATER-0.45-P.y)', 'P.oxygen=Math.max(0,P.oxygen-dt*8)', "playerDamage(4*dt,'Drowning')", '(P.swimming?0.58:1)']) {
+  for (const marker of ['P.swimming=!caveMode&&waterDepth>0.55', 'P.y+=(WATER-0.45-P.y)', 'P.oxygen=Math.max(0,P.oxygen-dt*8)', "playerDamage(4*dt,'Drowning')", '(P.swimming?0.58:1)']) {
     assert.ok(gameScript.includes(marker), 'missing swimming marker: ' + marker);
   }
 });
@@ -202,7 +202,7 @@ test('versioned save migration maps legacy 30-slot inventories into the 36-slot 
   old[0] = { id: 'wood', n: 80 };
   old[6] = { id: 'cage', n: 3 };
   old[29] = { id: 'berry', n: 2 };
-  const result = migrate(old);
+  const result = migrate(old, defs, 36, 9);
   assert.equal(result.length, 36);
   assert.deepEqual(result[0], { id: 'wood', n: 50 });
   assert.deepEqual(result[9], { id: 'ball', n: 3 });
@@ -221,7 +221,7 @@ test('save migration safely filters invalid legacy items and stack quantities', 
   old[1] = { id: 'wood', n: -2 };
   old[2] = { id: 'wood', n: '5' };
   old[3] = { id: 'wood', n: 4 };
-  const result = migrate(old);
+  const result = migrate(old, defs, 36, 9);
   assert.equal(result[0], null);
   assert.equal(result[1], null);
   assert.equal(result[2], null);
@@ -304,7 +304,7 @@ test('swimming adjusts third-person camera framing and enables underwater visual
 
 test('three outfit save slots persist and restore validated appearance selections', () => {
   for (const id of ['outfitSlot', 'saveOutfitSlot', 'loadOutfitSlot']) assert.match(html, new RegExp('id="' + id + '"'));
-  for (const marker of ['mfwilds3d_outfit_slots_v1', 'function readCurrentOutfit()', 'function validSelectValue(', 'all[$(\'outfitSlot\').value]=readCurrentOutfit()', "el.dispatchEvent(new Event('change'))", "applyCharacterStyle(look.character)"]) {
+  for (const marker of ['mfwilds3d_outfit_slots_v1', 'function readCurrentOutfit()', 'function validSelectValue(', 'all[$(\'outfitSlot\').value]=readCurrentOutfit()', "$(id).dispatchEvent(new Event('change'))", "applyCharacterStyle(look.character)"]) {
     assert.ok(gameScript.includes(marker), 'missing outfit-slot marker: ' + marker);
   }
 });
@@ -364,7 +364,7 @@ test('rare fallen-star event spawns after three nights, grants rewards once, and
 
 test('character customization has a persisted preview turntable, light, and animation selector', () => {
   for (const id of ['previewTurntable', 'previewLighting', 'previewAnimation']) assert.match(html, new RegExp('id="' + id + '"'));
-  for (const marker of ['mfwilds3d_preview_v1', 'function updateCharacterPreview(dt)', 'cam.yaw+=0.004', 'playerPreviewLight.visible=previewActive&&previewPrefs.lighting', "previewPrefs.animation=this.value", "mode==='walk'", "mode==='attack'"]) {
+  for (const marker of ['mfwilds3d_preview_v1', 'function updateCharacterPreview(dt)', 'cam.yaw+=0.004', 'playerPreviewLight.visible=previewActive&&previewPrefs.lighting', "previewPrefs.animation=['idle','walk','attack'].indexOf(this.value)>=0?this.value:'idle'", "mode==='walk'", "mode==='attack'"]) {
     assert.ok(gameScript.includes(marker), 'missing character preview marker: ' + marker);
   }
 });
@@ -380,7 +380,7 @@ test('character customization exposes independent head, torso, leg, and accessor
 
 test('achievement rewards unlock cosmetics and persist the unlocked reward IDs', () => {
   assert.match(html, /id="cosmeticUnlockStatus"/);
-  for (const marker of ["id:'aurora_hair',achievement:'three_nights'", "id:'wraith_violet',achievement:'wraith_slayer'", "id:'pathfinder_gold',achievement:'pathfinder'", 'function refreshCosmeticUnlocks()', 'option.disabled=achievementIds.indexOf(option.getAttribute(\'data-unlock\'))<0', 'cosmeticUnlockIds:cosmeticUnlockIds', 'cosmeticUnlockIds=d.cosmeticUnlockIds']) {
+  for (const marker of ["id:'aurora_hair',achievement:'three_nights'", "id:'wraith_violet',achievement:'wraith_slayer'", "id:'pathfinder_gold',achievement:'pathfinder'", 'function refreshCosmeticUnlocks()', 'option.disabled=achievementIds.indexOf(option.getAttribute(\'data-unlock\'))<0', 'cosmeticUnlockIds:cosmeticUnlockIds', 'cosmeticUnlockIds=Array.isArray(d.cosmeticUnlockIds)?d.cosmeticUnlockIds.filter']) {
     assert.ok(gameScript.includes(marker), 'missing cosmetic unlock marker: ' + marker);
   }
 });
@@ -395,7 +395,7 @@ test('transient particle counts are bounded and unique capture projectiles relea
 
 
 test('doors and gates open/close with collision changes and roofs are buildable and saved', () => {
-  for (const id of ['door', 'gate', 'roof']) assert.match(html, new RegExp('id="' + id + '"|value="' + id + '"|data-craft="' + id + '"'));
+  for (const id of ['door', 'gate', 'roof']) assert.ok(gameScript.includes(id+':{wood:') || gameScript.includes(id+':{stone:'));
   for (const marker of ['function makeDoor()', 'function makeGate()', 'function makeRoof()', "w.t==='door'||w.t==='gate'", 'nearbyEntry.open=!nearbyEntry.open', 'open:!!w.open', "w.open&&(kind==='door'||kind==='gate')", 'door:[new THREE.BoxGeometry']) {
     assert.ok(gameScript.includes(marker), 'missing building piece marker: ' + marker);
   }
@@ -403,7 +403,7 @@ test('doors and gates open/close with collision changes and roofs are buildable 
 
 
 test('workbench and cooking pot are craftable, placeable, and usable stations', () => {
-  for (const id of ['workbench', 'cookpot']) assert.match(html, new RegExp('value="' + id + '"|data-craft="' + id + '"'));
+  for (const id of ['workbench', 'cookpot']) assert.ok(gameScript.includes(id+':{'));
   for (const marker of ['function makeWorkbench()', 'function makeCookpot()', "w.t==='workbench'||w.t==='cookpot'", "nearbyStation.t==='workbench'", "craft('jam',1)", "workbench:{wood:8,stone:3}", "cookpot:{stone:6,ironbar:1}"]) assert.ok(gameScript.includes(marker), 'missing station marker: '+marker);
 });
 
@@ -439,7 +439,7 @@ test('interface localization uses persisted English and Urdu text tables for cor
 test('cave entrance and underground chamber support entry, bounded movement, lighting, and exit', () => {
   assert.match(html, /id="cavePrompt"/);
   assert.match(html, /id="caveAction"/);
-  for (const marker of ['function addCaveEntrance(x,z)', 'function enterCave(cave)', 'function exitCave()', 'var initialCave=addCaveEntrance(-52,42)', 'caveMode?activeCave.floorY', "if(caveMode&&activeCave){P.x=clamp", "new THREE.PointLight(0x3ecde8"]) {
+  for (const marker of ['function addCaveEntrance(x,z)', 'function enterCave(cave)', 'function exitCave()', 'var initialCave=addCaveEntrance(-52,42)', 'caveMode&&activeCave?activeCave.floorY', "if(caveMode&&activeCave){P.x=clamp", "new THREE.PointLight(0x3ecde8"]) {
     assert.ok(gameScript.includes(marker), 'missing cave system marker: '+marker);
   }
 });
