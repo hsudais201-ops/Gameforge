@@ -227,7 +227,7 @@ test('wetness, drying, cold exposure, and oxygen persist safely in versioned sav
   for (const marker of ['wetness:P.wetness', 'oxygen:P.oxygen', 'P.wetness=Math.min(100', 'P.wetness=Math.max(0', "playerDamage(0.45*dt,'Cold exposure')", 'P.temperature<0.08']) {
     assert.ok(gameScript.includes(marker), 'missing exposure marker: ' + marker);
   }
-  assert.match(gameScript, /version:5/);
+  assert.match(gameScript, /version:6/);
   assert.match(gameScript, /P\.wetness=isFinite\(d\.P\.wetness\)/);
 });
 
@@ -326,7 +326,7 @@ test('mobile touch layout and viewport regression safeguards are present', () =>
 });
 
 test('versioned save defaults and recovery paths remain compatible', () => {
-  assert.match(gameScript, /version:5/);
+  assert.match(gameScript, /version:6/);
   assert.match(gameScript, /P\.wetness=isFinite\(d\.P\.wetness\)/);
   assert.match(gameScript, /P\.oxygen=isFinite\(d\.P\.oxygen\)/);
   assert.match(gameScript, /SAVE_KEY\+'_backup'/);
@@ -733,7 +733,7 @@ test('new survival recipes are listed, craftable at the bench, and have working 
     assert.ok(gameScript.includes("['Survival',['salve','strongsalve','tonic','jam','berrypie','heartymeal','torch']]"));
   }
   assert.ok(gameScript.includes("P.food=Math.min(100,P.food+70)"));
-  assert.ok(gameScript.includes("P.food=Math.min(100,P.food+48);P.hp=Math.min(100,P.hp+22)"));
+  assert.ok(gameScript.includes("P.food=Math.min(100,P.food+48);P.hp=Math.min(P.maxHp||100,P.hp+22)"));
   assert.ok(gameScript.includes("P.hp=Math.min(100,P.hp+75)"));
   assert.ok(gameScript.includes("strongsalve:{salve:2,crystal:1,fiber:2}"));
   assert.ok(gameScript.includes("berrypie:{berry:4,jam:1,fiber:1}"));
@@ -773,7 +773,7 @@ test('mob signature drops unlock legendary Nightfall Blade and Wraithguard recip
     assert.ok(gameScript.includes(id+":'<svg"),'missing icon '+id);
     assert.ok(gameScript.includes(id+':1'),'missing output '+id);
   }
-  assert.ok(gameScript.includes("id:'heraldblade',damage:6,bonus:0"));
+  assert.ok(gameScript.includes("id:'heraldblade',damage:6,bonus:powerBonus"));
   assert.ok(gameScript.includes("wraithguard:0.28"));
   assert.ok(gameScript.includes("'wraithguard','frostarmor','emberarmor'].indexOf(d.equippedArmor)>=0"));
   assert.ok(gameScript.includes("id!=='wraithguard'"));
@@ -915,7 +915,7 @@ test('player levels, persists upgrades, and exposes a caught-creature index', ()
   assert.ok(gameScript.includes("progress:{level:P.level,xp:P.xp,statPoints:P.statPoints,stats:P.stats,caught:catchIndex}"));
   assert.ok(gameScript.includes("awardXP(25+(SPECIES[sc.sp].r==='rare'?15"));
   assert.ok(gameScript.includes("data-stat-upgrade"));
-  assert.ok(gameScript.includes("id=\"creatureIndex\""));
+  assert.ok(html.includes('id="creatureIndex"'));
   assert.ok(gameScript.includes("CAUGHT ×'+catchIndex[ci]"));
   assert.ok(gameScript.includes("P.stats.tamer)||0)*0.025"));
   assert.ok(gameScript.includes("P.stats.power)||0)*0.75"));
