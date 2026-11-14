@@ -95,7 +95,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 73. Add armor equip and unequip.
 - [x] 74. Add crafting recipes and quantity selection.
 - [x] 75. Check ingredients and inventory capacity before crafting.
-- [ ] 76. Add item durability and repair.
+- [x] 76. Add item durability and repair.
 - [x] 77. Add tool tiers with gathering-speed differences.
 - [x] 78. Add storage chests with persistent contents.
 - [x] 79. Add item sorting and quick-transfer controls.
@@ -158,6 +158,8 @@ This is the execution tracker for the next development stages. A checked item me
 
 - Boss encounter: introduced the Night Herald after the seventh survived night, with three escalating phases, phase-specific movement/attack tuning, a live boss-health display, persistent defeat state, and crystal/gold rewards.
 - Gathering progression: verified existing Stone/Copper/Iron tool tiers use distinct gathering cooldowns and mining damage.
+
+- Tool durability and repair: Stone, Copper, and Iron tools/weapons now wear with use, display durability in slot tooltips, break at zero, and can be repaired with tier-appropriate materials. Durability persists per world save.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
