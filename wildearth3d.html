@@ -333,11 +333,11 @@ var selectedWorldId=localStorage.getItem(SELECTED_WORLD_KEY)||worldList[0].id;
 if(!worldList.some(function(w){return w.id===selectedWorldId;}))selectedWorldId=worldList[0].id;
 var selectedWorld=worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0];
 var seedParam=new URLSearchParams(location.search).get('seed');
-var seedOverride=seedParam!==null&&/^\\d+$/.test(seedParam)?(Number(seedParam)>>>0):null;
+var seedOverride=seedParam!==null&&/^\d+$/.test(seedParam)?(Number(seedParam)>>>0):null;
 var worldSeed=seedOverride!==null&&seedOverride!==0?seedOverride:(selectedWorld.seed>>>0);
 // Show the resolved seed immediately; world streaming is deliberately deferred until after the menu's first paint.
 var earlySeedLabel=$('worldSeedInfo');if(earlySeedLabel)earlySeedLabel.textContent='World seed: '+worldSeed+(seedOverride!==null?' · temporary URL override':'');
-function persistWorldList(){localStorage.setItem(WORLD_LIST_KEY,JSON.stringify(worldList));localStorage.setItem(SELECTED_WORLD_KEY,selectedWorldId);}
+function persistWorldList(){try{localStorage.setItem(WORLD_LIST_KEY,JSON.stringify(worldList));localStorage.setItem(SELECTED_WORLD_KEY,selectedWorldId);return true;}catch(e){showGameError('Could not save your world list. Check available browser storage. '+(e&&e.message||e));return false;}}
 persistWorldList();
 var SAVE_KEY='mfwilds3d_world_'+selectedWorldId;
 var vw=window.innerWidth,vh=window.innerHeight;
@@ -1778,10 +1778,39 @@ $('previewTurntable').addEventListener('change',function(){previewPrefs.turntabl
 $('settingsMenu').addEventListener('click',function(){save();pauseOpen=false;$('pausePanel').hidden=true;$('settingsPanel').hidden=true;mainMenu.hidden=false;menuOpen=true;});
 $('settingsCharacter').addEventListener('click',function(){$('settingsPanel').hidden=true;mainMenu.hidden=false;menuOpen=true;$('skinTone').focus();});
 document.querySelectorAll('.charChoice').forEach(function(b){b.addEventListener('click',function(){applyCharacterStyle(+b.getAttribute('data-char'));});});
-$('worldSelect').addEventListener('change',function(){selectedWorldId=this.value;persistWorldList();location.reload();});
-$('playSelected').addEventListener('click',function(){selectedWorldId=$('worldSelect').value;persistWorldList();mainMenu.hidden=true;menuOpen=false;say('Welcome to '+(worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0]).name+'. Your adventure continues.',4);});
-$('createWorldToggle').addEventListener('click',function(){$('createWorldForm').hidden=!$('createWorldForm').hidden;if(!$('createWorldForm').hidden)$('newWorldName').focus();});
-$('createWorld').addEventListener('click',function(){var name=$('newWorldName').value.trim().slice(0,28)||'New World '+(worldList.length+1);var seedText=$('newWorldSeed').value.trim(),id='world-'+Date.now().toString(36)+'-'+random().toString(36).slice(2,7);var newSeed=seedText===''?((Date.now()^Math.floor(random()*4294967295))>>>0):(/^\\d+$/.test(seedText)?(Number(seedText)>>>0):seedFromString(seedText));if(!newSeed)newSeed=seedFromString(seedText||id);worldList.push({id:id,name:name,created:Date.now(),seed:newSeed});selectedWorldId=id;persistWorldList();try{localStorage.removeItem('mfwilds3d_v2');}catch(e){}location.reload();});
+var activeWorldId=selectedWorldId;
+$('worldSelect').addEventListener('change',function(){
+  selectedWorldId=this.value;
+  var chosen=worldList.find(function(w){return w.id===selectedWorldId;});
+  $('worldSeedInfo').textContent=chosen?'World seed: '+chosen.seed+' · Press Play Selected to load this world.':'Select a world to continue.';
+  persistWorldList();
+});
+$('playSelected').addEventListener('click',function(){
+  var nextId=$('worldSelect').value;
+  if(!worldList.some(function(w){return w.id===nextId;})){say('Please select a valid world.',3);return;}
+  selectedWorldId=nextId;
+  if(!persistWorldList())return;
+  if(selectedWorldId!==activeWorldId){$('worldSeedInfo').textContent='Loading '+(worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0]).name+'…';location.reload();return;}
+  mainMenu.hidden=true;menuOpen=false;last=performance.now();requestAnimationFrame(frame);
+  say('Welcome to '+(worldList.find(function(w){return w.id===selectedWorldId;})||worldList[0]).name+'. Your adventure continues.',4);
+});
+$('createWorldToggle').addEventListener('click',function(){
+  $('createWorldForm').hidden=!$('createWorldForm').hidden;
+  if(!$('createWorldForm').hidden)$('newWorldName').focus();
+});
+$('createWorld').addEventListener('click',function(){
+  try{
+    var name=$('newWorldName').value.trim().slice(0,28)||'New World '+(worldList.length+1);
+    var seedText=$('newWorldSeed').value.trim(),id='world-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
+    var newSeed=seedText===''?((Date.now()^Math.floor(Math.random()*4294967295))>>>0):(/^\d+$/.test(seedText)?(Number(seedText)>>>0):seedFromString(seedText));
+    if(!newSeed)newSeed=seedFromString(seedText||id);
+    worldList.push({id:id,name:name,created:Date.now(),seed:newSeed});
+    selectedWorldId=id;
+    if(!persistWorldList()){worldList.pop();return;}
+    $('worldSeedInfo').textContent='Created '+name+' · seed '+newSeed+' · loading world…';
+    location.reload();
+  }catch(e){showGameError('Could not create the world: '+(e&&e.message||e));}
+});
 
 /* ---------- input ---------- */
 var keys={},held={gather:false,sprint:false},joy={x:0,y:0},gamepadMove={x:0,y:0,connected:false},gamepadButtons=[];
