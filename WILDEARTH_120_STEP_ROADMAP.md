@@ -135,7 +135,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 107. Add subtitle and notification duration settings.
 - [x] 108. Add scalable UI text and high-contrast mode.
 - [x] 109. Add controller/gamepad navigation.
-- [ ] 110. Add localization-ready text tables.
+- [x] 110. Add localization-ready text tables.
 
 ## L. Performance, QA, and release
 - [x] 111. Add Low, Balanced, and High graphics profiles.
@@ -180,6 +180,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Structural rules and base ratings: roofs require nearby wall/door/gate support, structure placement is capped at 120 pieces, corrupted/oversized structure arrays are rejected during save validation, and nearby base comfort/protection ratings appear in the HUD.
 
 - Base interactions: nearby wooden walls can be upgraded to reinforced stone using four Stone; nearby wall/floor/door/gate/roof/workbench/cooking-pot pieces can be dismantled with partial material refunds. Contextual touch-friendly buttons appear near the player.
+
+- Localization foundation: added persisted English/Urdu interface language selection and a reusable UI text table for core menu, navigation, day/night, and base-rating labels. Sound captions already have their own bilingual text table.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
