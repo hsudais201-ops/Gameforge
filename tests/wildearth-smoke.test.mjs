@@ -1222,3 +1222,15 @@ test('rock meshes add layered mineral facets and restrained moss patches', () =>
   assert.match(rock,/new THREE\.SphereGeometry\(0\.24,6,4\)/);
   assert.match(rock,/return merge\(parts\)/);
 });
+
+
+test('biome signature plants provide desert, snow, volcanic and jungle vegetation', () => {
+  for (const fn of ['buildDesertTuft','buildSnowShrub','buildEmberPlant','buildJungleBroadleaf']) {
+    assert.match(gameScript,new RegExp('function '+fn+'\\('),fn+' builder should exist');
+  }
+  assert.match(gameScript,/biomeAt\(x,z\)\.id==='volcanic'/);
+  assert.match(gameScript,/id==='frost'\|\|id==='tundra'\|\|id==='highland'/);
+  assert.match(gameScript,/id==='jungle'\|\|id==='marsh'/);
+  assert.match(gameScript,/Math\.round\(72\*mf\)/);
+  assert.match(gameScript,/Math\.round\(30\*mf\)/);
+});
