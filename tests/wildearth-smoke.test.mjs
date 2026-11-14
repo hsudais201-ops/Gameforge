@@ -683,3 +683,28 @@ test('game uses one animation-frame scheduler so menu actions cannot create dupl
   assert.match(gameScript, /else\{last=performance\.now\(\);scheduleFrame\(\);\}/);
   assert.match(gameScript, /if\(pageActive\)\{last=performance\.now\(\);scheduleFrame\(\);\}/);
 });
+
+test('expanded 600m world includes woodland, desert, gravel, beach, ocean and forest biomes', () => {
+  assert.ok(gameScript.includes('var WORLD=600,HALF=WORLD/2'));
+  for (const id of ["id:'woodland'","id:'forest'","id:'desert'","id:'gravel'","id:'sand'","id:'ocean'"]) {
+    assert.ok(gameScript.includes(id), 'missing expanded biome: '+id);
+  }
+  assert.ok(gameScript.includes("if(elevation<WATER+0.35)return BIOMES[9]"));
+  assert.ok(gameScript.includes("if(elevation<WATER+2.1)return BIOMES[8]"));
+});
+
+test('2D minimap and full top-down map render terrain colors and a directional player marker', () => {
+  for (const id of ['miniMap','mapCanvas']) assert.match(html,new RegExp('id="'+id+'"'));
+  for (const marker of ['function renderMiniMap()','function renderWorldMap()','function biomeMapColor(x,z)','function drawPlayerArrow(ctx,x,y,size,angle)','var MAP_CELLS=60','ctx.fillStyle=seen[idx]?biomeMapColor(x,z)']) {
+    assert.ok(gameScript.includes(marker),'missing 2D map feature: '+marker);
+  }
+  assert.ok(html.includes('WORLD MAP · 600 × 600 M'));
+  assert.ok(html.includes('#miniMapWrap'));
+});
+
+test('expanded map exploration migrates old 30x30 explored cells without re-migrating new saves', () => {
+  assert.ok(gameScript.includes('mapVersion:2'));
+  assert.ok(gameScript.includes('a>=0&&a<3600'));
+  assert.ok(gameScript.includes('d.mapVersion!==2'));
+  assert.ok(gameScript.includes('return mapCellFor(wx,wz)'));
+});
