@@ -1417,7 +1417,7 @@ function benchCellClick(i){var c=benchCells[i];if(moveFrom>=0&&slots[moveFrom]){
 function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]||1;if(!canAdd(key,n)){say('Your backpack is full.');return;}addItem(key,n);craftedCount++;checkAchievements();benchCells=[null,null,null,null];renderInv(true);say('Crafted '+NAMES[key]+'.');}
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
 var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0,craftedCount=0,achievementIds=[];
-var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[],bossDefeated=false;
+var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[],bossDefeated=false,rareEvent=null,rareEventClaimed=false;
 var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34,stormLevel=0,lightningCooldown=0,lightningFlashTime=0;
@@ -1471,6 +1471,14 @@ function updateWeather(dt){
 }
 P.y=heightAt(P.x,P.z);
 
+function spawnRareEvent(){
+  var p=landSpot(20),g=new THREE.Group(),orbMat=new THREE.MeshStandardMaterial({color:0x8beaff,emissive:0x3acfff,emissiveIntensity:2.2,metalness:0.25,roughness:0.25});
+  var orb=new THREE.Mesh(new THREE.IcosahedronGeometry(0.62,1),orbMat);g.add(orb);
+  var ring=new THREE.Mesh(new THREE.TorusGeometry(1.05,0.055,8,28),new THREE.MeshBasicMaterial({color:0x9cefff,transparent:true,opacity:0.85}));ring.rotation.x=Math.PI/2;g.add(ring);
+  var light=new THREE.PointLight(0x65dfff,1.6,12);light.position.y=0.4;g.add(light);
+  var y=heightAt(p.x,p.z);g.position.set(p.x,y+1.2,p.z);scene.add(g);rareEvent={g:g,x:p.x,z:p.z,y:y,phase:random()*6.28};
+  say('A fallen star has landed nearby. Find its Lumen Heart!',6);playSfx('warning');
+}
 function landSpot(minFromPlayer){
   for(var t=0;t<40;t++){
     var x=(random()-0.5)*(WORLD-40),z=(random()-0.5)*(WORLD-40),y=heightAt(x,z);
@@ -1552,7 +1560,7 @@ function save(){
   var snapshot;
   try{
     snapshot=JSON.stringify({
-      version:5,worldSeed:worldSeed,bossDefeated:bossDefeated,toolDurability:toolDurability,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
+      version:5,worldSeed:worldSeed,bossDefeated:bossDefeated,rareEventClaimed:rareEventClaimed,toolDurability:toolDurability,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
@@ -1604,7 +1612,7 @@ function load(){
     }
     if(!d)d=validSave(localStorage.getItem(OLD_KEY));
     if(!d)return false;
-    P.x=d.P.x;P.z=d.P.z;bossDefeated=d.bossDefeated===true;toolDurability={};if(d.toolDurability&&typeof d.toolDurability==='object')Object.keys(TOOL_MAX).forEach(function(id){if(isFinite(d.toolDurability[id]))toolDurability[id]=clamp(d.toolDurability[id],0,TOOL_MAX[id]);});companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
+    P.x=d.P.x;P.z=d.P.z;bossDefeated=d.bossDefeated===true;rareEventClaimed=d.rareEventClaimed===true;toolDurability={};if(d.toolDurability&&typeof d.toolDurability==='object')Object.keys(TOOL_MAX).forEach(function(id){if(isFinite(d.toolDurability[id]))toolDurability[id]=clamp(d.toolDurability[id],0,TOOL_MAX[id]);});companionMode=['follow','hold','defend'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,100):100;P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
       slots=migrateInventorySlots(d.slots,ITEMS,NSLOTS,HOT);
       hotSel=clamp(d.hot|0,0,HOT-1);
@@ -2191,6 +2199,8 @@ var hudT=0,saveT=0,flick=0,sprintEmptyNotified=false,hungerWarned=false;
 function update(dt){
   if(dead){respawnTimer=Math.max(0,respawnTimer-dt);var secs=Math.ceil(respawnTimer);$("deathCountdown").textContent=respawnTimer>0?"Respawning in "+secs+" second"+(secs===1?"":"s")+"…":"Ready to return";if(respawnTimer<=0)finishRespawn();return;}
   clock+=dt;flick+=dt;
+  if(!rareEvent&&!rareEventClaimed&&nights>=3&&nightF>0.7)spawnRareEvent();
+  if(rareEvent){rareEvent.phase+=dt*1.7;rareEvent.g.position.y=rareEvent.y+1.2+Math.sin(rareEvent.phase)*0.22;rareEvent.g.rotation.y+=dt*0.65;if(Math.hypot(P.x-rareEvent.x,P.z-rareEvent.z)<2.25){rareEventClaimed=true;scene.remove(rareEvent.g);rareEvent.g.traverse(function(o){if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(function(m){m.dispose()});else o.material.dispose();}});rareEvent=null;gain('crystal',8,P.x,P.y+2.4,P.z,'#8beaff');gain('goldOre',3,P.x,P.y+2.8,P.z,'#f6d47a');say('Lumen Heart recovered! Rare star-metal rewards added.',6);save();}}
   updateWeather(dt);
   streamTimer+=dt;if(streamDirty||streamTimer>0.65){streamTimer=0;updateWorldStreaming(false);}
   envUpdate();
