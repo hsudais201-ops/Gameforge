@@ -958,3 +958,14 @@ test('save validation rejects malformed or out-of-bounds world records before lo
   assert.equal(validate({slots:Array(37).fill(null)}),false,'oversized player inventories must be rejected');
   assert.equal(validate({slots:Array(36).fill(null)}),true,'the supported inventory size must remain loadable');
 });
+
+test('inventory uses a responsive Palworld-inspired field layout with item preview', () => {
+  assert.ok(html.includes('class="palInventory"'));
+  assert.ok(html.includes('id="itemPreviewIcon"'));
+  assert.ok(html.includes('id="itemPreviewName"'));
+  assert.ok(html.includes('id="bagGrid"'));
+  assert.ok(html.includes('id="bagHotbar"'));
+  assert.ok(html.includes('grid-template-columns:minmax(170px, .82fr) minmax(300px,1.55fr) minmax(220px,1.05fr)'));
+  assert.ok(html.includes('@media(max-width:480px)'));
+  assert.ok(gameScript.includes("$('itemPreviewName').textContent=preview?ITEMS[preview.id].n:'Select an item';"));
+});
