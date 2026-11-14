@@ -419,3 +419,9 @@ test('base comfort and protection ratings respond to nearby structures', () => {
   assert.ok(gameScript.includes("if(w.t==='roof')comfort+=4"));
   assert.ok(gameScript.includes("if(w.t==='stone'||w.t==='wall')protection"));
 });
+
+
+test('nearby base pieces can be upgraded from wood to stone and dismantled with refunds', () => {
+  for (const id of ['baseActions', 'upgradeBasePiece', 'dismantleBasePiece']) assert.match(html, new RegExp('id="' + id + '"'));
+  for (const marker of ['function upgradeNearbyBasePiece()', 'takeItem(\'stone\',4)', "w.t='stone'", 'function dismantleNearbyBasePiece()', 'walls.splice(idx,1)', "var refunds={wall:['wood',1]"]) assert.ok(gameScript.includes(marker), 'missing base interaction marker: '+marker);
+});
