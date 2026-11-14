@@ -110,7 +110,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 86. Add structural integrity and support rules.
 - [x] 87. Add storage, workbench, and cooking stations.
 - [x] 88. Add base comfort and protection ratings.
-- [ ] 89. Add build-piece upgrade and dismantle interactions.
+- [x] 89. Add build-piece upgrade and dismantle interactions.
 - [x] 90. Add base save validation and structure limits.
 
 ## J. Progression, quests, and exploration
@@ -178,6 +178,8 @@ This is the execution tracker for the next development stages. A checked item me
 
 - Base stations: added craftable Workbench and Cooking Pot. The workbench opens inventory crafting; the cooking pot converts berries and fiber into jam.
 - Structural rules and base ratings: roofs require nearby wall/door/gate support, structure placement is capped at 120 pieces, corrupted/oversized structure arrays are rejected during save validation, and nearby base comfort/protection ratings appear in the HUD.
+
+- Base interactions: nearby wooden walls can be upgraded to reinforced stone using four Stone; nearby wall/floor/door/gate/roof/workbench/cooking-pot pieces can be dismantled with partial material refunds. Contextual touch-friendly buttons appear near the player.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
