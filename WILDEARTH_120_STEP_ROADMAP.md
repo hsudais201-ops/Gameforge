@@ -25,7 +25,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 15. Add remappable keyboard controls.
 - [x] 16. Add configurable joystick dead-zone and sensitivity.
 - [x] 17. Add camera sensitivity and inversion settings.
-- [ ] 18. Add optional aim assist for touch combat.
+- [x] 18. Add optional aim assist for touch combat.
 - [ ] 19. Add swimming movement and underwater camera handling.
 - [x] 20. Add player status effects with clear HUD indicators.
 
@@ -96,7 +96,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 74. Add crafting recipes and quantity selection.
 - [x] 75. Check ingredients and inventory capacity before crafting.
 - [ ] 76. Add item durability and repair.
-- [ ] 77. Add tool tiers with gathering-speed differences.
+- [x] 77. Add tool tiers with gathering-speed differences.
 - [x] 78. Add storage chests with persistent contents.
 - [x] 79. Add item sorting and quick-transfer controls.
 - [x] 80. Add crafting category filters and recipe search.
@@ -189,3 +189,6 @@ Source-level syntax and structural checks are not substitutes for playing the ga
 
 - Save QA: extracted legacy inventory conversion into a pure migration helper and added executable tests for 30-slot-to-36-slot conversion, legacy cage-to-ball mapping, stack clamping, invalid-item rejection, and version-5 save fallback defaults.
 - Mobile QA: added smoke-test regression checks for viewport metadata, touch controls, narrow/short viewport CSS breakpoints, and renderer resize handling. These are source-level regression checks, not physical-device gameplay tests.
+
+- Combat accessibility: added a mobile-only, limited-cone aim assist for nearby wildlife and Wraiths; keyboard/controller aiming is unchanged.
+- Gathering progression: copper/iron/stone pick tiers and the axe now have distinct gathering cooldowns in addition to existing damage differences.
