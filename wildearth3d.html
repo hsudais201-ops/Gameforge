@@ -998,7 +998,24 @@ tgeo.rotateX(-Math.PI/2);
   tgeo.setAttribute('color',new THREE.BufferAttribute(col,3));
   tgeo.computeVertexNormals();
 })();
-var terrain=new THREE.Mesh(tgeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0}));
+// A tiny deterministic grayscale height texture adds real grazing-light surface relief.
+function makeGroundDetailMap(){
+  var canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;
+  var ctx=canvas.getContext('2d'),img=ctx.createImageData(128,128);
+  for(var py=0;py<128;py++)for(var px=0;px<128;px++){
+    var h=hash(px+py*128,913),grain=hash(px*7+py*131,277);
+    var v=Math.round(112+h*92+grain*38),at=(py*128+px)*4;
+    img.data[at]=v;img.data[at+1]=v;img.data[at+2]=v;img.data[at+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  var tex=new THREE.CanvasTexture(canvas);tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;
+  tex.repeat.set(54,54);tex.magFilter=THREE.LinearFilter;tex.minFilter=THREE.LinearMipmapLinearFilter;
+  tex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());tex.needsUpdate=true;
+  return tex;
+}
+var groundDetailMap=makeGroundDetailMap();
+var terrainMaterial=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.96,metalness:0,bumpMap:groundDetailMap,bumpScale:0.038});
+var terrain=new THREE.Mesh(tgeo,terrainMaterial);
 terrain.receiveShadow=true;scene.add(terrain);
 // Physically layered water with a restrained animated wave surface; segment count is lower on mobile.
 var waterGeo=new THREE.PlaneGeometry(WORLD*1.6,WORLD*1.6,isMobile?20:40,isMobile?20:40);
