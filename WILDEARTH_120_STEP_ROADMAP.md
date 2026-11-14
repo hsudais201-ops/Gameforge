@@ -49,7 +49,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 35. Add distinct named biomes with readable boundaries.
 - [x] 36. Add biome-specific ground materials and foliage.
 - [x] 37. Add biome-specific resource distribution.
-- [ ] 38. Add caves with entrances, interior lighting, and exit paths.
+- [x] 38. Add caves with entrances, interior lighting, and exit paths.
 - [ ] 39. Add rivers, ponds, and connected water flow.
 - [x] 40. Add world seed entry and seed display.
 
@@ -182,6 +182,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Base interactions: nearby wooden walls can be upgraded to reinforced stone using four Stone; nearby wall/floor/door/gate/roof/workbench/cooking-pot pieces can be dismantled with partial material refunds. Contextual touch-friendly buttons appear near the player.
 
 - Localization foundation: added persisted English/Urdu interface language selection and a reusable UI text table for core menu, navigation, day/night, and base-rating labels. Sound captions already have their own bilingual text table.
+
+- Caves: added a surface cave entrance, a bounded underground chamber with crystal formations and point lighting, an entry/exit interaction, and cave-specific ground/temperature/oxygen handling.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
