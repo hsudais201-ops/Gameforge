@@ -238,3 +238,6 @@ Source-level syntax and structural checks are not substitutes for playing the ga
 - Gathering progression: copper/iron/stone pick tiers and the axe now have distinct gathering cooldowns in addition to existing damage differences.
 
 - Accessibility captions: added a persisted sound-caption toggle and live subtitle line for gathering, capture, damage, rain, wildlife, and danger cues. Captions remain available when sound effects are muted or unavailable.
+
+- Target-device profiling preparation: added a 30-second in-game profiler that exports per-frame samples, average/p95 frame time, update/render-submit timing, draw calls, triangles, viewport, pixel ratio, logical CPU cores, and reported device memory. This enables the Chromebook measurement step but does not complete it until real device profiles are collected and reviewed.
+- Release preparation: added `WILDEARTH_RELEASE_CANDIDATE.md` with feature inventory, automated checks, Chromebook test matrix, known limitations, and explicit release gates. No public release has been deployed.
