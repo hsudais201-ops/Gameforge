@@ -11,7 +11,7 @@
   #underwaterTint{position:fixed;inset:0;z-index:7;pointer-events:none;opacity:0;background:linear-gradient(180deg,rgba(26,104,145,.18),rgba(5,43,72,.38));transition:opacity .25s}#lightningFlash{position:fixed;inset:0;z-index:29;pointer-events:none;background:rgba(225,242,255,.9);opacity:0;mix-blend-mode:screen}#underwaterTint.active{opacity:1}
   #damageFlash.hit{animation:damagePulse .42s ease-out}
   @keyframes damagePulse{0%{opacity:.95}100%{opacity:0}}
-  #bossStatus{position:fixed;top:96px;left:50%;transform:translateX(-50%);width:min(340px,82vw);padding:8px 12px;border:1px solid #e28c74aa;border-radius:8px;background:rgba(32,10,14,.86);text-align:center;font-size:11px;z-index:9}#bossStatus[hidden]{display:none}#bossStatus strong{display:block;letter-spacing:.12em;color:#ffd4c5}#bossPhase{display:block;margin:3px;color:#ffb18f;font-size:9px}.bossTrack{height:7px;border-radius:6px;background:#ffffff30;overflow:hidden}.bossTrack i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#a82d3b,#ff946b)}
+  #bossStatus{position:fixed;top:96px;left:50%;transform:translateX(-50%);width:min(340px,82vw);padding:8px 12px;border:1px solid #e28c74aa;border-radius:8px;background:rgba(32,10,14,.86);text-align:center;font-size:11px;z-index:9}#baseActions{position:fixed;right:12px;top:112px;z-index:12;display:flex;align-items:center;gap:5px;padding:6px;border-radius:8px;background:rgba(9,18,13,.86);border:1px solid #c5d5bd66;font-size:10px}#baseActions[hidden]{display:none}#baseActions button{padding:6px 8px;border:1px solid #9caf91;border-radius:5px;background:#405c43;color:#fff;font-size:10px;font-weight:700}#baseActions button:disabled{opacity:.35}@media(max-width:520px){#baseActions{right:6px;top:145px;max-width:90vw;flex-wrap:wrap}}#bossStatus[hidden]{display:none}#bossStatus strong{display:block;letter-spacing:.12em;color:#ffd4c5}#bossPhase{display:block;margin:3px;color:#ffb18f;font-size:9px}.bossTrack{height:7px;border-radius:6px;background:#ffffff30;overflow:hidden}.bossTrack i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#a82d3b,#ff946b)}
   #hud{position:fixed;left:0;right:0;top:0;padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) 0 max(10px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:6px;pointer-events:none;font-size:12px}
   .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .pill{background:rgba(8,16,12,.62);padding:4px 9px;border-radius:999px;white-space:nowrap}
@@ -231,7 +231,7 @@
     <span class="pill">Stamina<span class="bar"><i id="stamina" style="background:#61d6a0"></i></span></span>
     <span class="pill" id="time"></span><span class="pill" id="biomeStatus">Sunlit Meadow</span><span class="pill" id="baseRating">Base comfort 0 · protection 0</span><span class="pill" id="statusEffects" role="status" aria-live="polite" hidden></span>
   </div>
-  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div>
+  <div class="row"><span class="pill" id="goal"></span><button id="questOpen" type="button">📜 QUEST JOURNAL</button><button id="mapOpen" type="button">🗺 MAP</button></div><div id="bossStatus" hidden role="status" aria-live="polite"><strong>THE NIGHT HERALD</strong><span id="bossPhase">PHASE 1</span><div class="bossTrack"><i id="bossHealth"></i></div></div><div id="baseActions" hidden><span id="basePieceName">Nearby structure</span><button id="upgradeBasePiece" type="button">Upgrade</button><button id="dismantleBasePiece" type="button">Dismantle</button></div>
 </div>
 <div id="mapPanel" hidden role="dialog" aria-modal="true" aria-labelledby="mapTitle"><div class="mapCard"><button class="mapClose" id="mapClose" type="button">Close ✕</button><strong id="mapTitle">WORLD MAP</strong><p class="questIntro">Unexplored areas remain hidden. Explore the world to reveal the map and discover landmarks.</p><div class="mapLegend"><span>Explored</span><span class="keyLand">Landmark</span><span class="keyPlayer">You</span></div><div id="mapGrid" class="mapGrid" aria-label="Exploration map"></div><div id="landmarkList"></div></div></div>
 <div id="questPanel" hidden role="dialog" aria-modal="true" aria-labelledby="questTitle"><div class="questCard"><div class="questHead"><strong id="questTitle">QUEST JOURNAL</strong><button id="questClose" type="button">Close ✕</button></div><p class="questIntro">Track your journey. Objectives complete automatically as you explore, build, craft and survive. Progress is saved with this world.</p><div id="questList"></div><div id="questSummary" class="questIntro" aria-live="polite"></div><h3 class="questSectionTitle">FIELD TUTORIAL</h3><div id="tutorialList"></div><h3 class="questSectionTitle">MAIN STORY · A NEW DAWN</h3><div id="mainQuest"></div></div></div>
@@ -2985,6 +2985,22 @@ $('questList').addEventListener('click',function(e){
 $('questOpen').addEventListener('click',function(){renderQuestJournal();$('questPanel').hidden=false;});
 $('questClose').addEventListener('click',function(){$('questPanel').hidden=true;});
 $('questPanel').addEventListener('click',function(e){if(e.target===$('questPanel'))$('questPanel').hidden=true;});
+var nearbyBasePiece=null;
+function updateBaseActions(){
+  nearbyBasePiece=nearestOf(walls,P.x,P.z,5.4,function(w){return ['wall','stone','floor','door','gate','roof','workbench','cookpot'].indexOf(w.t)>=0;});
+  var panel=$('baseActions');panel.hidden=!nearbyBasePiece||menuOpen||bagOpen||pauseOpen||dead;
+  if(nearbyBasePiece){$('basePieceName').textContent=nearbyBasePiece.t.toUpperCase();$('upgradeBasePiece').disabled=nearbyBasePiece.t!=='wall'||countOf('stone')<4;$('upgradeBasePiece').textContent=nearbyBasePiece.t==='wall'?'Upgrade to Stone':'Upgrade';}
+}
+function upgradeNearbyBasePiece(){
+  var w=nearbyBasePiece;if(!w||w.t!=='wall'){say('Only wooden walls can be upgraded right now.',3);return;}
+  if(countOf('stone')<4){say('Upgrade needs 4 Stone.',2);return;}
+  takeItem('stone',4);scene.remove(w.g);w.t='stone';w.g=makeStoneWall();w.g.position.set(w.x,w.y+1,w.z);scene.add(w.g);renderInv(true);save();say('Wooden wall upgraded to reinforced stone.',3);updateBaseActions();
+}
+function dismantleNearbyBasePiece(){
+  var w=nearbyBasePiece;if(!w)return;var idx=walls.indexOf(w);if(idx<0)return;scene.remove(w.g);walls.splice(idx,1);
+  var refunds={wall:['wood',1],stone:['stone',1],floor:['wood',1],door:['wood',2],gate:['wood',2],roof:['wood',2],workbench:['wood',3],cookpot:['stone',2]},refund=refunds[w.t];if(refund)gain(refund[0],refund[1],P.x,P.y+2,P.z,'#d5c49a');nearbyBasePiece=null;save();say('Structure dismantled. Some materials recovered.',3);updateBaseActions();
+}
+$('upgradeBasePiece').addEventListener('click',upgradeNearbyBasePiece);$('dismantleBasePiece').addEventListener('click',dismantleNearbyBasePiece);
 function baseRatings(){
   var comfort=0,protection=0;
   walls.forEach(function(w){var d=Math.hypot(w.x-P.x,w.z-P.z);if(d>30)return;if(w.t==='stone'||w.t==='wall')protection+=w.t==='stone'?7:4;if(w.t==='roof')comfort+=4;if(w.t==='workbench')comfort+=7;if(w.t==='cookpot')comfort+=8;if(w.t==='door'||w.t==='gate')protection+=3;});
@@ -3012,7 +3028,7 @@ function updateHud(){
   var phase=nightF>0.6?'Night':(nightF>0.15?(Math.cos(t*Math.PI*2+0.65)>0?'Dusk':'Dawn'):'Day');
   $('time').textContent='Day '+(Math.floor(clock/DAY)+1)+' · '+phase+' · '+seasonInfo().name;
   $('biomeStatus').textContent=biomeAt(P.x,P.z).name;
-  var base=baseRatings();$('baseRating').textContent='Base comfort '+base.comfort+' · protection '+base.protection;
+  var base=baseRatings();$('baseRating').textContent='Base comfort '+base.comfort+' · protection '+base.protection;updateBaseActions();
   renderInv(false);
   checkAchievements();
   updateExplorationMap();
