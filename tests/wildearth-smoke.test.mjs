@@ -376,3 +376,11 @@ test('character customization exposes independent head, torso, leg, and accessor
     assert.ok(gameScript.includes(marker), 'missing separated appearance slot marker: ' + marker);
   }
 });
+
+
+test('achievement rewards unlock cosmetics and persist the unlocked reward IDs', () => {
+  assert.match(html, /id="cosmeticUnlockStatus"/);
+  for (const marker of ["id:'aurora_hair',achievement:'three_nights'", "id:'wraith_violet',achievement:'wraith_slayer'", "id:'pathfinder_gold',achievement:'pathfinder'", 'function refreshCosmeticUnlocks()', 'option.disabled=achievementIds.indexOf(option.getAttribute(\'data-unlock\'))<0', 'cosmeticUnlockIds:cosmeticUnlockIds', 'cosmeticUnlockIds=d.cosmeticUnlockIds']) {
+    assert.ok(gameScript.includes(marker), 'missing cosmetic unlock marker: ' + marker);
+  }
+});
