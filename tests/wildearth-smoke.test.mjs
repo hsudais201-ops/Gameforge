@@ -392,3 +392,11 @@ test('transient particle counts are bounded and unique capture projectiles relea
   assert.ok(gameScript.includes('disposeObject3D(sh.m)'));
   assert.ok(gameScript.includes('floats.length>=60'));
 });
+
+
+test('doors and gates open/close with collision changes and roofs are buildable and saved', () => {
+  for (const id of ['door', 'gate', 'roof']) assert.match(html, new RegExp('id="' + id + '"|value="' + id + '"|data-craft="' + id + '"'));
+  for (const marker of ['function makeDoor()', 'function makeGate()', 'function makeRoof()', "w.t==='door'||w.t==='gate'", 'nearbyEntry.open=!nearbyEntry.open', 'open:!!w.open', "w.open&&(kind==='door'||kind==='gate')", 'door:[new THREE.BoxGeometry']) {
+    assert.ok(gameScript.includes(marker), 'missing building piece marker: ' + marker);
+  }
+});
