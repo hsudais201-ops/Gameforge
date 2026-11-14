@@ -444,15 +444,23 @@ var BIOMES=[
   {id:'desert',name:'Sunscorched Desert',temp:0.96,moisture:0.12,ground:0xc9a45f,accent:0xa9783d,map:'#d7b36d'},
   {id:'gravel',name:'Shatterstone Barrens',temp:0.34,moisture:0.2,ground:0x858078,accent:0x5d5b58,map:'#77736d'},
   {id:'sand',name:'Golden Shore',temp:0.72,moisture:0.3,ground:0xd8c18a,accent:0xb89b65,map:'#ddc58a'},
-  {id:'ocean',name:'Open Ocean',temp:0.48,moisture:1,ground:0x315e78,accent:0x24475e,map:'#285d7a'}
+  {id:'ocean',name:'Open Ocean',temp:0.48,moisture:1,ground:0x315e78,accent:0x24475e,map:'#285d7a'},
+  {id:'tundra',name:'Frostwind Tundra',temp:0.04,moisture:0.24,ground:0xa8b5a8,accent:0x778b83,map:'#a8b8b0'},
+  {id:'jungle',name:'Emerald Rainforest',temp:0.94,moisture:0.92,ground:0x315d32,accent:0x1d472c,map:'#245b35'},
+  {id:'savanna',name:'Golden Savanna',temp:0.88,moisture:0.43,ground:0xb5a04d,accent:0x827b37,map:'#b7a34e'},
+  {id:'volcanic',name:'Ashen Caldera',temp:0.98,moisture:0.08,ground:0x51413d,accent:0x9a4930,map:'#633d35'}
 ];
 function biomeAt(x,z){
-  var elevation=heightAt(x,z),moisture=fbm(x*0.009+173,z*0.009-91),heat=fbm(x*0.006-47,z*0.006+211),detail=fbm(x*0.034+19,z*0.034-37);
+  var elevation=heightAt(x,z),moisture=fbm(x*0.009+173,z*0.009-91),heat=fbm(x*0.006-47,z*0.006+211),detail=fbm(x*0.034+19,z*0.034-37),volcanicNoise=fbm(x*0.012+331,z*0.012-127);
   if(elevation<WATER+0.35)return BIOMES[9];
   if(elevation<WATER+2.1)return BIOMES[8];
-  if(elevation>11.5||heat<0.24)return BIOMES[5];
+  if(elevation>11.5)return BIOMES[5];
   if(elevation>7.2)return BIOMES[3];
-  if(heat>0.68&&moisture<0.39)return BIOMES[6];
+  if(heat<0.24)return BIOMES[10];
+  if(elevation>2.5&&heat>0.6&&moisture<0.34&&volcanicNoise>0.7)return BIOMES[13];
+  if(heat>0.68&&moisture>0.62)return BIOMES[11];
+  if(heat>0.62&&moisture>0.3&&moisture<0.58)return BIOMES[12];
+  if(heat>0.68&&moisture<0.3)return BIOMES[6];
   if(moisture<0.29&&detail>0.48)return BIOMES[7];
   if(moisture>0.68&&elevation<5.2)return BIOMES[4];
   if(moisture>0.56)return BIOMES[2];
@@ -706,7 +714,7 @@ tgeo.rotateX(-Math.PI/2);
   var tp=tgeo.attributes.position,n=tp.count,i;
   for(i=0;i<n;i++)tp.setY(i,heightAt(tp.getX(i),tp.getZ(i)));
   var col=new Float32Array(n*3);
-  var cSand=new THREE.Color(0xd8c18a),cRock=new THREE.Color(0x7a7e80),cDirt=new THREE.Color(0x6f5b3d),cDesert=new THREE.Color(0xc9a45f),cGravel=new THREE.Color(0x858078);
+  var cSand=new THREE.Color(0xd8c18a),cRock=new THREE.Color(0x7a7e80),cDirt=new THREE.Color(0x6f5b3d),cDesert=new THREE.Color(0xc9a45f),cGravel=new THREE.Color(0x858078),cAsh=new THREE.Color(0x55413c),cEmber=new THREE.Color(0xb84c2e),cTundra=new THREE.Color(0xa8b5a8);
   var cG1=new THREE.Color(0x477a31),cG2=new THREE.Color(0x6d9b3e),cHi=new THREE.Color(0x8a9a6a),c=new THREE.Color();
   for(i=0;i<n;i++){
     var x=tp.getX(i),z=tp.getZ(i),y=tp.getY(i);
@@ -717,6 +725,10 @@ tgeo.rotateX(-Math.PI/2);
     if(biome.id==='desert')c.lerp(cDesert,0.35+fine*0.18);
     if(biome.id==='gravel')c.lerp(cGravel,0.28+fine*0.22);
     if(biome.id==='sand')c.lerp(cSand,0.38);
+    if(biome.id==='tundra')c.lerp(cTundra,0.38+fine*0.16);
+    if(biome.id==='jungle')c.lerp(new THREE.Color(0x234d2c),0.32+fine*0.18);
+    if(biome.id==='savanna')c.lerp(new THREE.Color(0xc0a653),0.3+fine*0.18);
+    if(biome.id==='volcanic'){c.lerp(cAsh,0.55);if(fine>0.76)c.lerp(cEmber,(fine-0.76)*1.4);}
     if(y>8)c.lerp(cHi,clamp((y-8)/6,0,0.7));
     if(sl>1.5)c.lerp(cDirt,clamp((sl-1.5)/1.2,0,1));
     if(sl>2.6)c.lerp(cRock,clamp((sl-2.6)/1.4,0,1));
@@ -798,7 +810,7 @@ function scatter(kind,type,count,minS,maxS,rad,hp){
     if(Math.hypot(x,z)<12)continue;
     var y=heightAt(x,z),biome=biomeAt(x,z);
     if(y<WATER+0.5||y>14)continue;
-    var habitatChance=kind==='pine'?(biome.id==='forest'||biome.id==='woodland'?0.88:0.12):kind==='oak'?(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.82:0.12):kind==='birch'?(biome.id==='frost'||biome.id==='highland'?0.8:0.18):kind==='bush'?(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.86:0.18):(biome.id==='highland'||biome.id==='frost'||biome.id==='gravel'?0.78:0.2);
+    var habitatChance=kind==='pine'?(biome.id==='forest'||biome.id==='woodland'?0.88:0.12):kind==='oak'?(biome.id==='jungle'?0.94:(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.82:(biome.id==='savanna'?0.46:0.12))):kind==='birch'?(biome.id==='frost'||biome.id==='highland'||biome.id==='tundra'?0.8:0.18):kind==='bush'?(biome.id==='jungle'?0.96:(biome.id==='savanna'?0.72:(biome.id==='meadow'||biome.id==='marsh'||biome.id==='woodland'?0.86:0.18))):(biome.id==='volcanic'||biome.id==='highland'||biome.id==='frost'||biome.id==='gravel'?0.78:0.2);
     if(R()>habitatChance)continue;
     if((kind==='rock'||kind==='copperOre'||kind==='ironOre'||kind==='crystalOre'||kind==='tinOre'||kind==='goldOre')?false:(Math.abs(heightAt(x+2,z)-y)+Math.abs(heightAt(x,z+2)-y)>3.2))continue;
     var s=minS+R()*(maxS-minS);
