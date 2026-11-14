@@ -1841,8 +1841,7 @@ function doGather(){
   if(P.cool>0)return;
   var axe=countOf('axe')>0,pickLevel=countOf('ironpick')>0?3:(countOf('copperpick')>0?2:(countOf('pick')>0?1:0)),pick=pickLevel>0;
   P.cool=axe?0.42:0.55;P.swing=0.45;playSfx('gather');
-  applyTouchAimAssist(wraiths,5,0.82);
-  applyTouchAimAssist(wild,3.4,0.82);
+  if(!applyTouchAimAssist(wraiths,5,0.82))applyTouchAimAssist(wild,3.4,0.82);
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5,function(o){return inWeaponArc(o,5,0.25)});
   if(w){var weaponLevel=countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1));var dealt=Math.max(1,weaponLevel*(w.damageTaken||1));w.hp-=dealt;w.hit=0.25;burst(w.x,w.y+1.2,w.z,0xc9a8ff,6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),'#c9a8ff');return}
