@@ -730,11 +730,11 @@ var cv=$('c'),webglAvailable=false;
 try{var glProbe=cv.getContext('webgl2')||cv.getContext('webgl')||cv.getContext('experimental-webgl');webglAvailable=!!glProbe;}catch(webglProbeError){}
 if(!window.THREE||!webglAvailable){$('webglFallback').hidden=false;$('webglFallback').textContent=!window.THREE?'The 3D engine could not load. Check your internet connection and reload.':'WILDEARTH requires WebGL. Enable hardware acceleration or try a supported browser.';throw new Error('WILDEARTH startup requires Three.js and WebGL support.');}
 var renderer;try{renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!isLowEnd,powerPreference:'high-performance'});}catch(rendererError){$('webglFallback').hidden=false;$('webglFallback').textContent='This browser could not create a WebGL 2 rendering context. Update your browser and enable hardware acceleration.';throw new Error('WILDEARTH WebGL renderer initialization failed: '+rendererError.message);}
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+// Render above native CSS resolution on capable devices for cleaner edges; keep a strict low-end GPU cap.\nrenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,isLowEnd?1.15:1.75));
 // Three.js r128 color management: preserve rich, correctly encoded material colors.
 if(THREE.sRGBEncoding!==undefined)renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.2;
+renderer.toneMappingExposure=0.92;
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 var scene=new THREE.Scene();
@@ -747,10 +747,10 @@ function resize(){
 }
 window.addEventListener('resize',resize);resize();
 
-var hemi=new THREE.HemisphereLight(0xc8e2ff,0x514b37,0.72);scene.add(hemi);
+var hemi=new THREE.HemisphereLight(0xb7c9df,0x393329,0.48);scene.add(hemi);
 // A subtle non-shadowing sky fill keeps shaded creatures and structures readable without extra shadow-map cost.
-var skyFill=new THREE.DirectionalLight(0x9bbdff,0.2);skyFill.castShadow=false;scene.add(skyFill);
-var sun=new THREE.DirectionalLight(0xffedcf,1.35);
+var skyFill=new THREE.DirectionalLight(0x8299bd,0.12);skyFill.castShadow=false;scene.add(skyFill);
+var sun=new THREE.DirectionalLight(0xffe6c5,1.08);
 sun.castShadow=true;
 sun.shadow.mapSize.set(isMobile?512:1024,isMobile?512:1024);
 sun.shadow.camera.left=-45;sun.shadow.camera.right=45;sun.shadow.camera.top=45;sun.shadow.camera.bottom=-45;
@@ -2958,7 +2958,7 @@ var ghost={};
 })();
 
 /* ---------- environment ---------- */
-var cDayS=new THREE.Color(0x9fc4e6),cDusk=new THREE.Color(0xf0a070),cNightS=new THREE.Color(0x070b18),cSky=new THREE.Color(),seasonFogColor=new THREE.Color();
+var cDayS=new THREE.Color(0x8199b2),cDusk=new THREE.Color(0xc78361),cNightS=new THREE.Color(0x070b18),cSky=new THREE.Color(),seasonFogColor=new THREE.Color();
 var sunDir=new THREE.Vector3(),cSunWarm=new THREE.Color(0xffb87a),cSunWhite=new THREE.Color(0xfff3dc);
 function envUpdate(){
   var t=(clock/DAY)%1,ang=t*Math.PI*2+0.65,e=Math.sin(ang);
@@ -2966,10 +2966,10 @@ function envUpdate(){
   sunDir.set(Math.cos(ang)*0.8,Math.max(e,0.02),0.45).normalize();
   sun.position.set(P.x+sunDir.x*80,P.y+sunDir.y*80,P.z+sunDir.z*80);
   sun.target.position.set(P.x,P.y,P.z);
-  sun.intensity=1.38*dayF;
+  sun.intensity=1.12*dayF;
   sun.color.copy(cSunWarm).lerp(cSunWhite,clamp(e*2.2,0,1));
-  hemi.intensity=0.2+0.65*dayF;
-  skyFill.position.set(P.x-sunDir.x*35,P.y+sunDir.y*28+12,P.z-sunDir.z*35);skyFill.intensity=0.055+0.2*dayF;
+  hemi.intensity=0.14+0.46*dayF;
+  skyFill.position.set(P.x-sunDir.x*35,P.y+sunDir.y*28+12,P.z-sunDir.z*35);skyFill.intensity=0.025+0.12*dayF;
   moon.position.set(P.x-sunDir.x*60,P.y+50,P.z-20);moon.intensity=0.32*nightF;
   var warm=clamp(1-Math.abs(e)*3.5,0,1);
   cSky.copy(cNightS).lerp(cDayS,dayF).lerp(cDusk,warm*0.55);
@@ -2982,7 +2982,7 @@ function envUpdate(){
 
 /* ---------- ambient: clouds and fireflies ---------- */
 var _ax=new THREE.Vector3();
-var cloudMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.9,fog:false,depthWrite:false});
+var cloudMat=new THREE.MeshBasicMaterial({color:0xd9e0e8,transparent:true,opacity:0.76,fog:false,depthWrite:false});
 var clouds=[];
 (function(){
   var cg=new THREE.SphereGeometry(1,10,8);
