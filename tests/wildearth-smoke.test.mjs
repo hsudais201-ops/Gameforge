@@ -1271,3 +1271,12 @@ test('terrain uses a lightweight deterministic bump map for fine surface relief'
   assert.ok(gameScript.includes('bumpMap:groundDetailMap,bumpScale:0.038'));
   assert.ok(gameScript.includes('Math.min(4,renderer.capabilities.getMaxAnisotropy())'));
 });
+
+
+test('shared prop materials use a lightweight tileable micro-surface map for sharper material definition', () => {
+  assert.ok(gameScript.includes('function makeSurfaceDetailMap()'));
+  assert.ok(gameScript.includes('canvas.width=128;canvas.height=128'));
+  assert.ok(gameScript.includes('tex.repeat.set(3,3)'));
+  assert.ok(gameScript.includes('roughnessMap:surfaceDetailMap,bumpMap:surfaceDetailMap,bumpScale:0.016'));
+  assert.ok(gameScript.includes('Math.min(4,renderer.capabilities.getMaxAnisotropy())'));
+});
