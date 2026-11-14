@@ -1757,7 +1757,7 @@ function save(){
   var snapshot;
   try{
     snapshot=JSON.stringify({
-      version:6,mapVersion:2,worldSeed:worldSeed,bossDefeated:bossDefeated,rareEventClaimed:rareEventClaimed,toolDurability:toolDurability,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
+      version:5,mapVersion:2,worldSeed:worldSeed,bossDefeated:bossDefeated,rareEventClaimed:rareEventClaimed,toolDurability:toolDurability,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
       team:team.map(function(t){return {sp:t.sp}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t,open:!!w.open}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
