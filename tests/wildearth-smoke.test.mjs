@@ -291,3 +291,12 @@ test('streamed instance matrices only mark changed mesh buffers dirty', () => {
   assert.ok(gameScript.includes('var meshChanged=false,im=streamedMeshes[m]'));
   assert.ok(gameScript.includes('if(meshChanged)im.instanceMatrix.needsUpdate=true'));
 });
+
+
+test('swimming adjusts third-person camera framing and enables underwater visual feedback', () => {
+  assert.match(html, /id="underwaterTint"/);
+  assert.ok(gameScript.includes('var underwater=!!P.swimming'));
+  assert.ok(gameScript.includes('underwater?1.25:1.7'));
+  assert.ok(gameScript.includes('underwater?Math.min(cam.dist,7.2):cam.dist'));
+  assert.ok(gameScript.includes("tint.classList.toggle('active',underwater)"));
+});
