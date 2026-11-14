@@ -777,4 +777,8 @@ test('mob signature drops unlock legendary Nightfall Blade and Wraithguard recip
   assert.ok(gameScript.includes("equippedArmor==='wraithguard'?0.28"));
   assert.ok(gameScript.includes("d.equippedArmor==='wraithguard'"));
   assert.ok(gameScript.includes("id!=='wraithguard'"));
+  assert.ok(gameScript.includes("wearTool(countOf('heraldblade')?'heraldblade'"));
+  assert.ok(gameScript.includes('heraldblade:320'));
+  assert.ok(gameScript.includes("id==='ironpick'||id==='ironsword'||id==='heraldblade'?'ironbar'"));
+  assert.ok(gameScript.includes("id==='wraithguard'?'Wraithguard'"));
 });
