@@ -26,7 +26,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 16. Add configurable joystick dead-zone and sensitivity.
 - [x] 17. Add camera sensitivity and inversion settings.
 - [x] 18. Add optional aim assist for touch combat.
-- [ ] 19. Add swimming movement and underwater camera handling.
+- [x] 19. Add swimming movement and underwater camera handling.
 - [x] 20. Add player status effects with clear HUD indicators.
 
 ## C. Character and customization
@@ -151,6 +151,8 @@ This is the execution tracker for the next development stages. A checked item me
 
 - Localization foundation: sound captions now use a persisted English/Urdu text table with a language selector; the existing subtitle enable/disable preference remains persisted.
 - Runtime cleanup: floating combat text is capped at 60 DOM nodes and removed safely; streamed instance buffers now mark only the changed mesh dirty, avoiding redundant GPU uploads.
+
+- Underwater camera: third-person framing moves closer/lower while swimming and a lightweight blue underwater tint communicates submersion.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
