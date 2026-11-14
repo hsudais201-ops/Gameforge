@@ -186,3 +186,6 @@ This is the execution tracker for the next development stages. A checked item me
 
 ## Verification policy
 Source-level syntax and structural checks are not substitutes for playing the game. Browser, mobile, performance, and save-migration tests remain open until actually run on target devices.
+
+- Save QA: extracted legacy inventory conversion into a pure migration helper and added executable tests for 30-slot-to-36-slot conversion, legacy cage-to-ball mapping, stack clamping, invalid-item rejection, and version-5 save fallback defaults.
+- Mobile QA: added smoke-test regression checks for viewport metadata, touch controls, narrow/short viewport CSS breakpoints, and renderer resize handling. These are source-level regression checks, not physical-device gameplay tests.
