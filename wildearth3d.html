@@ -240,7 +240,7 @@
 <div id="settingsPanel" hidden><div class="bagTop"><strong>World & Graphics</strong><button id="settingsClose" type="button">Close</button></div><label class="settingRow">Graphics quality<select id="qualitySelect"><option value="0">Low</option><option value="1" selected>Balanced</option><option value="2">High</option></select></label><label class="settingRow">World loading area<select id="areaSelect"><option value="0">Near · 55 m</option><option value="1" selected>Normal · 85 m</option><option value="2">Far · 125 m</option></select></label><label class="settingRow">Interface text size<select id="uiSizeSelect"><option value="normal">Normal</option><option value="large">Large</option></select></label><label class="settingRow">High contrast mode<input id="contrastToggle" type="checkbox"></label>
 <label class="settingRow">Survival difficulty<select id="difficultySelect"><option value="easy">Explorer · Easy</option><option value="normal" selected>Survivor · Normal</option><option value="hard">Wilderness · Hard</option></select></label>
 <label class="settingRow">Notification duration <input id="notificationDuration" type="range" min="1" max="8" step="0.5" value="3.5"></label>
-<label class="settingRow">Sound captions / subtitles <input id="subtitlesToggle" type="checkbox" checked></label>\n<label class="settingRow">Ambient music volume <input id="musicVolume" type="range" min="0" max="0.3" step="0.01" value="0.08"></label>
+<label class="settingRow">Sound captions / subtitles <input id="subtitlesToggle" type="checkbox" checked></label><label class="settingRow">Caption language <select id="captionLanguage"><option value="en">English</option><option value="ur">Urdu</option></select></label>\n<label class="settingRow">Ambient music volume <input id="musicVolume" type="range" min="0" max="0.3" step="0.01" value="0.08"></label>
 <label class="settingRow">Sound effects volume <input id="effectsVolume" type="range" min="0" max="0.8" step="0.02" value="0.35"></label>
 <label class="settingRow">Joystick dead zone <input id="joyDeadzone" type="range" min="0" max="40" step="5" value="10"></label>
 <label class="settingRow">Camera sensitivity <input id="cameraSensitivity" type="range" min="50" max="200" step="10" value="100"></label>
@@ -449,6 +449,7 @@ $('saveWorldBtn').addEventListener('click',function(){var ok=save();var status=$
 $('settingsClose').addEventListener('click',function(){$('settingsPanel').hidden=true});if(pauseOpen)$('pausePanel').hidden=false;
 $('qualitySelect').addEventListener('change',function(){applyRenderProfile(+this.value);say('Graphics set to '+renderProfiles[renderLevel].name,2)});
 $('musicVolume').value=String(audioPrefs.music);$('effectsVolume').value=String(audioPrefs.effects);$('subtitlesToggle').checked=audioPrefs.subtitles!==false;$('subtitlesToggle').addEventListener('change',function(){audioPrefs.subtitles=!!this.checked;if(!audioPrefs.subtitles)$('subtitleLine').textContent='';saveAudioPrefs();});
+$('captionLanguage').value=audioPrefs.captionLanguage||'en';$('captionLanguage').addEventListener('change',function(){audioPrefs.captionLanguage=this.value==='ur'?'ur':'en';saveAudioPrefs();});
 $('musicVolume').addEventListener('input',function(){audioPrefs.music=clamp(+this.value,0,0.3);if(musicBus)musicBus.gain.setTargetAtTime(audioPrefs.music,audioCtx.currentTime,0.04);saveAudioPrefs();initAudio();});
 $('effectsVolume').addEventListener('input',function(){audioPrefs.effects=clamp(+this.value,0,0.8);if(effectsBus)effectsBus.gain.setTargetAtTime(audioPrefs.effects,audioCtx.currentTime,0.04);saveAudioPrefs();initAudio();});
 $('areaSelect').addEventListener('change',function(){applyAreaLevel(+this.value);say('World loading area: '+areaRadii[areaLevel]+' metres',2)});
@@ -688,16 +689,16 @@ function updateWorldStreaming(force){
   var radius=areaRadii[areaLevel],radius2=radius*radius,chunkSize=32,changed=0;
   function active(x,z){var cx=Math.floor(x/chunkSize)*chunkSize+chunkSize/2,cz=Math.floor(z/chunkSize)*chunkSize+chunkSize/2;var dx=cx-P.x,dz=cz-P.z;return dx*dx+dz*dz<=(radius+chunkSize*0.72)*(radius+chunkSize*0.72)}
   for(var m=0;m<streamedMeshes.length;m++){
-    var im=streamedMeshes[m],pos=im.userData.streamPositions,base=im.userData.baseMatrices,vis=im.userData.streamVisible;
+    var meshChanged=false,im=streamedMeshes[m],pos=im.userData.streamPositions,base=im.userData.baseMatrices,vis=im.userData.streamVisible;
     for(var n=0;n<pos.length;n++){
       var on=active(pos[n].x,pos[n].z);
       if(force||vis[n]!==on){
         _m.fromArray(base[n]);
         if(!on){_m.elements[0]*=0.0001;_m.elements[1]*=0.0001;_m.elements[2]*=0.0001;_m.elements[4]*=0.0001;_m.elements[5]*=0.0001;_m.elements[6]*=0.0001;_m.elements[8]*=0.0001;_m.elements[9]*=0.0001;_m.elements[10]*=0.0001;}
-        im.setMatrixAt(n,_m);vis[n]=on;changed++;
+        im.setMatrixAt(n,_m);vis[n]=on;changed++;meshChanged=true;
       }
     }
-    if(changed)im.instanceMatrix.needsUpdate=true;
+    if(meshChanged)im.instanceMatrix.needsUpdate=true;
   }
   for(var ri=0;ri<res.length;ri++){
     var r=res[ri],onR=active(r.x,r.z);
@@ -1215,8 +1216,8 @@ function makeBed(){
 
 /* ---------- state ---------- */
 var P={x:0,y:0,z:4,hp:100,food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
-var AUDIO_KEY='mfwilds3d_audio_v1',audioPrefs={music:0.08,effects:0.35,subtitles:true},audioCtx=null,musicBus=null,effectsBus=null;
-try{var savedAudio=JSON.parse(localStorage.getItem(AUDIO_KEY)||'{}');if(isFinite(savedAudio.music))audioPrefs.music=clamp(savedAudio.music,0,0.3);if(isFinite(savedAudio.effects))audioPrefs.effects=clamp(savedAudio.effects,0,0.8);if(typeof savedAudio.subtitles==='boolean')audioPrefs.subtitles=savedAudio.subtitles;}catch(e){}
+var AUDIO_KEY='mfwilds3d_audio_v1',audioPrefs={music:0.08,effects:0.35,subtitles:true,captionLanguage:'en'},audioCtx=null,musicBus=null,effectsBus=null;
+try{var savedAudio=JSON.parse(localStorage.getItem(AUDIO_KEY)||'{}');if(isFinite(savedAudio.music))audioPrefs.music=clamp(savedAudio.music,0,0.3);if(isFinite(savedAudio.effects))audioPrefs.effects=clamp(savedAudio.effects,0,0.8);if(typeof savedAudio.subtitles==='boolean')audioPrefs.subtitles=savedAudio.subtitles;if(savedAudio.captionLanguage==='ur')audioPrefs.captionLanguage='ur';}catch(e){}
 function saveAudioPrefs(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs));}catch(e){}}
 function initAudio(){
   if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}
@@ -1232,8 +1233,8 @@ function initAudio(){
 var subtitleTimer=null;
 function showSoundCaption(kind){
   if(!audioPrefs.subtitles)return;
-  var captions={gather:'Gathering nearby resources',capture:'Creature capture',damage:'You are taking damage',rain:'Rain is falling',creature:'Wildlife nearby',warning:'Danger nearby'};
-  var line=captions[kind];if(!line)return;
+  var captions={en:{gather:'Gathering nearby resources',capture:'Creature capture',damage:'You are taking damage',rain:'Rain is falling',creature:'Wildlife nearby',warning:'Danger nearby'},ur:{gather:'قریب وسائل جمع کیے جا رہے ہیں',capture:'مخلوق کو پکڑنے کی کوشش',damage:'آپ کو نقصان پہنچ رہا ہے',rain:'بارش ہو رہی ہے',creature:'قریب جنگلی حیات موجود ہے',warning:'قریب خطرہ ہے'}};
+  var line=(captions[audioPrefs.captionLanguage]||captions.en)[kind];if(!line)return;
   var el=$('subtitleLine');if(!el)return;
   el.textContent=line;
   if(subtitleTimer)clearTimeout(subtitleTimer);
@@ -1781,6 +1782,7 @@ var hintEl=$('hint'),hintT=0;
 function say(t,secs){hintEl.textContent=t;hintEl.style.opacity=1;hintT=secs||notificationSeconds}
 function pop(x,y,z,text,color){
   var el=document.createElement('div');el.className='float';el.textContent=text;el.style.color=color||'#fff';
+  if(floats.length>=60){var oldest=floats.shift();if(oldest&&oldest.el&&oldest.el.parentNode)oldest.el.parentNode.removeChild(oldest.el);}
   document.body.appendChild(el);
   floats.push({el:el,x:x,y:y,z:z,t:1.3});
 }
@@ -2964,7 +2966,7 @@ function updateFloats(dt){
   for(var i=floats.length-1;i>=0;i--){
     var f=floats[i];f.t-=dt;f.y+=1.2*dt;
     _v.set(f.x,f.y,f.z).project(camera);
-    if(f.t<=0||_v.z>1){document.body.removeChild(f.el);floats.splice(i,1);continue}
+    if(f.t<=0||_v.z>1){if(f.el.parentNode)f.el.parentNode.removeChild(f.el);floats.splice(i,1);continue}
     f.el.style.transform='translate('+((_v.x*0.5+0.5)*vw-30)+'px,'+((-_v.y*0.5+0.5)*vh)+'px)';
     f.el.style.opacity=clamp(f.t/0.6,0,1);
   }
