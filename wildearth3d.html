@@ -1427,7 +1427,7 @@ var ITEMS={
   ball:{n:'Capture Ball',max:20},great:{n:'Great Ball',max:10},wall:{n:'Wall block',max:20},fire:{n:'Campfire',max:5},
   torch:{n:'Torch',max:10},axe:{n:'Stone Axe',max:1},pick:{n:'Stone Pickaxe',max:1},salve:{n:'Healing Salve',max:10},
   frostShard:{n:'Frost Shard',max:20},emberCore:{n:'Ember Core',max:20},
-  jam:{n:'Berry Jam',max:10},berrypie:{n:'Berry Pie',max:8},heartymeal:{n:'Hearty Meal',max:8},strongsalve:{n:'Greater Healing Salve',max:8},treat:{n:'Creature Treat',max:10},wraithEssence:{n:'Wraith Essence',max:30},shadowFang:{n:'Shadow Fang',max:20},bruteHeart:{n:'Brute Heart',max:10},heraldSigil:{n:'Herald Sigil',max:5},heraldblade:{n:'Nightfall Blade',max:1},wraithguard:{n:'Wraithguard Armor',max:1},stonewall:{n:'Stone wall',max:20},floor:{n:'Wood floor',max:20},bed:{n:'Bedroll',max:2},chest:{n:'Storage Chest',max:8},door:{n:'Wood Door',max:10},gate:{n:'Wood Gate',max:10},roof:{n:'Wood Roof',max:20},workbench:{n:'Workbench',max:4},cookpot:{n:'Cooking Pot',max:4}
+  jam:{n:'Berry Jam',max:10},berrypie:{n:'Berry Pie',max:8},heartymeal:{n:'Hearty Meal',max:8},strongsalve:{n:'Greater Healing Salve',max:8},treat:{n:'Creature Treat',max:10},wraithEssence:{n:'Wraith Essence',max:30},shadowFang:{n:'Shadow Fang',max:20},bruteHeart:{n:'Brute Heart',max:10},heraldSigil:{n:'Herald Sigil',max:5},heraldblade:{n:'Nightfall Blade',max:1},wraithguard:{n:'Wraithguard Armor',max:1},frostblade:{n:'Frostfang Blade',max:1},emberblade:{n:'Emberbrand Blade',max:1},frostarmor:{n:'Frostguard Armor',max:1},emberarmor:{n:'Emberplate Armor',max:1},stonewall:{n:'Stone wall',max:20},floor:{n:'Wood floor',max:20},bed:{n:'Bedroll',max:2},chest:{n:'Storage Chest',max:8},door:{n:'Wood Door',max:10},gate:{n:'Wood Gate',max:10},roof:{n:'Wood Roof',max:20},workbench:{n:'Workbench',max:4},cookpot:{n:'Cooking Pot',max:4}
 };
 var PLACEABLE={wall:1,stonewall:1,floor:1,fire:1,torch:1,bed:1,chest:1,door:1,gate:1,roof:1,workbench:1,cookpot:1};
 var GRID={wall:1,stonewall:1,floor:1,door:1,gate:1,roof:1};
@@ -1449,7 +1449,7 @@ var ICON={
   treat:'<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="#e0a24a"/><circle cx="9" cy="11" r="1.4" fill="#8a5a2b"/><circle cx="14" cy="14" r="1.4" fill="#8a5a2b"/><circle cx="11" cy="16" r="1.2" fill="#8a5a2b"/><path d="M12 5c0-2 2-3 4-3" stroke="#4c8a3a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
   wraithEssence:'<svg viewBox="0 0 24 24"><path d="M12 2c-6 4-8 8-6 13 1 4 5 6 9 5 5-2 6-8 2-13-1-2-3-4-5-5z" fill="#8c6bca"/><path d="M12 6c-3 4-3 7 0 11 3-3 3-7 0-11z" fill="#d9c6ff"/></svg>',frostShard:'<svg viewBox="0 0 24 24"><path d="M12 1 16 8 21 6 17 12 22 16 15 16 12 23 9 16 2 16 7 12 3 6 8 8z" fill="#8de5ff" stroke="#e6faff" stroke-width="1.1"/><path d="M12 4v16M5 12h14" stroke="#dff9ff" stroke-width="1.2"/></svg>',emberCore:'<svg viewBox="0 0 24 24"><path d="M12 2c1 5-5 6-3 12 1 3 4 5 7 3 5-3 2-9-1-12 0 4-2 5-3 6 1-4-1-7 0-9z" fill="#ff7138" stroke="#ffd08a" stroke-width="1.1"/><path d="M12 13c-2 3 0 6 2 6 2-1 2-4 0-6-1 2-1 2-2 3z" fill="#ffe5a3"/></svg>',shadowFang:'<svg viewBox="0 0 24 24"><path d="M5 3c7 2 12 7 13 17-6-2-11-7-13-17z" fill="#c5d0dc" stroke="#647386" stroke-width="1.2"/></svg>',bruteHeart:'<svg viewBox="0 0 24 24"><path d="M12 21S3 15 3 9c0-5 6-7 9-2 3-5 9-3 9 2 0 6-9 12-9 12z" fill="#a83e50" stroke="#f18b8b" stroke-width="1.2"/></svg>',heraldSigil:'<svg viewBox="0 0 24 24"><path d="M12 1l3 5 6 2-3 5-1 7-5-2-5 2-1-7-3-5 6-2z" fill="#e5bd63" stroke="#fff0ae" stroke-width="1.2"/><circle cx="12" cy="11" r="3" fill="#6bd8ed"/></svg>',
   stonewall:' viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="#8c9298" stroke="#5a5f64" stroke-width="1.5"/><path d="M3 9h18M3 15h18M9 3v6M15 9v6M9 15v6" stroke="#5a5f64" stroke-width="1.4"/></svg>',
-  heraldblade:'<svg viewBox="0 0 24 24"><path d="M15 2l7 7-11 11-4-4z" fill="#9cecff" stroke="#e8fdff" stroke-width="1.2"/><path d="M7 14l4 4-4 4-4-4z" fill="#8d6b43"/></svg>',wraithguard:'<svg viewBox="0 0 24 24"><path d="M7 2l5 3 5-3 5 6-3 14H5L2 8z" fill="#65538e" stroke="#c3a9ff" stroke-width="1.4"/><path d="M12 5v14M7 9h10" stroke="#e1d3ff" stroke-width="1.5"/></svg>',
+  heraldblade:'<svg viewBox="0 0 24 24"><path d="M15 2l7 7-11 11-4-4z" fill="#9cecff" stroke="#e8fdff" stroke-width="1.2"/><path d="M7 14l4 4-4 4-4-4z" fill="#8d6b43"/></svg>',wraithguard:'<svg viewBox="0 0 24 24"><path d="M7 2l5 3 5-3 5 6-3 14H5L2 8z" fill="#65538e" stroke="#c3a9ff" stroke-width="1.4"/><path d="M12 5v14M7 9h10" stroke="#e1d3ff" stroke-width="1.5"/></svg>',frostblade:'<svg viewBox="0 0 24 24"><path d="M15 1l7 7-11 11-4-4z" fill="#8de5ff" stroke="#e9fbff" stroke-width="1.2"/><path d="M7 13l5 5-4 4-5-5z" fill="#7199b4"/><path d="M15 3l-2 7" stroke="#fff" stroke-width="1.2"/></svg>',emberblade:'<svg viewBox="0 0 24 24"><path d="M15 1l7 7-11 11-4-4z" fill="#ff8248" stroke="#ffe0a5" stroke-width="1.2"/><path d="M7 13l5 5-4 4-5-5z" fill="#8c4c32"/><path d="M16 3l-2 7" stroke="#fff0bd" stroke-width="1.2"/></svg>',frostarmor:'<svg viewBox="0 0 24 24"><path d="M7 3l5 2 5-2 4 5-3 13H6L3 8z" fill="#4e9eb9" stroke="#bcefff" stroke-width="1.4"/><path d="M12 5v14M7 9h10" stroke="#e4fbff" stroke-width="1.4"/></svg>',emberarmor:'<svg viewBox="0 0 24 24"><path d="M7 3l5 2 5-2 4 5-3 13H6L3 8z" fill="#a64b31" stroke="#ffc078" stroke-width="1.4"/><path d="M12 5v14M7 9h10" stroke="#ffe0a0" stroke-width="1.4"/></svg>',
   floor:'<svg viewBox="0 0 24 24"><path d="M3 8l9-4 9 4-9 4z" fill="#b98a55"/><path d="M3 8v5l9 4 9-4V8l-9 4z" fill="#8d6b43"/><path d="M7.5 6l9 4M10 5l9 4" stroke="#7a5a35" stroke-width="1"/></svg>',
   bed:'<svg viewBox="0 0 24 24"><rect x="2" y="11" width="20" height="8" rx="4" fill="#c7a46a"/><rect x="2" y="11" width="9" height="8" rx="4" fill="#a33a3a"/><ellipse cx="17" cy="13" rx="3.5" ry="2" fill="#f1e6cf"/></svg>',
   copperOre:'<svg viewBox="0 0 24 24"><path d="M3 17 6 7l8-4 7 7-2 10-10 1z" fill="#665b50"/><path d="m6 7 8-4-2 9-7 5z" fill="#c87942"/><path d="m14 3 7 7-7 2z" fill="#e3a06a"/></svg>',
@@ -1475,7 +1475,7 @@ var ICON={
 };
 var slots=[];for(var si0=0;si0<NSLOTS;si0++)slots.push(null);
 var equippedArmor=null,benchCells=[null,null,null,null],benchResult=null;
-var TOOL_MAX={axe:80,pick:90,copperpick:140,ironpick:220,coppersword:110,ironsword:180,heraldblade:320},toolDurability={};
+var TOOL_MAX={axe:80,pick:90,copperpick:140,ironpick:220,coppersword:110,ironsword:180,heraldblade:320,frostblade:360,emberblade:350},toolDurability={};
 function countOf(id){var n=0;for(var i=0;i<NSLOTS;i++){if(slots[i]&&slots[i].id===id)n+=slots[i].n}if(equippedArmor===id)n++;return n}
 function canAdd(id,n){
   var room=0,max=ITEMS[id].max;
@@ -1524,7 +1524,7 @@ function slotHtml(i){
   return '<div class="'+c+'" data-slot="'+i+'" draggable="'+(!!s)+'"'+(s?' data-id="'+s.id+'" title="'+ITEMS[s.id].n+(TOOL_MAX[s.id]?' · Durability '+Math.round(toolDurabilityNow(s.id))+'/'+TOOL_MAX[s.id]:'')+'"':'')+'>'+(i<HOT?'<i>'+(i+1)+'</i>':'')+(s?(ICON[s.id]||ICON.stone)+'<b>'+s.n+'</b>':'')+'</div>';
 }
 function renderInv(force){
-  var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.length+'|'+companionMode;
+  var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.length+'|'+companionMode+'|'+equippedArmor;
   if(!force&&sig===lastSig)return;
   lastSig=sig;
   var h='',i;
@@ -1537,7 +1537,7 @@ function renderInv(force){
     else if(cur.id==='salve'||cur.id==='tonic')note=' – Use to restore health';
     else if(cur.id==='treat')note=' – Use before a throw (+20% catch)';
     else if(cur.id==='ball'||cur.id==='great')note=' – Use to throw at a wild creature';
-    else if(['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','copperarmor','ironarmor','wraithguard'].indexOf(cur.id)>=0)note=' – passive equipment while carried';
+    else if(['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','frostblade','emberblade','copperarmor','ironarmor','wraithguard','frostarmor','emberarmor'].indexOf(cur.id)>=0)note=' – passive equipment while carried';
   }
   $('hotname').textContent=cur?ITEMS[cur.id].n+note:'Empty slot';
   if(bagOpen){
@@ -1549,21 +1549,21 @@ function renderInv(force){
     $('quickMove').disabled=!mv;
     $('quickDiscard').disabled=!mv;
     $('splitStack').disabled=!(mv&&mv.n>1);
-    $('equipArmor').disabled=!(mv&&(mv.id==='ironarmor'||mv.id==='copperarmor'||mv.id==='wraithguard'));
+    $('equipArmor').disabled=!(mv&&(mv.id==='ironarmor'||mv.id==='copperarmor'||mv.id==='wraithguard'||mv.id==='frostarmor'||mv.id==='emberarmor'));
     var cnt={},tn=0;
     team.forEach(function(t){cnt[t.sp]=(cnt[t.sp]||0)+1;tn++});
     var th='<strong>Creature log</strong> <small>'+tn+'/12 tamed</small><div class="chips">';
     SPECIES.forEach(function(S,si){th+=cnt[si]?'<span class="chip" style="color:'+RAR[S.r].c+'">'+S.n+' ×'+cnt[si]+'</span>':'<span class="chip off">???</span>'});
     th+='</div><div class="companionCommands"><span>Companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button></div>';
     $('bagTeam').innerHTML=th;
-    var armor=equippedArmor==='wraithguard'?'Wraithguard Armor':(equippedArmor==='ironarmor'?'Iron Armor':(equippedArmor==='copperarmor'?'Copper Armor':'No armor equipped'));
+    var armor=equippedArmor==='wraithguard'?'Wraithguard Armor':(equippedArmor==='frostarmor'?'Frostguard Armor':(equippedArmor==='emberarmor'?'Emberplate Armor':(equippedArmor==='ironarmor'?'Iron Armor':(equippedArmor==='copperarmor'?'Copper Armor':'No armor equipped'))));
     $('equipStatus').textContent=armor+(armor==='No armor equipped'?'':' · equipped · damage reduction active');
-    $('armorChest').style.borderColor=equippedArmor==='wraithguard'?'#bca4ff':(equippedArmor==='ironarmor'?'#f0d27b':(equippedArmor==='copperarmor'?'#d58a58':'#aab4aa'));
-    $('armorChest').textContent=equippedArmor==='wraithguard'?'✦Wraith':(equippedArmor==='ironarmor'?'⬡Iron':(equippedArmor==='copperarmor'?'⬡Cu':'◇Chest'));
+    $('armorChest').style.borderColor=equippedArmor==='wraithguard'?'#bca4ff':(equippedArmor==='frostarmor'?'#8de5ff':(equippedArmor==='emberarmor'?'#ff8248':(equippedArmor==='ironarmor'?'#f0d27b':(equippedArmor==='copperarmor'?'#d58a58':'#aab4aa'))));
+    $('armorChest').textContent=equippedArmor==='wraithguard'?'✦Wraith':(equippedArmor==='frostarmor'?'❄ Frost':(equippedArmor==='emberarmor'?'🔥 Ember':(equippedArmor==='ironarmor'?'⬡Iron':(equippedArmor==='copperarmor'?'⬡Cu':'◇Chest'))));
     renderBench();
     var cbs=$('bag').querySelectorAll('[data-craft]');
     for(i=0;i<cbs.length;i++){
-      var ck=cbs[i].getAttribute('data-craft'),r=RECIPES[ck],ok=!(['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','copperarmor','ironarmor','wraithguard'].indexOf(ck)>=0&&countOf(ck)>0);
+      var ck=cbs[i].getAttribute('data-craft'),r=RECIPES[ck],ok=!(['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','frostblade','emberblade','copperarmor','ironarmor','wraithguard','frostarmor','emberarmor'].indexOf(ck)>=0&&countOf(ck)>0);
       for(var k in r){if(countOf(k)<r[k])ok=false}
       cbs[i].className=(ok?'':'no')+(ck===selectedRecipe?' selected':'');
     }
@@ -1601,7 +1601,7 @@ function sortStorageInventory(){
 }
 $('bagSort').addEventListener('click',sortStorageInventory);
 function splitSelectedStack(){if(moveFrom<0||!slots[moveFrom]||slots[moveFrom].n<2)return;var src=slots[moveFrom],target=-1;for(var i=0;i<NSLOTS;i++)if(!slots[i]){target=i;break;}if(target<0){say('No empty slot available for the split stack.');return;}var half=Math.floor(src.n/2);src.n-=half;slots[target]={id:src.id,n:half};moveFrom=-1;renderInv(true);say('Stack split into '+src.n+' and '+half+'.');}
-function equipSelectedArmor(){if(moveFrom<0||!slots[moveFrom])return;var id=slots[moveFrom].id;if(id!=='ironarmor'&&id!=='copperarmor'&&id!=='wraithguard')return;var prev=equippedArmor;slots[moveFrom]=null;moveFrom=-1;if(prev===id){equippedArmor=null;addItem(id,1);renderInv(true);say('Armor unequipped.');return;}equippedArmor=id;if(prev&&!addItem(prev,1)){equippedArmor=prev;addItem(id,1);say('No room to swap armor.');return;}renderInv(true);say((id==='wraithguard'?'Wraithguard':(id==='ironarmor'?'Iron':'Copper'))+' armor equipped.');}
+function equipSelectedArmor(){if(moveFrom<0||!slots[moveFrom])return;var id=slots[moveFrom].id;if(id!=='ironarmor'&&id!=='copperarmor'&&id!=='wraithguard'&&id!=='frostarmor'&&id!=='emberarmor')return;var prev=equippedArmor;slots[moveFrom]=null;moveFrom=-1;if(prev===id){equippedArmor=null;addItem(id,1);renderInv(true);say('Armor unequipped.');return;}equippedArmor=id;if(prev&&!addItem(prev,1)){equippedArmor=prev;addItem(id,1);say('No room to swap armor.');return;}renderInv(true);say(({wraithguard:'Wraithguard',frostarmor:'Frostguard',emberarmor:'Emberplate',ironarmor:'Iron',copperarmor:'Copper'})[id]+' armor equipped.');}
 function renderBench(){var h='',counts={},i;for(i=0;i<4;i++){var c=benchCells[i];h+='<button type="button" data-benchcell="'+i+'">'+(c?(ICON[c.id]||ICON.stone)+'<small>'+c.n+'</small>':'+')+'</button>';if(c)counts[c.id]=(counts[c.id]||0)+c.n;}$('benchGrid').innerHTML=h;benchResult=null;for(var key in RECIPES){var req=RECIPES[key],match=true,keys=Object.keys(req);if(keys.length>4)continue;for(i=0;i<keys.length;i++)if((counts[keys[i]]||0)!==req[keys[i]])match=false;for(var have in counts)if(!req[have])match=false;if(match){benchResult=key;break;}}var out=$('benchOutput');out.disabled=!benchResult;out.innerHTML=benchResult?(ICON[benchResult]||'✦'):'◇';$('benchHint').textContent=benchResult?'Ready: '+NAMES[benchResult]+' ×'+(OUT[benchResult]||1)+'. Tap the result to craft.':'Select an item, then tap a grid cell to add one unit. Tap a filled cell to return it.';}
 function benchCellClick(i){var c=benchCells[i];if(moveFrom>=0&&slots[moveFrom]){var src=slots[moveFrom];if(c&&c.id!==src.id){say('This crafting cell already holds another item.');return;}if(benchCells.some(function(v,j){return j!==i&&v&&v.id!==src.id;})){say('The grid can contain up to four different item types.');return;}if(c&&c.n>=ITEMS[src.id].max){say('That crafting cell is full.');return;}src.n--;if(c)c.n++;else benchCells[i]={id:src.id,n:1};if(src.n<=0)slots[moveFrom]=null;moveFrom=-1;renderInv(true);return;}if(c){if(!canAdd(c.id,c.n)){say('Not enough backpack space to return materials.');return;}addItem(c.id,c.n);benchCells[i]=null;renderInv(true);return;}say('Select an item stack first.');}
 function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]||1;if(!canAdd(key,n)){say('Your backpack is full.');return;}addItem(key,n);craftedCount++;checkAchievements();benchCells=[null,null,null,null];renderInv(true);say('Crafted '+NAMES[key]+'.');}
@@ -1864,7 +1864,7 @@ function load(){
     if(Array.isArray(d.slots)){
       slots=migrateInventorySlots(d.slots,ITEMS,NSLOTS,HOT);
       hotSel=clamp(d.hot|0,0,HOT-1);
-      equippedArmor=(d.equippedArmor==='ironarmor'||d.equippedArmor==='copperarmor'||d.equippedArmor==='wraithguard')?d.equippedArmor:null;
+      equippedArmor=(['ironarmor','copperarmor','wraithguard','frostarmor','emberarmor'].indexOf(d.equippedArmor)>=0)?d.equippedArmor:null;
     }else if(d.inv){for(var k in d.inv){var kk=k==='cage'?'ball':k;if(ITEMS[kk]&&d.inv[k]>0)addItem(kk,d.inv[k])}}
     (d.team||[]).forEach(function(t){
       var m=makeCreature(t.sp);m.g.position.set(P.x,P.y,P.z);scene.add(m.g);
@@ -2162,6 +2162,8 @@ function applyTouchAimAssist(targets,range,cone){
   P.face=Math.atan2(target.x-P.x,target.z-P.z);
   return true;
 }
+function activeElementalWeapon(){if(countOf('frostblade')>0)return {id:'frostblade',damage:8,bonus:2,color:0x8de5ff,textColor:'#a8edff'};if(countOf('emberblade')>0)return {id:'emberblade',damage:7.5,bonus:2.5,color:0xff7138,textColor:'#ffb17c'};if(countOf('heraldblade')>0)return {id:'heraldblade',damage:6,bonus:0,color:0xc9a8ff,textColor:'#c9a8ff'};if(countOf('ironsword')>0)return {id:'ironsword',damage:4,bonus:0,color:0xc5d0d6,textColor:'#e0e9ed'};if(countOf('coppersword')>0)return {id:'coppersword',damage:3,bonus:0,color:0xc87942,textColor:'#e5a06a'};if(countOf('axe')>0)return {id:'axe',damage:2,bonus:0,color:0xa9784a,textColor:'#d9b07a'};return {id:'',damage:1,bonus:0,color:0xc9a8ff,textColor:'#c9a8ff'};}
+function armorDamageMultiplier(id){return ({copperarmor:0.85,ironarmor:0.72,wraithguard:0.28,frostarmor:0.68,emberarmor:0.62})[id]||1;}
 function doGather(){
   if(P.cool>0)return;
   var axe=countOf('axe')>0,pickLevel=countOf('ironpick')>0?3:(countOf('copperpick')>0?2:(countOf('pick')>0?1:0)),pick=pickLevel>0;
@@ -2169,9 +2171,9 @@ function doGather(){
   if(!applyTouchAimAssist(wraiths,5,0.82))applyTouchAimAssist(wild,3.4,0.82);
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5,function(o){return inWeaponArc(o,5,0.25)});
-  if(w){var weaponLevel=countOf('heraldblade')>0?6:(countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1)));var dealt=Math.max(1,weaponLevel*(w.damageTaken||1));w.hp-=dealt;wearTool(countOf('heraldblade')?'heraldblade':(countOf('ironsword')?'ironsword':(countOf('coppersword')?'coppersword':'axe')),1);w.hit=0.25;burst(w.x,w.y+1.2,w.z,0xc9a8ff,6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),'#c9a8ff');return}
+  if(w){var weapon=activeElementalWeapon(),weaponLevel=weapon.damage;var dealt=Math.max(1,(weaponLevel+weapon.bonus)*(w.damageTaken||1));w.hp-=dealt;wearTool(weapon.id,1);w.hit=0.25;burst(w.x,w.y+1.2,w.z,weapon.color,weapon.id==='frostblade'||weapon.id==='emberblade'?12:6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),weapon.textColor);return}
   var prey=nearestOf(wild,P.x,P.z,3.4,function(o){return !o.held&&inWeaponArc(o,3.4,0.35)});
-  if(prey){var huntWeapon=countOf('heraldblade')>0?6:(countOf('ironsword')>0?4:(countOf('coppersword')>0?3:(axe?2:1)));var preyDamage=12+huntWeapon*7;prey.hp=Math.max(0,prey.hp-preyDamage);wearTool(countOf('heraldblade')?'heraldblade':(countOf('ironsword')?'ironsword':(countOf('coppersword')?'coppersword':'axe')),1);prey.hitTimer=0.22;prey.attackAnim=0.38;prey.flee=Math.max(prey.flee,2.6);prey.state='flee';prey.alertT=1.2;P.face=Math.atan2(prey.x-P.x,prey.z-P.z);burst(prey.x,prey.y+1.1,prey.z,SPECIES[prey.sp].c,5);pop(prey.x,prey.y+2.1,prey.z,'-'+preyDamage,'#ffd08a');
+  if(prey){var preyWeapon=activeElementalWeapon(),preyDamage=12+preyWeapon.damage*7+preyWeapon.bonus*4;prey.hp=Math.max(0,prey.hp-preyDamage);wearTool(preyWeapon.id,1);prey.hitTimer=0.22;prey.attackAnim=0.38;prey.flee=Math.max(prey.flee,2.6);prey.state='flee';prey.alertT=1.2;P.face=Math.atan2(prey.x-P.x,prey.z-P.z);burst(prey.x,prey.y+1.1,prey.z,SPECIES[prey.sp].c,5);pop(prey.x,prey.y+2.1,prey.z,'-'+preyDamage,'#ffd08a');
     if(prey.hp<=0){var preyIndex=wild.indexOf(prey);if(prey.parent)prey.parent.young=null;if(prey.secondParent)prey.secondParent.young=null;if(prey.young){prey.young.parent=null;prey.young.secondParent=null;}scene.remove(prey.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[prey.sp].w,prey.sp===3?3:2,prey.x,prey.y+1.2,prey.z,'#d8c6a1');say(SPECIES[prey.sp].n+' has been defeated.');}
     return;
   }
@@ -2244,16 +2246,16 @@ var RECIPES={
   axe:{wood:3,stone:2,fiber:2},pick:{wood:2,stone:3,fiber:2},
   copperbar:{copperOre:2,wood:1},ironbar:{ironOre:2,wood:2},tinbar:{tinOre:2,wood:1},goldbar:{goldOre:2,wood:2},crystalcore:{crystal:2,ironbar:1},
   copperpick:{copperbar:3,wood:2,fiber:1},ironpick:{ironbar:3,copperbar:1,wood:2,fiber:2,crystalcore:1},
-  coppersword:{copperbar:3,wood:1,fiber:1},ironsword:{ironbar:3,wood:1,crystalcore:1},heraldblade:{ironbar:2,shadowFang:2,wraithEssence:2,heraldSigil:1},
-  copperarmor:{copperbar:5,ironbar:1,fiber:3},ironarmor:{ironbar:6,goldbar:1,crystalcore:1},wraithguard:{ironbar:3,bruteHeart:2,wraithEssence:2,heraldSigil:1},tonic:{berry:3,crystal:1,fiber:2},
+  coppersword:{copperbar:3,wood:1,fiber:1},ironsword:{ironbar:3,wood:1,crystalcore:1},heraldblade:{ironbar:2,shadowFang:2,wraithEssence:2,heraldSigil:1},frostblade:{ironbar:2,frostShard:3,wraithEssence:1,crystalcore:1},emberblade:{ironbar:2,emberCore:3,bruteHeart:1,crystalcore:1},
+  copperarmor:{copperbar:5,ironbar:1,fiber:3},ironarmor:{ironbar:6,goldbar:1,crystalcore:1},wraithguard:{ironbar:3,bruteHeart:2,wraithEssence:2,heraldSigil:1},frostarmor:{ironbar:4,frostShard:3,crystalcore:1},emberarmor:{ironbar:4,emberCore:3,goldbar:1},tonic:{berry:3,crystal:1,fiber:2},
   salve:{berry:3,fiber:2},strongsalve:{salve:2,crystal:1,fiber:2},jam:{berry:5,fiber:1},berrypie:{berry:4,jam:1,fiber:1},heartymeal:{berry:3,jam:1,wood:1},torch:{wood:1,fiber:1},
   wall:{wood:2},stonewall:{stone:3},floor:{wood:2},door:{wood:6,fiber:2},gate:{wood:5,stone:2},roof:{wood:5,fiber:1},workbench:{wood:8,stone:3},cookpot:{stone:6,ironbar:1},fire:{wood:2,stone:1},bed:{wood:4,fiber:4},chest:{wood:12,stone:4}
 };
-var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,heraldblade:1,copperarmor:1,ironarmor:1,wraithguard:1,tonic:1,salve:1,jam:1,berrypie:1,heartymeal:1,strongsalve:1,torch:2,wall:1,stonewall:1,floor:2,door:1,gate:1,roof:1,workbench:1,cookpot:1,fire:1,bed:1,chest:1};
-var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',wraithEssence:'Wraith Essence',shadowFang:'Shadow Fang',bruteHeart:'Brute Heart',heraldSigil:'Herald Sigil',frostShard:'Frost Shard',emberCore:'Ember Core',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',strongsalve:'Greater Healing Salve',berrypie:'Berry Pie',heartymeal:'Hearty Meal',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',chest:'Storage Chest',door:'Wood Door',gate:'Wood Gate',roof:'Wood Roof',workbench:'Workbench',cookpot:'Cooking Pot',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',heraldblade:'Nightfall Blade',wraithguard:'Wraithguard Armor',tonic:'Vitality Tonic'};
-var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade']],['Armor',['copperarmor','ironarmor','wraithguard']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','strongsalve','tonic','jam','berrypie','heartymeal','torch']],['Relics',['wraithEssence','shadowFang','bruteHeart','heraldSigil','frostShard','emberCore']],['Building',['wall','stonewall','floor','door','gate','roof','workbench','cookpot','fire','bed','chest']]];
+var OUT={ball:2,great:1,treat:2,axe:1,pick:1,copperbar:1,ironbar:1,tinbar:1,goldbar:1,crystalcore:1,copperpick:1,ironpick:1,coppersword:1,ironsword:1,heraldblade:1,frostblade:1,emberblade:1,copperarmor:1,ironarmor:1,wraithguard:1,frostarmor:1,emberarmor:1,tonic:1,salve:1,jam:1,berrypie:1,heartymeal:1,strongsalve:1,torch:2,wall:1,stonewall:1,floor:2,door:1,gate:1,roof:1,workbench:1,cookpot:1,fire:1,bed:1,chest:1};
+var NAMES={ball:'Capture Ball',great:'Great Ball',treat:'Creature Treat',wraithEssence:'Wraith Essence',shadowFang:'Shadow Fang',bruteHeart:'Brute Heart',heraldSigil:'Herald Sigil',frostShard:'Frost Shard',emberCore:'Ember Core',axe:'Stone Axe',pick:'Stone Pickaxe',salve:'Healing Salve',strongsalve:'Greater Healing Salve',berrypie:'Berry Pie',heartymeal:'Hearty Meal',jam:'Berry Jam',torch:'Torch',wall:'Wall block',stonewall:'Stone wall',floor:'Wood floor',fire:'Campfire',bed:'Bedroll',chest:'Storage Chest',door:'Wood Door',gate:'Wood Gate',roof:'Wood Roof',workbench:'Workbench',cookpot:'Cooking Pot',copperbar:'Copper Ingot',ironbar:'Iron Ingot',crystalcore:'Lumen Core',copperpick:'Copper Pickaxe',ironpick:'Iron Pickaxe',tinbar:'Tin Ingot',goldbar:'Gold Ingot',coppersword:'Copper Sword',ironsword:'Iron Sword',copperarmor:'Copper Armor',ironarmor:'Iron Armor',heraldblade:'Nightfall Blade',wraithguard:'Wraithguard Armor',frostblade:'Frostfang Blade',emberblade:'Emberbrand Blade',frostarmor:'Frostguard Armor',emberarmor:'Emberplate Armor',tonic:'Vitality Tonic'};
+var CATS=[['Capture',['ball','great','treat']],['Tools',['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','frostblade','emberblade']],['Armor',['copperarmor','ironarmor','wraithguard','frostarmor','emberarmor']],['Metallurgy',['copperbar','ironbar','tinbar','goldbar','crystalcore']],['Survival',['salve','strongsalve','tonic','jam','berrypie','heartymeal','torch']],['Relics',['wraithEssence','shadowFang','bruteHeart','heraldSigil','frostShard','emberCore']],['Building',['wall','stonewall','floor','door','gate','roof','workbench','cookpot','fire','bed','chest']]];
 var selectedRecipe=null;
-function updateRecipePanel(){var k=selectedRecipe,a=Math.max(1,Math.min(99,parseInt($('craftAmount').value,10)||1));$('craftAmount').value=a;if(!k){$('craftSelected').disabled=true;return;}var r=RECIPES[k],lines=[],ok=true;for(var id in r){var need=r[id]*a,have=countOf(id);lines.push((ITEMS[id]?ITEMS[id].n:id)+': '+have+' / '+need);if(have<need)ok=false;}$('recipeSelected').textContent=NAMES[k]+' ×'+((OUT[k]||1)*a);$('recipeIngredients').innerHTML=lines.join('<br>');var unique=['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','copperarmor','ironarmor','wraithguard'].indexOf(k)>=0;if(unique&&(countOf(k)>0||a>1))ok=false;if(!canAdd(k,(OUT[k]||1)*a))ok=false;$('craftTotal').textContent=ok?'Ready to craft.':'Insufficient ingredients, space, or item already owned.';$('craftSelected').disabled=!ok;var bs=$('craftList').querySelectorAll('[data-craft]');for(var j=0;j<bs.length;j++)bs[j].classList.toggle('selected',bs[j].getAttribute('data-craft')===k);}
+function updateRecipePanel(){var k=selectedRecipe,a=Math.max(1,Math.min(99,parseInt($('craftAmount').value,10)||1));$('craftAmount').value=a;if(!k){$('craftSelected').disabled=true;return;}var r=RECIPES[k],lines=[],ok=true;for(var id in r){var need=r[id]*a,have=countOf(id);lines.push((ITEMS[id]?ITEMS[id].n:id)+': '+have+' / '+need);if(have<need)ok=false;}$('recipeSelected').textContent=NAMES[k]+' ×'+((OUT[k]||1)*a);$('recipeIngredients').innerHTML=lines.join('<br>');var unique=['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','frostblade','emberblade','copperarmor','ironarmor','wraithguard','frostarmor','emberarmor'].indexOf(k)>=0;if(unique&&(countOf(k)>0||a>1))ok=false;if(!canAdd(k,(OUT[k]||1)*a))ok=false;$('craftTotal').textContent=ok?'Ready to craft.':'Insufficient ingredients, space, or item already owned.';$('craftSelected').disabled=!ok;var bs=$('craftList').querySelectorAll('[data-craft]');for(var j=0;j<bs.length;j++)bs[j].classList.toggle('selected',bs[j].getAttribute('data-craft')===k);}
 function buildCraftUI(){
   var h='';
   CATS.forEach(function(c){
@@ -2286,9 +2288,9 @@ function feedCreature(c,item){
 }
 function craft(k,amount){
   var qty=Math.max(1,Math.min(99,parseInt(amount,10)||1)),output=(OUT[k]||1)*qty;
-  if(['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','copperarmor','ironarmor','wraithguard'].indexOf(k)>=0&&qty>1){say('Equipment can only be crafted one at a time.');return}
+  if(['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','frostblade','emberblade','copperarmor','ironarmor','wraithguard','frostarmor','emberarmor'].indexOf(k)>=0&&qty>1){say('Equipment can only be crafted one at a time.');return}
   var r=RECIPES[k],i;
-  if((['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','copperarmor','ironarmor','wraithguard'].indexOf(k)>=0)&&countOf(k)>0){say('You already have a '+NAMES[k]+'. It works while it is in your bag.');return}
+  if((['axe','pick','copperpick','ironpick','coppersword','ironsword','heraldblade','frostblade','emberblade','copperarmor','ironarmor','wraithguard','frostarmor','emberarmor'].indexOf(k)>=0)&&countOf(k)>0){say('You already have a '+NAMES[k]+'. It works while it is in your bag.');return}
   for(i in r){if(countOf(i)<r[i]*qty){say('Not enough materials for '+NAMES[k]+'.');return}}
   for(i in r)takeItem(i,r[i]*qty);
   if(!canAdd(k,output)){for(i in r)addItem(i,r[i]);say('Your bag is full.');renderInv(true);return}
@@ -3402,7 +3404,7 @@ function updateFloats(dt){
 function playerDamage(amount,label){
   if(dead||P.invulnerable>0||!isFinite(amount)||amount<=0)return;
   playSfx('damage');
-  P.hp=clamp(P.hp-amount*difficultyScale(),0,100);
+  P.hp=clamp(P.hp-amount*difficultyScale()*armorDamageMultiplier(equippedArmor),0,100);
   var flash=$('damageFlash');
   if(flash){flash.classList.remove('hit');void flash.offsetWidth;flash.classList.add('hit');}
   if(label)pop(P.x,P.y+2.1,P.z,label,'#ff9a91');
