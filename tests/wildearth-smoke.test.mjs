@@ -708,3 +708,19 @@ test('expanded map exploration migrates old 30x30 explored cells without re-migr
   assert.ok(gameScript.includes('d.mapVersion!==2'));
   assert.ok(gameScript.includes('return mapCellFor(wx,wz)'));
 });
+
+test('new tundra, jungle, savanna and volcanic biomes have distinct terrain and habitat rules', () => {
+  for (const id of ["id:'tundra'","id:'jungle'","id:'savanna'","id:'volcanic'"]) {
+    assert.ok(gameScript.includes(id), 'missing biome '+id);
+  }
+  for (const rule of [
+    "if(heat<0.24)return BIOMES[10]",
+    "if(heat>0.68&&moisture>0.62)return BIOMES[11]",
+    "if(heat>0.62&&moisture>0.3&&moisture<0.58)return BIOMES[12]",
+    "return BIOMES[13]",
+    "biome.id==='volcanic'",
+    "biome.id==='jungle'",
+    "biome.id==='savanna'",
+    "biome.id==='tundra'"
+  ]) assert.ok(gameScript.includes(rule), 'missing biome generation or visual rule '+rule);
+});
