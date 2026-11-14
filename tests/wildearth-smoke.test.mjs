@@ -662,7 +662,7 @@ test('low and balanced graphics reduce environmental shadow workload without cha
   assert.ok(gameScript.includes('detailShadowMeshes.push(im)'));
   assert.ok(gameScript.includes('detailShadowMeshes.push(stumpIM)'));
   assert.ok(gameScript.includes('detailShadowMeshes[di].castShadow=profile.detailShadows'));
-  assert.ok(gameScript.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))'));
+  assert.ok(gameScript.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,isLowEnd?1.15:1.75))'));
 });
 
 
@@ -1092,7 +1092,7 @@ test('Escape closes the topmost open game menu before attempting to pause', () =
 test('graphics upgrades color output and increases shadow quality without changing display resolution', () => {
   assert.ok(gameScript.includes('renderer.outputEncoding=THREE.sRGBEncoding'));
   assert.ok(gameScript.includes('renderLevel===2?((isMobile||isLowEnd)?1024:2048):((isMobile||isLowEnd)?512:1024)'));
-  assert.ok(gameScript.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))'));
+  assert.ok(gameScript.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,isLowEnd?1.15:1.75))'));
   assert.ok(gameScript.includes('renderer.setSize(vw,vh,false)'));
 });
 
