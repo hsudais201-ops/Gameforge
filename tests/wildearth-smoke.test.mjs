@@ -99,6 +99,13 @@ test('settings panel fits short and narrow screens and scrolls all controls', ()
   }
 });
 
+test('menu scrolling remains touch-accessible despite gameplay touch-action rules', () => {
+  assert.match(html, /#mainMenu,#settingsPanel,#questPanel,#mapPanel,#chestPanel,#pausePanel,#deathPanel,#bag,[\\s\\S]*?touch-action:pan-y/);
+  assert.match(html, /-webkit-overflow-scrolling:touch/);
+  assert.match(html, /#mainMenu \\.menuCard[^{]*\\{[^}]*max-height:calc\\(100dvh/);
+  assert.match(html, /scrollbar-color:#718d77/);
+});
+
 test('all game menus and dialogs support bounded vertical scrolling', () => {
   for (const id of ['mainMenu','questPanel','mapPanel','chestPanel','pausePanel','deathPanel']) {
     assert.match(html, new RegExp('#' + id + '[^{]*\\{[^}]*overflow-y:auto'), id + ' must scroll vertically');
