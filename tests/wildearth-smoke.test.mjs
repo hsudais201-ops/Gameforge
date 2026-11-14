@@ -875,6 +875,8 @@ test('elemental weapons deal their own damage and armor reduces incoming damage'
   assert.equal(helpers.armorDamageMultiplier(null),1,'no armor should leave damage unchanged');
   assert.equal(helpers.armorDamageMultiplier('frostarmor'),0.68,'Frostguard should reduce incoming damage by 32%');
   assert.equal(helpers.armorDamageMultiplier('emberarmor'),0.62,'Emberplate should reduce incoming damage by 38%');
+  assert.equal(helpers.armorDamageMultiplier('copperarmor'),0.7,'existing Copper Armor protection must remain intact');
+  assert.equal(helpers.armorDamageMultiplier('ironarmor'),0.42,'existing Iron Armor protection must remain intact');
   assert.equal(helpers.armorDamageMultiplier('wraithguard'),0.28,'existing Wraithguard protection must remain intact');
   assert.ok(gameScript.includes('weaponLevel+weapon.bonus'));
   assert.ok(gameScript.includes('preyWeapon.damage*7+preyWeapon.bonus*4'));
