@@ -50,7 +50,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 36. Add biome-specific ground materials and foliage.
 - [x] 37. Add biome-specific resource distribution.
 - [x] 38. Add caves with entrances, interior lighting, and exit paths.
-- [ ] 39. Add rivers, ponds, and connected water flow.
+- [x] 39. Add rivers, ponds, and connected water flow.
 - [x] 40. Add world seed entry and seed display.
 
 ## E. Ecology and creatures
@@ -184,6 +184,8 @@ This is the execution tracker for the next development stages. A checked item me
 - Localization foundation: added persisted English/Urdu interface language selection and a reusable UI text table for core menu, navigation, day/night, and base-rating labels. Sound captions already have their own bilingual text table.
 
 - Caves: added a surface cave entrance, a bounded underground chamber with crystal formations and point lighting, an entry/exit interaction, and cave-specific ground/temperature/oxygen handling.
+
+- Rivers and ponds: added two connected flowing river channels and two ponds using lightweight mesh geometry. River/pond proximity now feeds the swimming, oxygen, temperature, and water-surface systems.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
