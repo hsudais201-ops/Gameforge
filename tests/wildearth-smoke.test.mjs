@@ -1103,3 +1103,4 @@ test('companions resolve movement against world obstacles and avoid invalid wate
   assert.ok(gameScript.includes('t.x=companionNext.x;t.z=companionNext.z;t.speed=Math.min(1,sp2/6)'));
   assert.ok(gameScript.includes('else{t.speed=0;}'));
 });
+
