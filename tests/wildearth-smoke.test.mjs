@@ -645,3 +645,22 @@ test('cloud project validation accepts every editor object type and rejects unsa
   assert.equal(validators.validProject(duplicateIds), false);
   assert.ok(projectApi.includes('return validProject(project) ? [project] : []'));
 });
+
+
+test('performance optimizations throttle water animation and avoid redundant world-stream scans', () => {
+  assert.ok(gameScript.includes('var riverUpdateAccumulator=0'));
+  assert.ok(gameScript.includes('if(riverUpdateAccumulator>=1/12){updateRivers();riverUpdateAccumulator%=1/12;}'));
+  assert.ok(gameScript.includes('lastStreamX=NaN,lastStreamZ=NaN,lastStreamRadius=0'));
+  assert.ok(gameScript.includes('dxPlayer*dxPlayer+dzPlayer*dzPlayer<64'));
+  assert.ok(gameScript.includes('lastStreamX=P.x;lastStreamZ=P.z;lastStreamRadius=radius;streamDirty=false'));
+});
+
+test('low and balanced graphics reduce environmental shadow workload without changing resolution', () => {
+  assert.ok(gameScript.includes("{name:'Low',shadows:false,detailShadows:false"));
+  assert.ok(gameScript.includes("{name:'Balanced',shadows:true,detailShadows:false"));
+  assert.ok(gameScript.includes("{name:'High',shadows:true,detailShadows:true"));
+  assert.ok(gameScript.includes('detailShadowMeshes.push(im)'));
+  assert.ok(gameScript.includes('detailShadowMeshes.push(stumpIM)'));
+  assert.ok(gameScript.includes('detailShadowMeshes[di].castShadow=profile.detailShadows'));
+  assert.ok(gameScript.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5))'));
+});
