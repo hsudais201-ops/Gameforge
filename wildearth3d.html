@@ -220,6 +220,30 @@
   @media(max-width:650px){#mainMenu{align-items:flex-start;padding:9px}.menuGrid{grid-template-columns:1fr;gap:9px}.menuCard{max-height:98dvh;padding:15px}.menuTag{margin-bottom:12px}.menuPanel{padding:11px}}
 
   .customControls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}.customControls label{font-size:11px;color:#c8d8c5}.customControls .menuField{margin:5px 0 2px;padding:9px}.customControls #saveLook{grid-column:1/-1;text-align:center}
+  /* Shared small-screen menu and dialog scrolling */
+  #mainMenu,#questPanel,#mapPanel,#chestPanel,#pausePanel,#deathPanel{box-sizing:border-box;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;align-items:flex-start;justify-content:center;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  #mainMenu{align-items:center}
+  .menuCard,.questCard,.mapCard,.chestCard,.pauseCard,.deathCard{box-sizing:border-box;min-height:0;max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+  #bag{overscroll-behavior:contain;scrollbar-gutter:stable;scroll-padding:12px}
+  .questCard,.mapCard,.chestCard,.pauseCard,.deathCard{width:min(100%,560px)}
+  .chestCard{max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+  .pauseCard{max-width:380px;text-align:center}
+  .menuCard{width:min(920px,96vw)}
+  @media(max-width:650px){
+    #mainMenu{align-items:flex-start;justify-content:flex-start}
+    .menuCard{width:100%;max-height:calc(100dvh - 18px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:12px}
+    .menuGrid{grid-template-columns:minmax(0,1fr);gap:9px}
+    .menuPanel{min-width:0}
+    .customControls{grid-template-columns:repeat(2,minmax(0,1fr))}
+    #questPanel,#mapPanel,#chestPanel,#pausePanel,#deathPanel{padding-left:8px;padding-right:8px}
+    .questCard,.mapCard,.chestCard,.pauseCard,.deathCard{width:100%;padding:14px}
+  }
+  @media(max-height:560px){
+    #mainMenu,#questPanel,#mapPanel,#chestPanel,#pausePanel,#deathPanel{justify-content:flex-start;padding-top:6px;padding-bottom:6px}
+    .menuCard,.questCard,.mapCard,.chestCard,.pauseCard,.deathCard{max-height:calc(100dvh - 12px);padding:10px}
+    #bag{top:3px;transform:translateX(-50%);max-height:calc(100dvh - 6px)}
+  }
+
   .outfitSlots{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:end}.outfitSlots label{grid-column:1/-1}.outfitSlots button{text-align:center}@media(max-width:420px){.outfitSlots{grid-template-columns:1fr 1fr}}.charChoice{cursor:pointer}#settingsPanel .bagTop{position:sticky;top:-14px;z-index:2;margin:-14px -14px 2px;padding:12px 14px;background:rgba(7,17,13,.99);border-bottom:1px solid #ffffff22}#settingsPanel .settingRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,auto);align-items:center;gap:12px;min-width:0;line-height:1.35}#settingsPanel .settingRow select,#settingsPanel .settingRow button{width:auto;max-width:100%;min-width:0}#settingsPanel .settingRow input[type=range]{width:clamp(110px,38vw,210px);max-width:100%;min-width:0;accent-color:#86c98b}#settingsPanel .settingRow input[type=checkbox]{justify-self:end;width:20px;height:20px}#settingsPanel .settingNote{overflow-wrap:anywhere}#settingsPanel .settingsActions{grid-template-columns:repeat(2,minmax(0,1fr))}#settingsPanel .settingsActions button{min-width:0;white-space:normal}@media(max-width:420px){#settingsPanel{width:calc(100vw - 16px);padding:12px;top:max(8px,env(safe-area-inset-top));max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));gap:9px}#settingsPanel .bagTop{top:-12px;margin:-12px -12px 2px;padding:10px 12px}#settingsPanel .settingRow{grid-template-columns:minmax(0,1fr) minmax(104px,44%);gap:8px;font-size:12px}#settingsPanel .settingRow input[type=range]{width:100%}#settingsPanel .settingRow select{width:100%;font-size:12px;padding:7px 5px}}@media(max-height:560px){#settingsPanel{top:6px;max-height:calc(100dvh - 12px);padding:10px;gap:7px}#settingsPanel .bagTop{top:-10px;margin:-10px -10px 1px;padding:8px 10px}}
 </style>
 </head>
