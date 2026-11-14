@@ -6,6 +6,7 @@ const html = readFileSync(new URL('../wildearth3d.html', import.meta.url), 'utf8
 const scriptStart = html.indexOf('<script>');
 const scriptEnd = html.indexOf('</script>', scriptStart);
 const gameScript = scriptStart >= 0 && scriptEnd > scriptStart ? html.slice(scriptStart + 8, scriptEnd) : '';
+const projectApi = readFileSync(new URL('../functions/api/projects/index.js', import.meta.url), 'utf8');
 
 test('game script parses without syntax errors', () => {
   assert.ok(gameScript.trim(), 'expected the game entry script');
@@ -541,4 +542,33 @@ test('loaded and backed-up saves enforce the global 120-piece structure limit', 
   assert.equal(validator({walls:'corrupt'}), false);
   assert.ok(gameScript.includes('validStructureCounts(parsed)'));
   assert.match(gameScript, /validStructureCounts\(check\)/);
+});
+
+
+test('cloud project validation accepts every editor object type and rejects unsafe IDs or malformed data', () => {
+  const start = projectApi.indexOf('function validId(');
+  const end = projectApi.indexOf('export async function onRequestGet', start);
+  assert.ok(start >= 0 && end > start, 'cloud project validators must exist');
+  const validators = new Function(projectApi.slice(start, end) + ';return {validId,validProject};')();
+  const project = {
+    id:'project-1', name:'Test Project', genre:'adventure', currentSceneId:'scene-1',
+    scenes:[{id:'scene-1',name:'Main',objects:[
+      {id:'hazard-1',kind:'Hazard',name:'Hazard',x:20,y:30,width:36,height:36,visible:true,collisionEnabled:true,collisionMode:'trigger'},
+      {id:'decoration-1',kind:'Decoration',name:'Decoration',x:40,y:50,width:42,height:42,visible:true,collisionEnabled:false,collisionMode:'trigger'}
+    ]}]
+  };
+  assert.equal(validators.validProject(project), true);
+  const unsafe = structuredClone(project);
+  unsafe.scenes[0].objects[0].id = 'x" onmouseover="alert(1)';
+  assert.equal(validators.validProject(unsafe), false);
+  const invalidBounds = structuredClone(project);
+  invalidBounds.scenes[0].objects[0].x = 999;
+  assert.equal(validators.validProject(invalidBounds), false);
+  const invalidScene = structuredClone(project);
+  invalidScene.currentSceneId = 'missing';
+  assert.equal(validators.validProject(invalidScene), false);
+  const duplicateIds = structuredClone(project);
+  duplicateIds.scenes[0].objects[1].id = duplicateIds.scenes[0].objects[0].id;
+  assert.equal(validators.validProject(duplicateIds), false);
+  assert.ok(projectApi.includes('return validProject(project) ? [project] : []'));
 });
