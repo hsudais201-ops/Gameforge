@@ -2131,7 +2131,7 @@ var ghost={};
 })();
 
 /* ---------- environment ---------- */
-var cDayS=new THREE.Color(0x9fc4e6),cDusk=new THREE.Color(0xf0a070),cNightS=new THREE.Color(0x070b18),cSky=new THREE.Color();
+var cDayS=new THREE.Color(0x9fc4e6),cDusk=new THREE.Color(0xf0a070),cNightS=new THREE.Color(0x070b18),cSky=new THREE.Color(),seasonFogColor=new THREE.Color();
 var sunDir=new THREE.Vector3(),cSunWarm=new THREE.Color(0xffb87a),cSunWhite=new THREE.Color(0xfff3dc);
 function envUpdate(){
   var t=(clock/DAY)%1,ang=t*Math.PI*2+0.65,e=Math.sin(ang);
@@ -2149,7 +2149,7 @@ function envUpdate(){
   scene.fog.far=140+90*dayF;scene.fog.near=30+30*dayF;
   starMat.opacity=clamp(nightF*1.2-0.2,0,1);
   playerLight.intensity=1.1*nightF;
-  var season=seasonInfo();water.material.color.setHex(season.water);scene.fog.color.lerp(new THREE.Color(season.sky),0.045);
+  var season=seasonInfo();water.material.color.setHex(season.water);scene.fog.color.lerp(seasonFogColor.setHex(season.sky),0.045);
 }
 
 /* ---------- ambient: clouds and fireflies ---------- */
