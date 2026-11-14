@@ -1262,3 +1262,12 @@ test('visual grading reduces washed-out daylight and increases render edge clari
   assert.ok(gameScript.includes('hemi.intensity=0.14+0.46*dayF'));
   assert.ok(gameScript.includes('var cDayS=new THREE.Color(0x8199b2)'));
 });
+
+
+test('terrain uses a lightweight deterministic bump map for fine surface relief', () => {
+  assert.ok(gameScript.includes('function makeGroundDetailMap()'));
+  assert.ok(gameScript.includes('canvas.width=128;canvas.height=128'));
+  assert.ok(gameScript.includes('tex.repeat.set(54,54)'));
+  assert.ok(gameScript.includes('bumpMap:groundDetailMap,bumpScale:0.038'));
+  assert.ok(gameScript.includes('Math.min(4,renderer.capabilities.getMaxAnisotropy())'));
+});
