@@ -739,3 +739,25 @@ test('new survival recipes are listed, craftable at the bench, and have working 
   assert.ok(gameScript.includes("berrypie:{berry:4,jam:1,fiber:1}"));
   assert.ok(gameScript.includes("heartymeal:{berry:3,jam:1,wood:1}"));
 });
+
+test('each hostile mob drops its own guaranteed signature loot, including the Night Herald boss', () => {
+  const start=gameScript.indexOf('function dropWraithLoot(');
+  const end=gameScript.indexOf('function slotHtml(',start);
+  assert.ok(start>=0&&end>start,'mob loot table must be defined');
+  const cases=[
+    [{kind:'shade',x:0,y:0,z:0},'wraithEssence'],
+    [{kind:'stalker',x:0,y:0,z:0},'shadowFang'],
+    [{kind:'brute',x:0,y:0,z:0},'bruteHeart'],
+    [{kind:'harbinger',boss:true,x:0,y:0,z:0},'heraldSigil']
+  ];
+  for(const [mob,expected] of cases){
+    const drops=[];
+    const fn=new Function('gain','random',gameScript.slice(start,end)+';return dropWraithLoot;')((id,n)=>drops.push({id,n}),()=>0);
+    fn(mob);
+    assert.ok(drops.some(d=>d.id===expected),'missing signature loot '+expected);
+  }
+  for(const id of ['wraithEssence','shadowFang','bruteHeart','heraldSigil'])assert.ok(gameScript.includes(id+':{n:'),'missing inventory item '+id);
+  assert.ok(gameScript.includes('dropWraithLoot(s)'));
+  assert.ok(gameScript.includes("gain('crystal',12,s.x,s.y+2.6,s.z"));
+  assert.ok(gameScript.includes("gain('goldOre',6,s.x,s.y+2.2,s.z"));
+});
