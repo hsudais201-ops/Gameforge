@@ -1013,7 +1013,7 @@ test('inventory reference behaviors are selectively integrated and every storage
   // interaction. Keep that touch-friendly behavior while retaining WILDEARTH's
   // larger backpack, equipment, party and crafting systems.
   assert.ok(gameScript.includes('function slotClick(i)'));
-  assert.ok(gameScript.includes("if(moveFrom<0){if(slots[i])moveFrom=i;renderInv(true);return;}"));
+  assert.match(gameScript, /if\(moveFrom<0\)\{if\(slots\[i\]\)moveFrom=i;renderInv\(true\);return\}/);
   assert.ok(gameScript.includes("else if(b.id===a.id){var t=Math.min(a.n,ITEMS[a.id].max-b.n);"));
   assert.ok(gameScript.includes("$('hotbar').addEventListener('click'"));
   assert.ok(gameScript.includes("var b=e.target.closest('[data-slot]');"));
