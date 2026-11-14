@@ -75,7 +75,7 @@ This is the execution tracker for the next development stages. A checked item me
 - [x] 57. Add weapon hit validation and clearer hit confirmation.
 - [x] 58. Add dodge or evade with stamina cost.
 - [x] 59. Add enemy resistance and vulnerability profiles.
-- [ ] 60. Add a boss encounter with multi-stage behavior.
+- [x] 60. Add a boss encounter with multi-stage behavior.
 
 ## G. Survival, weather, and world events
 - [x] 61. Add hunger and health recovery.
@@ -155,6 +155,9 @@ This is the execution tracker for the next development stages. A checked item me
 - Underwater camera: third-person framing moves closer/lower while swimming and a lightweight blue underwater tint communicates submersion.
 
 - Character outfits: added three independent local outfit save slots with validation before applying selections; appearance remains stored globally and is restored when switching worlds.
+
+- Boss encounter: introduced the Night Herald after the seventh survived night, with three escalating phases, phase-specific movement/attack tuning, a live boss-health display, persistent defeat state, and crystal/gold rewards.
+- Gathering progression: verified existing Stone/Copper/Iron tool tiers use distinct gathering cooldowns and mining damage.
 
 ## Current verified implementation batch
 - Graphics scaling: added Low/Balanced/High weather particle budgets that rebuild rain buffers when quality changes, alongside the existing adaptive shadow settings.
