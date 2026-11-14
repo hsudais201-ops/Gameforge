@@ -15,7 +15,8 @@
 
 ## Verification completed in development
 
-- 58 source-level smoke/regression cases passed in the current local compatibility harness.
+- 64 source-level smoke/regression tests passed in GitHub Actions on commit `94934e984d76a7afa749ff4698d63fe2295aff4a`.
+- Added low-end Chromebook graphics defaults and stricter total structure-count validation for loaded and backup saves.
 - Game script syntax validation passed.
 - Static duplicate-ID scan passed.
 - Automated tests cover save migration, streaming visibility, combat, survival, building, cave/rivers, localization and diagnostics.
