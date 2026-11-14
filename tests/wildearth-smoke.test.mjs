@@ -427,7 +427,7 @@ test('tools and weapons have saved durability, wear on use, and can be repaired 
 
 test('storm weather adds variable wind and timed lightning flashes', () => {
   assert.match(html, /id="lightningFlash"/);
-  for (const marker of ['stormLevel=clamp((rainLevel-0.38)*2.1,0,1)', 'rainWindX=0.72+Math.sin(clock*0.13)*stormLevel*2.6', 'lightningCooldown=10+random()*18', 'lightningFlashTime=0.16+random()*0.12', "flash.style.opacity=lightningFlashTime>0"]) {
+  for (const marker of ['stormLevel=clamp((rainLevel-0.38)*2.1,0,1)', 'rainWindX=0.72+Math.sin(clock*0.13)*stormLevel*(snowing?1.2:2.6)', 'lightningCooldown=10+random()*18', 'lightningFlashTime=0.16+random()*0.12', "flash.style.opacity=lightningFlashTime>0"]) {
     assert.ok(gameScript.includes(marker), 'missing storm marker: ' + marker);
   }
 });
