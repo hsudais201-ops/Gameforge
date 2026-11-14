@@ -360,3 +360,11 @@ test('rare fallen-star event spawns after three nights, grants rewards once, and
     assert.ok(gameScript.includes(marker), 'missing rare event marker: ' + marker);
   }
 });
+
+
+test('character customization has a persisted preview turntable, light, and animation selector', () => {
+  for (const id of ['previewTurntable', 'previewLighting', 'previewAnimation']) assert.match(html, new RegExp('id="' + id + '"'));
+  for (const marker of ['mfwilds3d_preview_v1', 'function updateCharacterPreview(dt)', 'cam.yaw+=0.004', 'playerPreviewLight.visible=previewActive&&previewPrefs.lighting', "previewPrefs.animation=this.value", "mode==='walk'", "mode==='attack'"]) {
+    assert.ok(gameScript.includes(marker), 'missing character preview marker: ' + marker);
+  }
+});
