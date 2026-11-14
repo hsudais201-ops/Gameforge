@@ -28,6 +28,14 @@ test('startup shows the world seed before deferred world streaming', () => {
   assert.match(gameScript, /requestAnimationFrame\(function\(\)\{setTimeout\(function\(\)\{try\{updateWorldStreaming\(true\)/);
 });
 
+test('world creation and selected-world launch are wired to persistent world data', () => {
+  assert.match(gameScript, /var activeWorldId=selectedWorldId/);
+  assert.match(gameScript, /if\(selectedWorldId!==activeWorldId\).*location\.reload\(\)/s);
+  assert.match(gameScript, /id==='world-/);
+  assert.match(gameScript, /function persistWorldList\(\)\{try\{/);
+  assert.match(gameScript, /seedText===''[\s\S]*?\/\^\\d\+\$\//);
+  assert.match(gameScript, /Created '\+name\+' · seed '\+newSeed/);
+});
 test('seeded random generator reproduces the same sequence', () => {
   const rngStart = gameScript.indexOf('function rng(a){');
   const rngEnd = gameScript.indexOf('var R=', rngStart);
