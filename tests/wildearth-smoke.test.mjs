@@ -1234,3 +1234,20 @@ test('biome signature plants provide desert, snow, volcanic and jungle vegetatio
   assert.match(gameScript,/Math\.round\(72\*mf\)/);
   assert.match(gameScript,/Math\.round\(30\*mf\)/);
 });
+
+
+test('fallen logs show cut growth rings, bark ridges and knots', () => {
+  const log=gameScript.slice(gameScript.indexOf('function buildLog()'),gameScript.indexOf('function buildLeafLitter()'));
+  assert.match(log,/CylinderGeometry\(0\.19,0\.19,0\.018,9\)/);
+  assert.match(log,/CylinderGeometry\(0\.11,0\.11,0\.02,8\)/);
+  assert.match(log,/var colors=\[0x8b5a32/);
+  assert.match(log,/SphereGeometry\(0\.075,5,4\)/);
+});
+
+test('forest and dry biomes receive distinct ground litter instances', () => {
+  assert.match(gameScript,/function buildLeafLitter\(\)/);
+  assert.match(gameScript,/function buildDryLitter\(\)/);
+  assert.match(gameScript,/id==='forest'\|\|id==='woodland'\|\|id==='jungle'\|\|id==='marsh'/);
+  assert.match(gameScript,/id==='desert'\|\|id==='savanna'\|\|id==='meadow'/);
+  assert.match(gameScript,/Math\.round\(230\*mf\)/);
+});
