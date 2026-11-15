@@ -1310,3 +1310,15 @@ test('shared prop materials use a lightweight tileable micro-surface map for sha
   assert.ok(gameScript.includes('roughnessMap:surfaceDetailMap,bumpMap:surfaceDetailMap,bumpScale:0.016'));
   assert.ok(gameScript.includes('Math.min(4,renderer.capabilities.getMaxAnisotropy())'));
 });
+
+
+test('companion attack order is available, saved safely, and expands target acquisition without changing follow or defend ranges', () => {
+  for (const marker of [
+    'data-team-mode="attack"',
+    "if(['follow','hold','defend','attack'].indexOf(mode)<0)return;",
+    "companionMode=['follow','hold','defend','attack'].indexOf(d.companionMode)>=0?d.companionMode:'follow';",
+    "companionMode==='attack'?36:(companionMode==='defend'?19:13)",
+    "companionMode==='attack'?48:(companionMode==='defend'?27:19)",
+    'Companions will actively hunt nearby Wraiths.'
+  ]) assert.ok(gameScript.includes(marker), 'missing companion attack-order marker: ' + marker);
+});
