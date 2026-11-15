@@ -1322,3 +1322,31 @@ test('companion attack order is available, saved safely, and expands target acqu
     'Companions will actively hunt nearby Wraiths.'
   ]) assert.ok(gameScript.includes(marker), 'missing companion attack-order marker: ' + marker);
 });
+
+test('eight original species use distinct, bounded locomotion and secondary-motion profiles', () => {
+  const start = gameScript.indexOf('var CREATURE_GAITS=[');
+  const end = gameScript.indexOf('var CREATURE_ART_CACHE=[];', start);
+  assert.ok(start >= 0 && end > start, 'species gait profiles and pure gait helper must exist');
+  const source = gameScript.slice(start, end);
+  const factory = new Function(source + '; return { profiles: CREATURE_GAITS, gait: creatureGait };');
+  const system = factory();
+  assert.equal(system.profiles.length, 8);
+  const signatures = system.profiles.map(p => [p.rate,p.stride,p.leg,p.bob,p.tailRate,p.tailSwing,p.tailLift,p.bodySway,p.offsets.join(',')].join('|'));
+  assert.equal(new Set(signatures).size, 8, 'each species needs a distinct movement signature');
+  for (let species = 0; species < 8; species++) {
+    const pose = system.gait(species, 0.73, 1.2, true);
+    assert.equal(pose.legs.length, 4);
+    for (const angle of pose.legs) {
+      assert.ok(Number.isFinite(angle));
+      assert.ok(Math.abs(angle) <= 0.9, 'leg swing must stay inside a safe animation range');
+    }
+    for (const key of ['bob','bodySway','tailYaw','tailPitch','headSway']) assert.ok(Number.isFinite(pose[key]));
+    const stopped = system.gait(species, 0.73, 1.2, false);
+    assert.deepEqual(stopped.legs, [0,0,0,0], 'stopped creatures must not keep walking');
+  }
+  const fallback = system.gait(99, 0.73, 1.2, true);
+  assert.equal(fallback.legs.length, 4, 'unknown species safely uses the base gait');
+  assert.ok(gameScript.includes('gait=creatureGait(c.sp,c.walk,c.speed,moving)'));
+  assert.ok(gameScript.includes('m.tail.rotation.y=gait.tailYaw'));
+  assert.ok(gameScript.includes('m.g.rotation.z=gait.bodySway'));
+});
