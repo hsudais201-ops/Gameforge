@@ -264,3 +264,227 @@ For every development session:
 ## Scope protection
 
 Do not delete working gameplay to simplify the project. Do not replace real systems with placeholders to make checklist items appear complete. Do not change the screen resolution. Do not copy another game's protected models, textures, map, UI, animation, characters, or audio. Preserve WILDEARTH's original identity and keep the game playable throughout development.
+
+
+
+---
+
+# Expanded content roadmap — additional major systems
+
+The phases below expand the game beyond its current core loop. They are part of the long-term product vision, but they must be developed in dependency order. Do not start expensive online or large-world systems before the single-player foundations, save model, and performance budgets are stable.
+
+## Phase 10 — NPC settlements, factions, and social world
+
+**Status: Planned**
+
+- [ ] Build several original settlements with distinct architecture, culture, services, and local problems.
+- [ ] Add named NPCs with schedules, daily routines, dialogue, relationship states, and persistent identity.
+- [ ] Add dialogue choices with consequences, quest branching, and clear quest-state tracking.
+- [ ] Add merchants, specialist traders, creature researchers, builders, healers, and travelling vendors.
+- [ ] Add a buy/sell economy with item values, regional supply, currency sinks, and safeguards against easy duplication.
+- [ ] Add settlement reputation, faction standing, unlockable services, and visible reactions to player actions.
+- [ ] Add NPC requests, delivery tasks, rescue missions, and settlement upgrade projects.
+- [ ] Add patrols, guards, caravans, travellers, and settlement defense behaviors.
+- [ ] Add safe-zone rules and prevent NPCs from wandering into unloaded or unreachable areas.
+- [ ] Add dialogue history and quest tracking without storing unbounded text or state.
+
+**Exit gate:** Settlements feel populated and useful; NPC schedules, dialogue, economy, and quests persist correctly.
+
+## Phase 11 — Dungeons, caves, expeditions, and world challenges
+
+**Status: Planned**
+
+- [ ] Design several original dungeon themes with distinct layouts, hazards, puzzles, enemy groups, and rewards.
+- [ ] Add multi-room cave expeditions with clear entrances, exits, checkpoints, and optional secret routes.
+- [ ] Add environmental puzzles using creature abilities, elemental interactions, pressure plates, switches, and movable objects.
+- [ ] Add locked vaults, keys, treasure caches, relics, and readable clues.
+- [ ] Add dungeon difficulty tiers and scale encounters by progression rather than only increasing enemy health.
+- [ ] Add elite enemies with distinct behavior, telegraphs, and counterplay.
+- [ ] Add timed trials, survival arenas, hunting contracts, and exploration challenges.
+- [ ] Add boss rematches or challenge variants with separate rewards and fair retry rules.
+- [ ] Ensure dungeon state, loot claims, checkpoints, and reset rules are save-safe.
+- [ ] Keep dungeon geometry and enemy counts within the target device performance budget.
+
+**Exit gate:** Players have repeatable, varied expeditions with fair challenge, meaningful rewards, and reliable persistence.
+
+## Phase 12 — Deep ecology, wildlife, and creature life cycles
+
+**Status: Planned**
+
+- [ ] Add species-specific day/night activity, sleep, migration, nesting, territorial behavior, and group behavior.
+- [ ] Add predator/prey interactions with strict simulation limits and no uncontrolled population growth.
+- [ ] Add seasonal migration, weather responses, and biome-specific encounter changes.
+- [ ] Add nests, eggs, incubation, juvenile stages, growth, and adult traits where appropriate to each species.
+- [ ] Expand breeding inheritance with visible, understandable traits rather than opaque random stat rolls.
+- [ ] Add rare variants with unique behavior or utility, not only a different color.
+- [ ] Add creature care needs, habitat comfort, enrichment, and recovery at the base.
+- [ ] Add a creature archive with field notes, tracks, calls, behavior observations, and discovery rewards.
+- [ ] Add humane recovery/knockout rules and clear consequences for companion defeat.
+- [ ] Add a deterministic simulation budget so distant wildlife can use simplified updates.
+
+**Exit gate:** Creatures feel like inhabitants of the world, not just collectible combat units, while simulation remains efficient.
+
+## Phase 13 — Expanded gathering, farming, fishing, and cooking
+
+**Status: Planned**
+
+- [ ] Add fishing with rods, bait, water locations, fish behaviors, catch feedback, and collection records.
+- [ ] Add traps and gathering tools for selected resources with clear placement and retrieval rules.
+- [ ] Add crop plots, seed varieties, growth stages, soil quality, watering, harvest, and seed recovery.
+- [ ] Add orchards, herb gardens, mushrooms, and biome-specific harvestables.
+- [ ] Add food preparation tiers, recipes, ingredient quality, meal buffs, and party meals.
+- [ ] Add preservation such as drying, smoking, salting, or storage upgrades if it adds meaningful choices.
+- [ ] Add livestock or ranching only where it fits WILDEARTH's creature-care identity and does not reduce creatures to disposable resources.
+- [ ] Add clear resource tooltips, respawn rules, and anti-exploit checks.
+- [ ] Add storage labels, sorting, category filters, and station-to-storage convenience.
+- [ ] Ensure farming and production continue safely across world reloads without requiring continuous simulation.
+
+**Exit gate:** Gathering and food production support exploration and base life without becoming tedious chores.
+
+## Phase 14 — Traversal, vehicles, water, and aerial exploration
+
+**Status: Planned**
+
+- [ ] Add a complete mount roster with ground, climbing, swimming, and aerial roles.
+- [ ] Add mount stamina, acceleration, turning, jump, landing, dismount safety, and mount-specific camera behavior.
+- [ ] Add gliding equipment and wind/thermal lift where it creates interesting traversal.
+- [ ] Add boats or rafts for rivers and larger water regions, with buoyancy simplified for browser performance.
+- [ ] Add underwater exploration areas with oxygen management, visibility, aquatic creatures, and discoverable resources.
+- [ ] Add waterfalls, rapids, currents, and safe/unsafe water entry points.
+- [ ] Add fast travel through discovered waypoints with clear cost and restrictions.
+- [ ] Add travel route markers, compass bearings, custom map pins, and destination tracking.
+- [ ] Prevent mounts and vehicles from clipping through terrain, structures, or streamed-world boundaries.
+- [ ] Add travel unlocks through exploration rather than making fast travel available before discovery.
+
+**Exit gate:** Traversal adds meaningful freedom and discovery without breaking camera, collision, streaming, or low-end performance.
+
+## Phase 15 — Character identity, housing, cosmetics, and creative play
+
+**Status: Planned**
+
+- [ ] Expand player appearance with hair styles, face details, body proportions within rig limits, skin/outfit palettes, and accessory slots.
+- [ ] Add armor transmog or appearance overrides so players can choose looks without losing equipment stats.
+- [ ] Add outfit presets for exploration, cold regions, hot regions, combat, and base work.
+- [ ] Add furniture, decorations, trophies, lighting, signs, storage appearance, and interior customization.
+- [ ] Add player home upgrades, personal rooms, display stands, and creature habitat spaces.
+- [ ] Add a dye system with preview, color accessibility checks, and material-safe palette choices.
+- [ ] Add emotes, gestures, idle poses, and companion interaction animations.
+- [ ] Add a photo mode with camera orbit, focal distance, field of view, time-of-day selection, and UI hiding.
+- [ ] Add a creative/sandbox world option with configurable resource abundance, damage, survival drain, and building restrictions.
+- [ ] Add world naming, save thumbnails, favorite worlds, duplicate-world backup, and delete confirmation.
+
+**Exit gate:** Players can make their character and base feel personal, and optional creative settings do not compromise normal survival progression.
+
+## Phase 16 — Optional co-op and shared-world architecture
+
+**Status: Planned — post-core priority**
+
+- [ ] First decide whether co-op is technically and commercially justified; do not promise multiplayer until a network prototype proves feasibility.
+- [ ] Document authoritative ownership for player movement, creature AI, combat, inventory, crafting, building, and world events.
+- [ ] Design server-authoritative validation for item creation, capture, damage, currency, and save changes.
+- [ ] Prototype a small private session with two clients before designing large servers.
+- [ ] Add invite-only sessions, host migration or dedicated-host rules, reconnect handling, and clear session status.
+- [ ] Add synchronized creature movement, combat events, interactions, doors, building, and loot claims.
+- [ ] Add party permissions, base ownership, shared storage rules, and per-player progression boundaries.
+- [ ] Add anti-duplication, replay protection, rate limits, and server-side validation.
+- [ ] Add moderation, block/report tools, privacy controls, and safe defaults before public matchmaking.
+- [ ] Add latency simulation and network failure tests.
+- [ ] Keep single-player fully playable offline if co-op is unavailable.
+- [ ] Do not build an MMO or persistent public server as a prerequisite for the first complete release.
+
+**Exit gate:** A small co-op prototype is stable, secure, and fun under real network conditions; otherwise retain single-player scope.
+
+## Phase 17 — Long-term progression and endgame
+
+**Status: Planned**
+
+- [ ] Add a clear endgame loop after the main story: advanced expeditions, rare creature research, boss challenges, and base projects.
+- [ ] Add mastery tracks for weapons, gathering, crafting, exploration, creature care, and building.
+- [ ] Add optional challenge modifiers and difficulty presets with transparent effects.
+- [ ] Add a world completion journal for landmarks, dungeons, creature discoveries, recipes, lore, and achievements.
+- [ ] Add weekly or rotating challenges only if the game has reliable date handling and rewards that do not punish missed sessions.
+- [ ] Add New Game Plus or a fresh-world challenge mode only after save slots and progression migration are dependable.
+- [ ] Add late-game crafting materials and equipment with sidegrades and specialized roles, not endless stat inflation.
+- [ ] Add cosmetic rewards for difficult achievements without pay-to-win advantages.
+- [ ] Add endgame balance tests and ensure older content remains useful.
+
+**Exit gate:** Players have meaningful goals after the main story without mandatory repetitive grinding.
+
+## Phase 18 — Platform readiness, cloud saves, and community features
+
+**Status: Planned**
+
+- [ ] Add optional account-linked cloud save only after authentication, privacy, conflict resolution, and backup recovery are designed.
+- [ ] Support multiple local save slots and export/import backups in a documented format.
+- [ ] Add save conflict resolution with clear choices and never silently overwrite a newer world.
+- [ ] Add controller-first navigation and safe-area handling for phones, tablets, Chromebooks, and desktop.
+- [ ] Audit browser storage quotas and provide warnings before saves approach platform limits.
+- [ ] Add language selection and verify all supported languages across menus, HUD, captions, and dialogue.
+- [ ] Add localization-ready text keys; avoid hard-coded strings in gameplay logic.
+- [ ] Add credits, license notices, privacy information, support links, and crash-report consent.
+- [ ] Add optional player feedback/bug report export with user review before sharing.
+- [ ] Add mod/plugin support only after stable public APIs, sandboxing, versioning, and security review exist.
+- [ ] Add community-created world sharing only with content validation, moderation, and clear ownership/licensing.
+- [ ] Define supported browser/device versions and publish honest compatibility notes.
+
+**Exit gate:** Saves are portable and recoverable, controls adapt to supported platforms, and community features have security and moderation safeguards.
+
+## Phase 19 — Audio, feedback, and world immersion expansion
+
+**Status: Planned**
+
+- [ ] Give each biome a layered ambient soundscape with day/night variations.
+- [ ] Add original creature vocalizations and readable audio cues for aggression, fear, feeding, injury, and trust.
+- [ ] Add dynamic music transitions based on exploration, danger, combat, discovery, and boss phases.
+- [ ] Add spatial audio attenuation and priority limits so many creatures do not overwhelm low-end devices.
+- [ ] Add weather audio for rain, wind, thunder, caves, water, and sheltered interiors.
+- [ ] Add satisfying sound and visual feedback for gathering, crafting, building, capture, upgrades, and quest completion.
+- [ ] Add audio mix controls for music, ambience, effects, UI, and voice.
+- [ ] Add subtitle/caption labels for important non-verbal cues where practical.
+- [ ] Ensure every sound and music asset is original or properly licensed.
+
+**Exit gate:** Sound communicates the world and gameplay clearly, with adjustable mix and no performance or accessibility regressions.
+
+## Phase 20 — Security, data integrity, and operational readiness
+
+**Status: Planned**
+
+- [ ] Threat-model local saves, cloud endpoints, account sessions, project sharing, and any future multiplayer services.
+- [ ] Validate all client-provided IDs, quantities, coordinates, recipe costs, and object limits at trust boundaries.
+- [ ] Add schema versioning and tested migrations for every persistent system.
+- [ ] Add backup rotation and a tested recovery path for corrupt or interrupted saves.
+- [ ] Add telemetry only with transparent consent, data minimization, and documented retention.
+- [ ] Add crash diagnostics that avoid collecting passwords, tokens, personal data, or private world contents.
+- [ ] Add dependency/license inventory and a repeatable security update process.
+- [ ] Add content integrity checks for downloadable assets and future mods.
+- [ ] Add rate limits and abuse controls to any online service.
+- [ ] Document incident response and safe rollback procedures.
+
+**Exit gate:** Player data is protected, recoverable, and handled transparently; online surfaces are reviewed before release.
+
+---
+
+## Expanded prioritization rules
+
+Use this order when selecting work:
+
+1. **P0 — Blockers:** crashes, save loss, broken launch, input lockups, security issues, corrupted world state.
+2. **P1 — Core loop:** player feel, capture, creature AI, combat, crafting, building, world streaming, progression.
+3. **P2 — Content depth:** biomes, species, settlements, dungeons, quests, bosses, farming, fishing, mounts.
+4. **P3 — Polish:** animation quality, audio, UI, accessibility, cosmetics, photo mode.
+5. **P4 — Optional scale:** co-op, community sharing, modding, live events, advanced cloud features.
+
+A later phase must not be treated as a reason to delay a stable, complete single-player release. Co-op, modding, and online community features remain optional until their technical and operational costs are proven.
+
+## Additional release-quality acceptance checklist
+
+- [ ] A first-time player can start a new world, learn the controls, capture a first companion, craft essential gear, build shelter, and understand the first story objective without external instructions.
+- [ ] A returning player can load a previous world and recover from a failed or interrupted save.
+- [ ] Every creature species has a documented gameplay role, habitat, behavior, and at least one distinct ability or utility.
+- [ ] Every major biome has a unique resource loop, encounter identity, landmark, and reason to revisit.
+- [ ] Every major system has an accessible UI path and is usable with supported input methods.
+- [ ] All quests, bosses, recipes, structures, and rewards have tested unlock and persistence rules.
+- [ ] No optional online feature is required to play the main game.
+- [ ] Performance has been measured on actual target hardware, not inferred from CI.
+- [ ] No unlicensed or copied game assets are included.
+- [ ] The release build, save format, support information, and known limitations are documented.
