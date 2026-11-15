@@ -1188,6 +1188,14 @@ test('original WILDEARTH creature art direction uses eight tuned silhouettes and
   assert.ok(gameScript.includes('g.userData.speciesForm=S.n'));
 });
 
+test('creature faces use species-specific irises, pupils and eye highlights', () => {
+  assert.match(gameScript, /var irisColors=\[0x72b9a0,0xffa24f,0x6bd8e8,0xc5b9a0,0xffe36e,0x89b96e,0x9ca8c9,0x83f1e8\]/);
+  assert.ok(gameScript.includes('var irisMat=stdMat(irisColors[sp]'));
+  assert.ok(gameScript.includes('var eyeHighlight=stdMat(0xffffff'));
+  assert.ok(gameScript.includes('new THREE.SphereGeometry(0.064,10,8),irisMat'));
+  assert.ok(gameScript.includes('new THREE.SphereGeometry(0.014,7,5),eyeHighlight'));
+  assert.ok(gameScript.includes('new THREE.BoxGeometry(0.16,0.018,0.025),dark'));
+});
 test('creature models expose animated ears, eyes and torso for low-cost expressive idle motion', () => {
   assert.ok(gameScript.includes('ears.push(ear)'));
   assert.ok(gameScript.includes('eyes.push(eyeWhite)'));
