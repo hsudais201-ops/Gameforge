@@ -1174,6 +1174,20 @@ test('roof, workbench and cookpot models include additional construction and too
   assert.ok(gameScript.includes('new THREE.TorusGeometry(0.32,0.025,6,12)'));
 });
 
+
+test('original WILDEARTH creature art direction uses eight tuned silhouettes and cached merged detail meshes', () => {
+  assert.match(gameScript, /var CREATURE_FORMS=\[/);
+  assert.match(gameScript, /function makeCreatureArtPass\(sp\)/);
+  assert.ok(gameScript.includes('var CREATURE_ART_CACHE=[]'));
+  assert.ok(gameScript.includes('CREATURE_ART_CACHE[sp]'));
+  assert.ok(gameScript.includes('new THREE.MeshStandardMaterial({vertexColors:true,roughness:sp===7?0.58:0.84'));
+  assert.ok(gameScript.includes("sculptLayer.name='original-species-sculpt-'+S.n"));
+  assert.ok(gameScript.includes('g.add(sculptLayer)'));
+  assert.ok(gameScript.includes('head.scale.setScalar(form.headScale)'));
+  assert.ok(gameScript.includes('lg.scale.set(form.legScale[0],form.legScale[1],form.legScale[2])'));
+  assert.ok(gameScript.includes('g.userData.speciesForm=S.n'));
+});
+
 test('creature models expose animated ears, eyes and torso for low-cost expressive idle motion', () => {
   assert.ok(gameScript.includes('ears.push(ear)'));
   assert.ok(gameScript.includes('eyes.push(eyeWhite)'));
