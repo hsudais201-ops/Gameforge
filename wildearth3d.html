@@ -1616,18 +1616,18 @@ var CREATURE_GAITS=[
   // Glimmer's four-beat gait and gentle bob make it feel almost weightless.
   {rate:1.36,stride:0.74,leg:0.34,bob:0.085,tailRate:2.65,tailSwing:0.42,tailLift:0.105,bodySway:0.016,bodyPhase:1.4,headSway:0.04,headPhase:0.8,tailPhase:2,offsets:[0,Math.PI/2,Math.PI,Math.PI*1.5]}
 ];
+// One reusable result keeps per-frame animation free of transient arrays/objects.
+var CREATURE_GAIT_SCRATCH={legs:[0,0,0,0],bob:0,bodySway:0,tailYaw:0,tailPitch:0,headSway:0};
 function creatureGait(sp,walk,speed,moving){
   var p=CREATURE_GAITS[sp]||CREATURE_GAITS[0],phase=walk*p.rate;
-  var drive=Math.max(0,Math.min(1.25,speed*p.stride))*(moving?1:0),legs=[];
-  for(var i=0;i<4;i++)legs[i]=moving?Math.sin(phase+p.offsets[i])*drive*p.leg:0;
-  return {
-    legs:legs,
-    bob:Math.abs(Math.sin(phase))*p.bob*Math.max(0,speed)*(moving?1:0.12),
-    bodySway:Math.sin(phase+p.bodyPhase)*p.bodySway*(moving?1:0.3),
-    tailYaw:Math.sin(walk*p.tailRate+p.tailPhase)*p.tailSwing,
-    tailPitch:Math.sin(walk*(p.tailRate*0.58)+p.tailPhase)*p.tailLift,
-    headSway:Math.sin(phase+p.headPhase)*p.headSway*(moving?1:0.25)
-  };
+  var drive=Math.max(0,Math.min(1.25,speed*p.stride))*(moving?1:0),result=CREATURE_GAIT_SCRATCH;
+  for(var i=0;i<4;i++)result.legs[i]=moving?Math.sin(phase+p.offsets[i])*drive*p.leg:0;
+  result.bob=Math.abs(Math.sin(phase))*p.bob*Math.max(0,speed)*(moving?1:0.12);
+  result.bodySway=Math.sin(phase+p.bodyPhase)*p.bodySway*(moving?1:0.3);
+  result.tailYaw=Math.sin(walk*p.tailRate+p.tailPhase)*p.tailSwing;
+  result.tailPitch=Math.sin(walk*(p.tailRate*0.58)+p.tailPhase)*p.tailLift;
+  result.headSway=Math.sin(phase+p.headPhase)*p.headSway*(moving?1:0.25);
+  return result;
 }
 var CREATURE_ART_CACHE=[];
 function makeCreatureArtPass(sp){

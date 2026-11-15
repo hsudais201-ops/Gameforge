@@ -1342,6 +1342,7 @@ test('eight original species use distinct, bounded locomotion and secondary-moti
     }
     for (const key of ['bob','bodySway','tailYaw','tailPitch','headSway']) assert.ok(Number.isFinite(pose[key]));
     const stopped = system.gait(species, 0.73, 1.2, false);
+    assert.strictEqual(stopped, pose, 'the gait helper must reuse its scratch result rather than allocate per frame');
     assert.deepEqual(stopped.legs, [0,0,0,0], 'stopped creatures must not keep walking');
   }
   const fallback = system.gait(99, 0.73, 1.2, true);
