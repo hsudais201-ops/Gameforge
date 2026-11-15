@@ -2,11 +2,12 @@
 
 Status: **Not approved for public release yet**  
 Target branch: `feature/wildearth-browser-prototype`  
-Entry point: `wildearth3d.html`
+Entry point: `wildearth3d.html`  
+Master plan: [WILDEARTH Master Development Roadmap](WILDEARTH_ROADMAP.md)
 
 ## Included in this candidate
 
-- Five biomes, streamed terrain, caves, rivers and ponds.
+- Seeded, streamed world with multiple biomes, caves, rivers and ponds.
 - Detailed customizable player model, character presets and outfit slots.
 - Wildlife ecology, breeding, feeding, taming and companions.
 - Wraith variants and the three-phase Night Herald boss.
@@ -31,8 +32,8 @@ The test suite checks script syntax and critical UI wiring, deterministic seeds,
 
 - GitHub Actions run [#155](https://github.com/hsudais201-ops/Gameforge/actions/runs/43563419085) completed successfully on 2026-11-14.
 - Result: **64 tests passed, 0 failed** on commit `94934e984d76a7afa749ff4698d63fe2295aff4a`.
-- Regression coverage now includes low-end Chromebook startup defaults and the combined 120-piece save-validation limit.
-- Scope: Node.js source-level smoke/regression checks. This is not a substitute for browser gameplay, physical Chromebook profiling, controller testing, or release acceptance.
+- Regression coverage includes low-end Chromebook startup defaults and the combined 120-piece save-validation limit.
+- Scope: Node.js source-level smoke/regression checks. This is not a substitute for browser gameplay, physical Chromebook profiling, controller testing, or release acceptance. Check the current branch's latest Actions run before treating this historical result as current.
 
 ## Required target-device test matrix
 
@@ -55,4 +56,4 @@ The test suite checks script syntax and critical UI wiring, deterministic seeds,
 
 ## Release decision
 
-Keep roadmap step 114 open until real Chromebook profiles are reviewed. Keep step 120 open until the target-device matrix passes, a release build is deployed, and patch notes are published. Do not mark either step complete based only on source checks.
+The master roadmap's **Phase 8 — Performance, compatibility, and quality assurance** remains open until real Chromebook profiles are reviewed and the target-device matrix passes. **Phase 9 — Release candidate and launch** remains blocked until gameplay acceptance, release checks, and explicit production approval are complete. Do not infer release readiness from source-level CI alone.

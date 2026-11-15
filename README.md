@@ -1,6 +1,6 @@
 # GameForge Studio
 
-GameForge Studio is an early browser-based game creation workspace. The long-term target is **C: both** — an online editor, browser-playable games, and downloadable game exports.
+GameForge Studio is a browser-based game creation workspace. The long-term target is **C: both** — an online editor, browser-playable games, and downloadable game exports.
 
 ## Current starter features
 
@@ -18,9 +18,11 @@ GameForge Studio is an early browser-based game creation workspace. The long-ter
 - Browser playtest with keyboard and touch controls, score, lives, restart, and game-over state
 - Export the current scene as JSON or a standalone playable HTML file; touch actions and collision settings are included in the HTML export
 
-## WILDEARTH browser prototype
+## WILDEARTH browser game
 
-Open `wildearth3d.html` to play the current third-person 3D WILDEARTH prototype. The earlier 2D build remains available at `wildearth.html` as a fallback. The 3D prototype includes a seeded, streamed world; five biomes; caves, rivers and ponds; a customizable player; wildlife and companions; Wraith encounters; survival systems; crafting, inventory and building; quests and exploration; and keyboard, touch and gamepad controls. World progress is stored locally on this device, separately for each world. Three.js is loaded from cdnjs, so an internet connection is required. Modest Chromebook-class hardware receives a lighter default graphics workload. This remains a browser prototype, not a finished commercial AAA release.
+Open `wildearth3d.html` to play the current third-person 3D WILDEARTH prototype. The earlier 2D build remains available at `wildearth.html` as a fallback. The 3D prototype includes a seeded, streamed world; biomes; caves, rivers and ponds; a customizable player; wildlife and companions; Wraith encounters; survival systems; crafting, inventory and building; quests and exploration; and keyboard, touch and gamepad controls. World progress is stored locally on this device, separately for each world. Three.js is loaded from cdnjs, so an internet connection is required. Modest Chromebook-class hardware receives a lighter default graphics workload.
+
+WILDEARTH is still in active development and is not a finished commercial AAA release. Its single source of truth for remaining work, priorities, completion gates, and agent execution rules is the [WILDEARTH Master Development Roadmap](WILDEARTH_ROADMAP.md).
 
 ## Run locally
 
@@ -33,16 +35,6 @@ Open `index.html` in a modern browser, or serve this directory with a static web
 3. For this static starter, use the repository root as the build output directory and no build command.
 4. Deploy. The `wrangler.toml` file records the project name and output directory.
 
-## Roadmap
+## GameForge Studio status
 
-1. Improve the 2D physics engine (moving platforms, slopes, and offset hitboxes)
-2. Expand the visual event system (keyboard, timers, scene transitions, and reusable actions)
-3. Asset library, image/audio import, and sprite animation
-4. Camera, tilemap, and level design tools
-5. Browser publishing and shareable game links
-6. Downloadable desktop/mobile packaging workflow
-7. R2 asset uploads, asset browser, and collaboration
-
-## Status
-
-This repository is an early browser-based 2D editor prototype, not a complete commercial game engine. The event system currently supports player-touch triggers and a small set of actions; advanced physics, sprite animation, audio, multiplayer, email ownership verification, password reset, R2 asset uploads, and compiled desktop/mobile exports are not implemented yet. Signed-in projects sync to D1; a local copy remains on the device as a fallback.
+The repository also contains an early browser-based 2D editor prototype. Its current event system supports player-touch triggers and a small set of actions; advanced physics, sprite animation, audio, multiplayer, email ownership verification, password reset, R2 asset uploads, and compiled desktop/mobile exports are not implemented yet. Signed-in projects sync to D1; a local copy remains on the device as a fallback.
