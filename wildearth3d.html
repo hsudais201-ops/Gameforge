@@ -1619,7 +1619,7 @@ var CREATURE_GAITS=[
 function creatureGait(sp,walk,speed,moving){
   var p=CREATURE_GAITS[sp]||CREATURE_GAITS[0],phase=walk*p.rate;
   var drive=Math.max(0,Math.min(1.25,speed*p.stride))*(moving?1:0),legs=[];
-  for(var i=0;i<4;i++)legs[i]=Math.sin(phase+p.offsets[i])*drive*p.leg;
+  for(var i=0;i<4;i++)legs[i]=moving?Math.sin(phase+p.offsets[i])*drive*p.leg:0;
   return {
     legs:legs,
     bob:Math.abs(Math.sin(phase))*p.bob*Math.max(0,speed)*(moving?1:0.12),
