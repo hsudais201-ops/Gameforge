@@ -1351,3 +1351,45 @@ test('eight original species use distinct, bounded locomotion and secondary-moti
   assert.ok(gameScript.includes('m.tail.rotation.y=gait.tailYaw'));
   assert.ok(gameScript.includes('m.g.rotation.z=gait.bodySway'));
 });
+
+
+test('capture targeting follows the camera aim cone and allows a close-range throw', () => {
+  const start = gameScript.indexOf('function isCaptureTargetAimed(');
+  const end = gameScript.indexOf('function doCatch(){', start);
+  const source = gameScript.slice(start, end);
+  assert.ok(start >= 0 && end > start, 'capture targeting helpers must exist');
+  const system = new Function('function clamp(v,a,b){return Math.max(a,Math.min(b,v));};' + source + '; return { isCaptureTargetAimed, selectCaptureTarget, captureOddsLabel };')();
+  const ahead = { x: 0, z: 5 };
+  const behind = { x: 0, z: -3.5 };
+  assert.strictEqual(system.selectCaptureTarget([behind, ahead], 0, 0, 0, 12, 0.92, 2.4, true), ahead);
+  assert.strictEqual(system.selectCaptureTarget([behind], 0, 0, 0, 12, 0.92, 2.4, true), null);
+  const closeBehind = { x: 0, z: -1.8 };
+  assert.strictEqual(system.selectCaptureTarget([closeBehind], 0, 0, 0, 12, 0.92, 2.4, true), closeBehind);
+  assert.strictEqual(system.selectCaptureTarget([{ x: 0, z: 3, held: true }], 0, 0, 0, 12, 0.92, 2.4, true), null);
+});
+
+test('capture feedback uses qualitative odds and clearly reports aim readiness', () => {
+  const start = gameScript.indexOf('function isCaptureTargetAimed(');
+  const end = gameScript.indexOf('function doCatch(){', start);
+  const source = gameScript.slice(start, end);
+  const system = new Function('function clamp(v,a,b){return Math.max(a,Math.min(b,v));};' + source + '; return { captureOddsLabel };')();
+  assert.equal(system.captureOddsLabel(0.9), 'Excellent odds');
+  assert.equal(system.captureOddsLabel(0.65), 'Good odds');
+  assert.equal(system.captureOddsLabel(0.4), 'Fair odds');
+  assert.equal(system.captureOddsLabel(0.1), 'Low odds');
+  assert.ok(gameScript.includes('captureAimFace(),tc=selectCaptureTarget'));
+  assert.ok(gameScript.includes('captureOddsLabel(captureChance(tc,bid))'));
+  assert.ok(gameScript.includes("aimed?'AIMED':'TURN TO AIM'"));
+  assert.ok(gameScript.includes('Math.atan2(-Math.sin(cam.yaw),-Math.cos(cam.yaw))'));
+  assert.ok(gameScript.includes('rateNow(c.sp,id,c)'));
+  assert.ok(gameScript.includes('P.stats.tamer)||0)*0.025'));
+  assert.doesNotThrow(() => new Function(gameScript));
+});
+
+test('capture throws use eased distance-scaled arcs and communicate impact, success, and escape', () => {
+  assert.ok(gameScript.includes('flightDuration:clamp(0.36+distance*0.018,0.4,0.58)'));
+  assert.ok(gameScript.includes('flight=u0*u0*(3-2*u0)'));
+  assert.ok(gameScript.includes("pop(sc.x,sc.y+2.2,sc.z,'Capture attempt'"), 'impact should begin a visible capture attempt');
+  assert.ok(gameScript.includes("say(SPECIES[sc.sp].n+' joined your party!'"), 'successful capture should confirm party membership');
+  assert.ok(gameScript.includes('broke free. Build trust or try a Great Ball.'), 'failed capture should explain recovery options');
+});

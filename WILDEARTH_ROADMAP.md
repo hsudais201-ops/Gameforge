@@ -88,7 +88,7 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [ ] Create a complete creature roster plan with clear roles, rarity, habitats, diet, temperament, and progression.
 - [ ] Give every species a distinct movement style, locomotion animation, idle behavior, and recognizable personality.
 - [ ] Add species-specific attacks and companion abilities; avoid making creatures differ only by stats or color.
-- [ ] Improve capture feedback: aiming, throw arc, impact, capture attempt, success/failure, escape, and clear probability feedback without exposing hidden formulas.
+- [x] Improve capture feedback: camera-aligned aiming, eased distance-scaled throw arcs, impact and capture pulses, clear success/escape feedback, and qualitative odds without exposing hidden formulas.
 - [ ] Add a collection journal with discovery, habitat hints, care information, abilities, and missing-species tracking.
 - [ ] Make party management clear: active team, reserve storage, swapping, healing, and command feedback.
 - [ ] Improve companion navigation around slopes, trees, buildings, water, caves, and narrow spaces.

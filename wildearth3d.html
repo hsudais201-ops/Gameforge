@@ -64,7 +64,7 @@
   #hotbar .slot{width:clamp(31px,calc((96vw - 40px)/9),44px);height:clamp(31px,calc((96vw - 40px)/9),44px);border-radius:5px;background:linear-gradient(145deg,rgba(75,82,79,.94),rgba(29,35,32,.96));border:2px solid #89918b;box-shadow:inset 1px 1px #ffffff22,inset -1px -1px #0008}
   #hotbar .slot.on{border:2px solid #f5e28a;background:linear-gradient(145deg,#65745b,#344b38);box-shadow:0 0 0 2px #f5e28a55,inset 1px 1px #ffffff33}
   #hotbar .slot svg{width:78%;height:78%}
-  #target{background:rgba(8,16,12,.72);padding:3px 10px;border-radius:999px;font-size:11px;white-space:nowrap;pointer-events:none;font-weight:600}
+  #target{background:rgba(8,16,12,.82);padding:5px 11px;border:1px solid #aab99b66;border-radius:9px;font-size:10px;line-height:1.35;max-width:min(92vw,440px);box-sizing:border-box;white-space:normal;text-align:center;pointer-events:none;font-weight:700;text-shadow:0 1px 3px #000}#target.ready{border-color:#a6d69b;background:rgba(19,48,29,.9);box-shadow:0 0 12px #8edb8a33}
   .slot{width:40px;height:40px;box-sizing:border-box;border-radius:5px;background:linear-gradient(145deg,#626b65,#333b36);border:2px solid #89918b;box-shadow:inset 1px 1px #ffffff22,inset -1px -1px #0008;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
   .slot.hot{border-color:#aab4ad}
   .slot.on{border-color:#f5e28a;background:linear-gradient(145deg,#65745b,#344b38);box-shadow:0 0 0 1px #f5e28a55,inset 1px 1px #ffffff33}
@@ -2889,18 +2889,54 @@ function burst(x,y,z,color,n){
     sparks.push({m:m,vx:Math.cos(a)*sp,vy:rand(0.3,1.4)*sp,vz:Math.sin(a)*sp,t:0.7});
   }
 }
+function captureAimFace(){return Math.atan2(-Math.sin(cam.yaw),-Math.cos(cam.yaw));}
+function isCaptureTargetAimed(o,px,pz,face,cone,closeRange){
+  if(!o||o.held)return false;
+  var dx=o.x-px,dz=o.z-pz,distance=Math.hypot(dx,dz);
+  if(distance<=closeRange)return true;
+  if(distance<=0)return true;
+  var angle=Math.atan2(dx,dz),delta=Math.atan2(Math.sin(angle-face),Math.cos(angle-face));
+  return Math.abs(delta)<=cone;
+}
+function selectCaptureTarget(candidates,px,pz,face,range,cone,closeRange,requireAim){
+  var bestAimed=null,bestAimedScore=Infinity,bestNearby=null,bestNearbyScore=Infinity;
+  for(var i=0;i<candidates.length;i++){
+    var o=candidates[i];if(!o||o.held)continue;
+    var dx=o.x-px,dz=o.z-pz,distance=Math.hypot(dx,dz);
+    if(!isFinite(distance)||distance>range)continue;
+    var angle=Math.atan2(dx,dz),delta=Math.atan2(Math.sin(angle-face),Math.cos(angle-face));
+    var aimed=distance<=closeRange||Math.abs(delta)<=cone,score=distance+Math.abs(delta)*2.4;
+    if(aimed&&score<bestAimedScore){bestAimed=o;bestAimedScore=score;}
+    else if(!aimed&&score<bestNearbyScore){bestNearby=o;bestNearbyScore=score;}
+  }
+  return bestAimed||(requireAim?null:bestNearby);
+}
+function captureOddsLabel(rate){
+  var chance=clamp(Number(rate)||0,0,1);
+  if(chance>=0.78)return 'Excellent odds';
+  if(chance>=0.56)return 'Good odds';
+  if(chance>=0.34)return 'Fair odds';
+  return 'Low odds';
+}
+function captureChance(c,id){return Math.min(0.98,rateNow(c.sp,id,c)+((P.stats&&P.stats.tamer)||0)*0.025);}
 function doCatch(){
-  var c=nearestOf(wild,P.x,P.z,12,function(o){return !o.held});
-  if(!c){say('No wild creature nearby. Get closer.');return}
+  var face=captureAimFace();
+  var c=selectCaptureTarget(wild,P.x,P.z,face,12,0.92,2.4,true);
+  if(!c){
+    var nearby=selectCaptureTarget(wild,P.x,P.z,face,12,0.92,2.4,false);
+    if(nearby){say('Aim toward '+SPECIES[nearby.sp].n+' to throw a Capture Ball.');return;}
+    say('No wild creature nearby. Get closer.');return;
+  }
   var id=ballForCatch();
   if(!id){say('You need a Capture Ball. Open the Bag to craft some.');return}
   if(team.length+shots.length>=12){say('Your team is full (12).');return}
-  var ok=random()<Math.min(0.98,rateNow(c.sp,id,c)+((P.stats&&P.stats.tamer)||0)*0.025);P.lure=false;playSfx('capture');
+  var distance=Math.hypot(c.x-P.x,c.z-P.z),chance=captureChance(c,id),ok=random()<chance;
+  P.lure=false;playSfx('capture');
   takeItem(id,1);renderInv(true);
   P.face=Math.atan2(c.x-P.x,c.z-P.z);P.swing=0.45;
   c.held=true;c.vx=0;c.vz=0;c.speed=0;
   var ball=makeBall(id);ball.position.set(P.x,P.y+1.6,P.z);scene.add(ball);
-  shots.push({m:ball,c:c,id:id,ok:ok,phase:0,t:0,wob:0,wobbles:ok?3:1+Math.floor(random()*2),sx:P.x,sy:P.y+1.6,sz:P.z});
+  shots.push({m:ball,c:c,id:id,ok:ok,phase:0,t:0,wob:0,wobbles:ok?3:1+Math.floor(random()*2),sx:P.x,sy:P.y+1.6,sz:P.z,flightDuration:clamp(0.36+distance*0.018,0.4,0.58),arcHeight:clamp(1.2+distance*0.07,1.35,2.1)});
 }
 var RECIPES={
   ball:{wood:1,stone:1,fiber:1},great:{stone:3,fiber:2,berry:2},treat:{berry:2,fiber:1},
@@ -3667,10 +3703,10 @@ function update(dt){
     if(wild.indexOf(sc)<0){scene.remove(sh.m);disposeObject3D(sh.m);shots.splice(i,1);continue}
     sh.t+=dt;
     if(sh.phase===0){
-      var u0=Math.min(1,sh.t/0.5);
-      sh.m.position.set(sh.sx+(sc.x-sh.sx)*u0,sh.sy+(sc.y+1.1-sh.sy)*u0+Math.sin(u0*Math.PI)*1.8,sh.sz+(sc.z-sh.sz)*u0);
+      var u0=Math.min(1,sh.t/(sh.flightDuration||0.5)),flight=u0*u0*(3-2*u0);
+      sh.m.position.set(sh.sx+(sc.x-sh.sx)*flight,sh.sy+(sc.y+1.1-sh.sy)*flight+Math.sin(u0*Math.PI)*(sh.arcHeight||1.8),sh.sz+(sc.z-sh.sz)*flight);
       sh.m.rotation.x+=dt*14;
-      if(u0>=1){sh.phase=1;sh.t=0;burst(sc.x,sc.y+1.1,sc.z,0xffffff,8)}
+      if(u0>=1){sh.phase=1;sh.t=0;burst(sc.x,sc.y+1.1,sc.z,SPECIES[sc.sp].c,10);burst(sc.x,sc.y+1.1,sc.z,0xffffff,5);pop(sc.x,sc.y+2.2,sc.z,'Capture attempt','#fff1b2')}
     }else if(sh.phase===1){
       var u1=Math.min(1,sh.t/0.4);
       sc.m.g.scale.setScalar(Math.max(0.001,1-u1));
@@ -3682,6 +3718,7 @@ function update(dt){
       sh.m.rotation.z=ph<0.8?Math.sin(ph/0.8*Math.PI*2)*0.55:0;
       if(ph>=1.15){
         sh.wob++;
+        if(sh.wob<sh.wobbles)burst(sc.x,sc.y+0.45,sc.z,sh.wob%2?0x8de5ff:0xffe58a,4);
         if(sh.wob>=sh.wobbles){
           scene.remove(sh.m);disposeObject3D(sh.m);shots.splice(i,1);
           sc.m.g.visible=true;sc.held=false;
@@ -3690,12 +3727,12 @@ function update(dt){
             wild.splice(wild.indexOf(sc),1);
             sc.work=rand(4,9);team.push(sc);catchIndex[sc.sp]=(catchIndex[sc.sp]||0)+1;awardXP(25+(SPECIES[sc.sp].r==='rare'?15:SPECIES[sc.sp].r==='uncommon'?8:0),'capture');checkAchievements();
             burst(sc.x,sc.y+0.6,sc.z,0xffe58a,22);burst(sc.x,sc.y+0.6,sc.z,0xffffff,8);
-            pop(sc.x,sc.y+2.6,sc.z,'Gotcha! '+SPECIES[sc.sp].n+' joined',rar.c);
+            pop(sc.x,sc.y+2.6,sc.z,'Gotcha! '+SPECIES[sc.sp].n+' joined',rar.c);playSfx('creature');say(SPECIES[sc.sp].n+' joined your party!',3);
             renderInv(true);save();
           }else{
-            sc.flee=4;
+            sc.flee=4;sc.alertT=1.5;sc.state='flee';sc.threatX=P.x;sc.threatZ=P.z;
             burst(sc.x,sc.y+0.8,sc.z,0xff9d9d,12);
-            pop(sc.x,sc.y+2.6,sc.z,'It broke free!','#ff9d9d');
+            pop(sc.x,sc.y+2.6,sc.z,'It broke free!','#ff9d9d');playSfx('warning');say(SPECIES[sc.sp].n+' broke free. Build trust or try a Great Ball.',4);
           }
         }
       }
@@ -4076,13 +4113,13 @@ function updateHud(){
   updateExplorationMap();
   updateQuestJournal();
   $('goal').textContent='Goals: tame 10 ('+team.length+'/10) · nights 3 ('+nights+'/3) · Wraiths '+wraithsDefeated+' · crafts '+craftedCount+' · explored '+Math.floor(explorationDistance)+' units · achievements '+achievementIds.length+'/15';
-  var tc=nearestOf(wild,P.x,P.z,12,function(o){return !o.held}),te=$('target');
+  var aimFace=captureAimFace(),tc=selectCaptureTarget(wild,P.x,P.z,aimFace,12,0.92,2.4,false),te=$('target');
   if(tc){
-    var TS=SPECIES[tc.sp],TR=RAR[TS.r],bid=ballForCatch();
-    te.hidden=false;te.style.color=TR.c;
-    var healthPct=Math.ceil(clamp(tc.hp/tc.maxHp,0,1)*100);
-    te.textContent=TS.n+' · '+TR.n+' · Health '+healthPct+'% · Trust '+Math.round((tc.trust||0)*100)+'%'+(healthPct<35?' · Wounded':'')+(bid?' · '+Math.round(rateNow(tc.sp,bid,tc)*100)+'% with '+ITEMS[bid].n:' · you have no balls');
-  }else te.hidden=true;
+    var TS=SPECIES[tc.sp],TR=RAR[TS.r],bid=ballForCatch(),distance=Math.hypot(tc.x-P.x,tc.z-P.z);
+    var aimed=isCaptureTargetAimed(tc,P.x,P.z,aimFace,0.92,2.4),healthPct=Math.ceil(clamp(tc.hp/tc.maxHp,0,1)*100),trustPct=Math.round(clamp(tc.trust||0,0,1)*100);
+    te.hidden=false;te.style.color=TR.c;te.classList.toggle('ready',aimed&&!!bid);
+    te.textContent=TS.n+' · '+TR.n+' · '+Math.round(distance)+' m · '+(aimed?'AIMED':'TURN TO AIM')+' · '+(bid?captureOddsLabel(captureChance(tc,bid)):'NO CAPTURE BALL')+' · Health '+healthPct+'% · Trust '+trustPct+'%';
+  }else{te.hidden=true;te.classList.remove('ready');}
 }
 
 /* ---------- camera + floating text ---------- */
