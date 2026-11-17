@@ -89,7 +89,7 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [ ] Give every species a distinct movement style, locomotion animation, idle behavior, and recognizable personality.
 - [x] Add eight species-specific signature abilities: Pollen Mend, Cinder Burst, Tidal Snare, Stone Ward, Arc Spark, Briar Snare, Gale Break, and Prism Lance, with distinct support, damage, control, chain, and disruption effects.
 - [x] Improve capture feedback: camera-aligned aiming, eased distance-scaled throw arcs, impact and capture pulses, clear success/escape feedback, and qualitative odds without exposing hidden formulas.
-- [ ] Add a collection journal with discovery, habitat hints, care information, abilities, and missing-species tracking.
+- [x] Add a collection journal with first-sighting discovery, biome hints, preferred-food care tips, signature abilities, caught counts, and missing-species filters.
 - [ ] Make party management clear: active team, reserve storage, swapping, healing, and command feedback.
 - [ ] Improve companion navigation around slopes, trees, buildings, water, caves, and narrow spaces.
 - [ ] Add reliable recall, regroup, stuck recovery, and leash-distance behavior.

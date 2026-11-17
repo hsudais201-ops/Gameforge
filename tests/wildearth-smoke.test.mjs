@@ -1471,3 +1471,69 @@ test('signature abilities integrate with companion attack orders, Wraith status 
   assert.ok(gameScript.includes('Signature abilities activate in Attack order when a Wraith is close.'));
   assert.doesNotThrow(() => new Function(gameScript));
 });
+
+test('species habitat metadata stays aligned with the eight original creature roles', () => {
+  const speciesStart = gameScript.indexOf('var SPECIES=[');
+  const speciesEnd = gameScript.indexOf('];', speciesStart) + 2;
+  const biomeStart = gameScript.indexOf('var BIOMES=[');
+  const biomeEnd = gameScript.indexOf('];', biomeStart) + 2;
+  const species = new Function(gameScript.slice(speciesStart, speciesEnd) + ';return SPECIES;')();
+  const biomes = new Function(gameScript.slice(biomeStart, biomeEnd) + ';return BIOMES;')();
+  const biomeIds = new Set(biomes.map(b => b.id));
+  assert.equal(species.length, 8);
+  assert.equal(new Set(species.map(s => s.n)).size, 8);
+  for (const entry of species) {
+    assert.ok(Array.isArray(entry.habitats) && entry.habitats.length >= 2);
+    assert.ok(entry.habitats.every(id => biomeIds.has(id)), entry.n + ' must reference real biomes');
+    assert.ok(entry.role && entry.ability);
+  }
+  assert.ok(gameScript.includes('var habitats=SPECIES[sp]&&SPECIES[sp].habitats;'), 'spawn weighting must use the same field-guide habitat data');
+});
+
+test('field guide discovery migration preserves caught species and rejects malformed flags', () => {
+  const start = gameScript.indexOf('function normalizeSpeciesDiscovery(');
+  const end = gameScript.indexOf('function creatureFieldGuideEntry(', start);
+  assert.ok(start >= 0 && end > start);
+  const normalize = new Function('var SPECIES=Array.from({length:8},function(){return {};});' + gameScript.slice(start, end) + ';return normalizeSpeciesDiscovery;')();
+  assert.deepEqual(normalize([true, 'yes', false, 1], [0, 1, 0, 0, 2]), [true, true, false, false, true, false, false, false]);
+  assert.deepEqual(normalize(null, [0, 0, 3]), [false, false, true, false, false, false, false, false]);
+  assert.deepEqual(normalize(['true', true], []), [false, true, false, false, false, false, false, false]);
+});
+
+test('field guide entries reveal care and signature ability only after a sighting', () => {
+  const start = gameScript.indexOf('function creatureFieldGuideEntry(');
+  const end = gameScript.indexOf('function discoverSpecies(', start);
+  assert.ok(start >= 0 && end > start);
+  const source = gameScript.slice(start, end);
+  const entryFor = new Function(
+    'var SPECIES=[{n:"Fluffo",r:"common",c:0x8fd16a,role:"Support",ability:"Pollen Mend",habitats:["meadow","forest"]}];' +
+    'var BIOMES=[{id:"meadow",name:"Sunlit Meadow"},{id:"forest",name:"Mosswood Forest"}];' +
+    'var CREATURE_DIET=["berry"];var ITEMS={berry:{n:"Berry"}};' +
+    'var RAR={common:{n:"Common"}};' + source + ';return creatureFieldGuideEntry;'
+  )();
+  const hidden = entryFor(0, false, 0);
+  assert.equal(hidden.name, 'Unknown species 1');
+  assert.equal(hidden.ability, 'Unknown');
+  assert.equal(hidden.food, 'Unknown');
+  assert.deepEqual(hidden.habitats, ['Sunlit Meadow', 'Mosswood Forest']);
+  const seen = entryFor(0, true, 2);
+  assert.equal(seen.name, 'Fluffo');
+  assert.equal(seen.rarity, 'Common');
+  assert.equal(seen.ability, 'Pollen Mend');
+  assert.equal(seen.food, 'Berry');
+  assert.equal(seen.caught, 2);
+});
+
+test('field guide sightings and captures persist without changing the existing save version', () => {
+  assert.ok(gameScript.includes('version:6,mapVersion:2'));
+  assert.ok(gameScript.includes('caught:catchIndex,discoveredSpecies:discoveredSpecies'));
+  assert.ok(gameScript.includes('discoveredSpecies=normalizeSpeciesDiscovery(d.progress&&d.progress.discoveredSpecies,catchIndex)'));
+  assert.ok(gameScript.includes('if(pdist<=18)discoverSpecies(c.sp,true);'));
+  assert.ok(gameScript.includes('discoverSpecies(sc.sp,false)'));
+  assert.ok(html.includes('data-creature-filter="all"'));
+  assert.ok(html.includes('data-creature-filter="seen"'));
+  assert.ok(html.includes('data-creature-filter="missing"'));
+  assert.ok(gameScript.includes("var filter=e.target.closest('button[data-creature-filter]')"));
+  assert.ok(gameScript.includes('SIGHTED '+ ' + seen'));
+  assert.ok(gameScript.includes('Preferred habitat: '+ ' + habitatText'));
+});
