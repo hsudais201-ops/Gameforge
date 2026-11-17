@@ -924,7 +924,7 @@ test('player levels, persists upgrades, and exposes a caught-creature index', ()
   assert.ok(gameScript.includes("awardXP(25+(SPECIES[sc.sp].r==='rare'?15"));
   assert.ok(gameScript.includes("data-stat-upgrade"));
   assert.ok(html.includes('id="creatureIndex"'));
-  assert.ok(gameScript.includes("CAUGHT ×'+catchIndex[ci]"));
+  assert.ok(gameScript.includes("status=count>0?'CAUGHT ×'+count"));
   assert.ok(gameScript.includes("P.stats.tamer)||0)*0.025"));
   assert.ok(gameScript.includes("P.stats.power)||0)*0.75"));
 });
