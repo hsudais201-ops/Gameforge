@@ -2288,7 +2288,7 @@ function renderInv(force){
 function setCompanionMode(mode){
   if(['follow','hold','defend','attack'].indexOf(mode)<0)return;
   companionMode=mode;renderInv(true);save();
-  say(mode==='follow'?'Companions will follow you.':(mode==='hold'?'Companions will hold their positions.':(mode==='attack'?'Companions will hunt Wraiths and use their signature abilities.':'Companions will defend a wider area.')),3);
+  say(mode==='follow'?'Companions will follow you.':(mode==='hold'?'Companions will hold their positions.':(mode==='attack'?'Companions will actively hunt nearby Wraiths. Signature abilities are enabled.':'Companions will defend a wider area.')),3);
 }
 function slotClick(i){
   if(!bagOpen){if(i<HOT){hotSel=i;renderInv(true)}return}
