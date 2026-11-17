@@ -920,7 +920,7 @@ test('player levels, persists upgrades, and exposes a caught-creature index', ()
   assert.ok(gameScript.includes('level:1,xp:0,statPoints:0,stats:{vitality:0,power:0,tamer:0}'));
   assert.ok(gameScript.includes('function awardXP(amount,reason)'));
   assert.ok(gameScript.includes('function upgradePlayerStat(stat)'));
-  assert.ok(gameScript.includes("progress:{level:P.level,xp:P.xp,statPoints:P.statPoints,stats:P.stats,caught:catchIndex}"));
+  assert.ok(gameScript.includes("progress:{level:P.level,xp:P.xp,statPoints:P.statPoints,stats:P.stats,caught:catchIndex,discoveredSpecies:discoveredSpecies}"));
   assert.ok(gameScript.includes("awardXP(25+(SPECIES[sc.sp].r==='rare'?15"));
   assert.ok(gameScript.includes("data-stat-upgrade"));
   assert.ok(html.includes('id="creatureIndex"'));
@@ -1534,6 +1534,6 @@ test('field guide sightings and captures persist without changing the existing s
   assert.ok(html.includes('data-creature-filter="seen"'));
   assert.ok(html.includes('data-creature-filter="missing"'));
   assert.ok(gameScript.includes("var filter=e.target.closest('button[data-creature-filter]')"));
-  assert.ok(gameScript.includes('SIGHTED '+ ' + seen'));
-  assert.ok(gameScript.includes('Preferred habitat: '+ ' + habitatText'));
+  assert.ok(gameScript.includes("'SIGHTED '+seen"));
+  assert.ok(gameScript.includes("'Preferred habitat: '+habitatText"));
 });
