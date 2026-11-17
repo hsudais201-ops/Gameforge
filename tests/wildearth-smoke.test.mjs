@@ -1393,3 +1393,81 @@ test('capture throws use eased distance-scaled arcs and communicate impact, succ
   assert.ok(gameScript.includes("say(SPECIES[sc.sp].n+' joined your party!'"), 'successful capture should confirm party membership');
   assert.ok(gameScript.includes('broke free. Build trust or try a Great Ball.'), 'failed capture should explain recovery options');
 });
+
+test('all eight original species expose unique signature abilities and readable combat roles', () => {
+  const start=gameScript.indexOf('var COMPANION_ABILITIES=[');
+  const end=gameScript.indexOf('function companionAbilityProfile',start);
+  assert.ok(start>=0&&end>start,'signature ability profiles must exist');
+  const block=gameScript.slice(start,end);
+  const profiles=new Function(block+';return COMPANION_ABILITIES;')();
+  assert.equal(profiles.length,8);
+  assert.equal(new Set(profiles.map(p=>p.name)).size,8);
+  assert.equal(new Set(profiles.map(p=>p.effect)).size,8);
+  for(const profile of profiles){
+    assert.ok(profile.cooldown>=9&&profile.cooldown<=13);
+    assert.ok(profile.range>=6&&profile.range<=8);
+    assert.ok(profile.role&&profile.name);
+  }
+  for(const entry of ["role:'Support',ability:'Pollen Mend'","role:'Striker',ability:'Cinder Burst'","role:'Controller',ability:'Tidal Snare'","role:'Guardian',ability:'Stone Ward'","role:'Chain striker',ability:'Arc Spark'","role:'Controller',ability:'Briar Snare'","role:'Disruptor',ability:'Gale Break'","role:'Finisher',ability:'Prism Lance'"])assert.ok(gameScript.includes(entry),'missing species role/ability: '+entry);
+});
+
+test('signature abilities require Attack order, range, cooldown and appropriate support conditions', () => {
+  const start=gameScript.indexOf('var COMPANION_ABILITIES=[');
+  const end=gameScript.indexOf('function resolveCompanionAbility',start);
+  const system=new Function(gameScript.slice(start,end)+';return {ready:companionAbilityReady};')();
+  const player={x:0,z:0,hp:72,maxHp:100,stamina:55};
+  const companion={sp:0,x:1,z:0,abilityCd:0};
+  const target={x:3,z:0,hp:12};
+  assert.equal(system.ready(companion,target,'attack',player,0,0),true);
+  assert.equal(system.ready(companion,target,'follow',player,0,0),false);
+  assert.equal(system.ready({...companion,abilityCd:2},target,'attack',player,0,0),false);
+  assert.equal(system.ready(companion,target,'attack',player,1,0),false);
+  assert.equal(system.ready(companion,{x:12,z:0,hp:12},'attack',player,0,0),false);
+  assert.equal(system.ready(companion,target,'attack',{...player,x:20},0,0),false);
+  assert.equal(system.ready(companion,target,'attack',{...player,hp:100,stamina:100},0,0),false);
+  assert.equal(system.ready({...companion,sp:3},target,'attack',player,0,4),false);
+  assert.equal(system.ready({...companion,abilityCd:undefined},target,'attack',player,0,0),true,'legacy saved companions start ready without a saved cooldown');
+});
+
+test('eight signature ability effects heal, ward, burn, slow, chain, root, knock back and finish Wraiths', () => {
+  const start=gameScript.indexOf('var COMPANION_ABILITIES=[');
+  const end=gameScript.indexOf('function activateCompanionAbility',start);
+  const system=new Function(gameScript.slice(start,end)+';return {resolve:resolveCompanionAbility};')();
+  function scenario(sp,boss){
+    const mobs=[
+      {x:0,z:0,y:0,hp:20,boss:!!boss,damageTaken:1,windup:0.4,lunge:0.2,attackCd:0.2},
+      {x:2,z:0,y:0,hp:20,damageTaken:1,windup:0.2,lunge:0.1,attackCd:0.1},
+      {x:3,z:0,y:0,hp:20,damageTaken:1},
+      {x:4,z:0,y:0,hp:20,damageTaken:1},
+      {x:8,z:0,y:0,hp:20,damageTaken:1}
+    ];
+    const companion={sp,x:-1,y:0,z:0};
+    const player={x:0,y:0,z:0,hp:70,maxHp:100,stamina:40};
+    const calls={bursts:0,pops:0,knockbacks:0,sounds:0};
+    const result=system.resolve(companion,mobs[0],{player,wraiths:mobs,wardTimer:0,wardReduction:0},{
+      burst(){calls.bursts++;},pop(){calls.pops++;},sound(){calls.sounds++;},knockback(){calls.knockbacks++;}
+    });
+    return {mobs,player,calls,result};
+  }
+  const mend=scenario(0);assert.equal(mend.result.healed,8);assert.equal(mend.result.staminaRestored,14);assert.equal(mend.player.hp,78);
+  const burn=scenario(1);assert.ok(burn.mobs[0].hp<20);assert.equal(burn.mobs[0].burnTimer,1.45);
+  const tide=scenario(2);assert.ok(tide.mobs[0].frostTimer>=3.1);
+  const ward=scenario(3);assert.equal(ward.result.wardTimer,5.5);assert.equal(ward.result.wardReduction,0.28);
+  const chain=scenario(4);assert.equal(chain.result.affected,3);assert.ok(chain.mobs[1].hp<20&&chain.mobs[2].hp<20);
+  const root=scenario(5);assert.ok(root.mobs[0].rootTimer>0);assert.equal(root.mobs[0].windup,0);assert.equal(root.mobs[0].lunge,0);
+  const gust=scenario(6);assert.equal(gust.result.affected,4);assert.equal(gust.calls.knockbacks,4);assert.equal(gust.mobs[0].attackCd,0.45);
+  const prism=scenario(7,true);assert.ok(Math.abs(prism.mobs[0].hp-(20-2.4*1.35))<0.0001);
+  for(const run of [mend,burn,tide,ward,chain,root,gust,prism]){assert.equal(run.calls.pops,1);assert.equal(run.calls.sounds,1);}
+});
+
+test('signature abilities integrate with companion attack orders, Wraith status updates, damage mitigation and unchanged saves', () => {
+  assert.ok(gameScript.includes('if(guard&&companionAbilityReady(t,guard,companionMode,P,companionAbilityGlobalCd,companionWardTimer))activateCompanionAbility(t,guard);'));
+  assert.ok(gameScript.includes("if(s.rootTimer>0){s.windup=0;s.lunge=0;s.attackTarget=null;}"));
+  assert.ok(gameScript.includes("s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);s.rootTimer=Math.max(0,(s.rootTimer||0)-dt);"));
+  assert.ok(gameScript.includes("var wardMultiplier=companionWardTimer>0?1-clamp(companionWardReduction,0,0.6):1;"));
+  assert.ok(gameScript.includes("if(companionWardTimer>0)statuses.push('STONE WARD · '+Math.ceil(companionWardTimer)+'s');"));
+  assert.ok(gameScript.includes("team:team.map(function(t){return {sp:t.sp}})"),'signature cooldowns remain runtime-only and do not alter saved party data');
+  assert.ok(gameScript.includes("th+='</div><div class=\"companionCommands\""));
+  assert.ok(gameScript.includes('Signature abilities activate in Attack order when a Wraith is close.'));
+  assert.doesNotThrow(() => new Function(gameScript));
+});
