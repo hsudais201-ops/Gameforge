@@ -87,7 +87,7 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Companion Follow, Hold, Defend, and Attack commands.
 - [ ] Create a complete creature roster plan with clear roles, rarity, habitats, diet, temperament, and progression.
 - [ ] Give every species a distinct movement style, locomotion animation, idle behavior, and recognizable personality.
-- [ ] Add species-specific attacks and companion abilities; avoid making creatures differ only by stats or color.
+- [x] Add eight species-specific signature abilities: Pollen Mend, Cinder Burst, Tidal Snare, Stone Ward, Arc Spark, Briar Snare, Gale Break, and Prism Lance, with distinct support, damage, control, chain, and disruption effects.
 - [x] Improve capture feedback: camera-aligned aiming, eased distance-scaled throw arcs, impact and capture pulses, clear success/escape feedback, and qualitative odds without exposing hidden formulas.
 - [ ] Add a collection journal with discovery, habitat hints, care information, abilities, and missing-species tracking.
 - [ ] Make party management clear: active team, reserve storage, swapping, healing, and command feedback.
