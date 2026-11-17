@@ -334,7 +334,7 @@
   #bag.palBag .partyOrb{width:19px;height:19px;flex:0 0 19px;border:2px solid #d8e0c5;border-radius:50%;box-shadow:0 0 8px #fff3}
   #bag.palBag .partyCard span:nth-child(2){display:grid;min-width:0}
   #bag.palBag .partyCard b{font-size:10px;color:#f0f2e9}
-  #bag.palBag .partyCard small{font-size:8px;color:#b9c5b8}
+  #bag.palBag .partyCard small{font-size:8px;color:#b9c5b8}#bag.palBag .partyCard .partyAbility{color:#e5d99f}.companionHint{display:block;width:100%;margin-top:2px;color:#9eaf9f;font-size:8px;line-height:1.35}
   #bag.palBag .partyCard em{margin-left:auto;font-size:7px;font-style:normal;color:#9ed7a7;letter-spacing:.08em}
   #bag.palBag .partyEmpty{padding:12px 8px;text-align:center;color:#aebbac;font-size:10px;border:1px dashed #536b58;border-radius:5px}
   #bag.palBag .hotbarHeading{margin-top:15px;padding-top:10px;border-top:1px solid #ffffff20}
@@ -1563,15 +1563,112 @@ function applyCharacterStyle(index){selectedCharacter=clamp(index|0,0,3);var mat
 applyCharacterStyle(selectedCharacter);
 
 var SPECIES=[
-  {n:'Fluffo',c:0x8fd16a,w:'wood',rough:1,r:'common'},
-  {n:'Embit',c:0xf08a3c,w:'stone',rough:0.8,r:'uncommon'},
-  {n:'Aquo',c:0x5aa9e6,w:'fiber',rough:0.25,r:'common'},
-  {n:'Rocko',c:0x9aa0a6,w:'stone',rough:1,flat:true,r:'uncommon'},
-  {n:'Zappy',c:0xf2d03b,w:'wood',rough:0.6,r:'rare'},
-  {n:'Thornback',c:0x8a5a3a,w:'wood',rough:0.9,r:'uncommon'},
-  {n:'Mistral',c:0xdfe8f2,w:'berry',rough:0.7,r:'rare'},
-  {n:'Glimmer',c:0x9b6bd6,w:'stone',rough:0.35,r:'rare'}
+  {n:'Fluffo',c:0x8fd16a,w:'wood',rough:1,r:'common',role:'Support',ability:'Pollen Mend'},
+  {n:'Embit',c:0xf08a3c,w:'stone',rough:0.8,r:'uncommon',role:'Striker',ability:'Cinder Burst'},
+  {n:'Aquo',c:0x5aa9e6,w:'fiber',rough:0.25,r:'common',role:'Controller',ability:'Tidal Snare'},
+  {n:'Rocko',c:0x9aa0a6,w:'stone',rough:1,flat:true,r:'uncommon',role:'Guardian',ability:'Stone Ward'},
+  {n:'Zappy',c:0xf2d03b,w:'wood',rough:0.6,r:'rare',role:'Chain striker',ability:'Arc Spark'},
+  {n:'Thornback',c:0x8a5a3a,w:'wood',rough:0.9,r:'uncommon',role:'Controller',ability:'Briar Snare'},
+  {n:'Mistral',c:0xdfe8f2,w:'berry',rough:0.7,r:'rare',role:'Disruptor',ability:'Gale Break'},
+  {n:'Glimmer',c:0x9b6bd6,w:'stone',rough:0.35,r:'rare',role:'Finisher',ability:'Prism Lance'}
 ];
+var COMPANION_ABILITIES=[
+  {role:'Support',name:'Pollen Mend',effect:'mend',color:0x9bdc77,cooldown:12,range:6.4,supportRange:10,heal:8,stamina:14},
+  {role:'Striker',name:'Cinder Burst',effect:'burn',color:0xff8744,cooldown:9.5,range:6.8,damage:1.45,burn:1.45},
+  {role:'Controller',name:'Tidal Snare',effect:'tide',color:0x6bcbe9,cooldown:10.5,range:6.8,damage:1.05,slow:3.1},
+  {role:'Guardian',name:'Stone Ward',effect:'ward',color:0xb6a58b,cooldown:13,range:6.4,supportRange:10,duration:5.5,wardReduction:0.28},
+  {role:'Chain striker',name:'Arc Spark',effect:'chain',color:0xffe16a,cooldown:10,range:7.4,radius:5.2,maxTargets:3,damage:1.25,bossMultiplier:0.85},
+  {role:'Controller',name:'Briar Snare',effect:'root',color:0x93bd6c,cooldown:11,range:6.3,damage:0.8,root:1.65,bossRoot:0.85},
+  {role:'Disruptor',name:'Gale Break',effect:'gust',color:0xa9d8ee,cooldown:11.5,range:7,radius:5.5,maxTargets:4,damage:0.65,knockback:2.4},
+  {role:'Finisher',name:'Prism Lance',effect:'prism',color:0xc69bff,cooldown:10.5,range:8,damage:2.4,bossMultiplier:1.35}
+];
+function companionAbilityProfile(sp){return COMPANION_ABILITIES[Number.isInteger(sp)&&sp>=0&&sp<COMPANION_ABILITIES.length?sp:0];}
+function companionAbilityTargets(primary,candidates,radius,maxTargets){
+  var found=[],limit=Math.max(1,Math.floor(maxTargets||1));
+  if(primary&&candidates.indexOf(primary)>=0&&primary.hp>0)found.push(primary);
+  for(var i=0;i<candidates.length&&found.length<limit;i++){
+    var mob=candidates[i];if(!mob||mob===primary||mob.hp<=0)continue;
+    if(Math.hypot(mob.x-primary.x,mob.z-primary.z)<=radius)found.push(mob);
+  }
+  return found;
+}
+function companionAbilityReady(companion,target,mode,player,globalCooldown,wardTimer){
+  if(!companion||!target||target.hp<=0||mode!=='attack'||(companion.abilityCd||0)>0||globalCooldown>0)return false;
+  var profile=companionAbilityProfile(companion.sp);
+  if(Math.hypot(target.x-companion.x,target.z-companion.z)>profile.range)return false;
+  if(profile.supportRange&&Math.hypot(player.x-companion.x,player.z-companion.z)>profile.supportRange)return false;
+  if(profile.effect==='mend'&&(player.hp>=(player.maxHp||100)-1&&player.stamina>=94))return false;
+  if(profile.effect==='ward'&&wardTimer>1)return false;
+  return true;
+}
+function companionAbilityDamage(profile,target,baseDamage){
+  var base=baseDamage===undefined?profile.damage:baseDamage;
+  return Math.max(0,(Number(base)||0)*(target&&target.boss?(profile.bossMultiplier||0.82):1)*(target&&target.damageTaken||1));
+}
+function resolveCompanionAbility(companion,target,context,effects){
+  var profile=companionAbilityProfile(companion.sp),player=context.player||{},wraithList=context.wraiths||[];
+  var targets=companionAbilityTargets(target,wraithList,profile.radius||0,profile.maxTargets||1);
+  var result={name:profile.name,effect:profile.effect,affected:0,healed:0,staminaRestored:0,wardTimer:Math.max(0,context.wardTimer||0),wardReduction:Math.max(0,context.wardReduction||0)};
+  function hit(mob,baseDamage){
+    if(!mob||wraithList.indexOf(mob)<0||mob.hp<=0)return;
+    var amount=companionAbilityDamage(profile,mob,baseDamage);
+    mob.hp=Math.max(0,mob.hp-amount);mob.hit=0.22;result.affected++;
+    if(effects&&effects.burst)effects.burst(mob.x,mob.y+1.4,mob.z,profile.color,profile.effect==='chain'?4:6);
+  }
+  if(profile.effect==='mend'){
+    var hpBefore=Number(player.hp)||0,staminaBefore=Number(player.stamina)||0;
+    player.hp=Math.min(player.maxHp||100,hpBefore+profile.heal);
+    player.stamina=Math.min(100,staminaBefore+profile.stamina);
+    result.healed=player.hp-hpBefore;result.staminaRestored=player.stamina-staminaBefore;
+    if(effects&&effects.burst)effects.burst(player.x,player.y+1.3,player.z,profile.color,10);
+  }else if(profile.effect==='ward'){
+    result.wardTimer=Math.max(result.wardTimer,profile.duration);
+    result.wardReduction=profile.wardReduction;
+    if(effects&&effects.burst)effects.burst(player.x,player.y+1.2,player.z,profile.color,12);
+  }else if(profile.effect==='burn'){
+    hit(target,profile.damage);target.burnTimer=Math.max(target.burnTimer||0,profile.burn);target.burnTick=Math.min(target.burnTick||0.25,0.25);
+  }else if(profile.effect==='tide'){
+    hit(target,profile.damage);target.frostTimer=Math.max(target.frostTimer||0,profile.slow);
+  }else if(profile.effect==='chain'){
+    for(var ci=0;ci<targets.length;ci++)hit(targets[ci],profile.damage);
+  }else if(profile.effect==='root'){
+    hit(target,profile.damage);target.rootTimer=Math.max(target.rootTimer||0,target.boss?profile.bossRoot:profile.root);
+    target.windup=0;target.lunge=0;target.attackTarget=null;
+  }else if(profile.effect==='gust'){
+    for(var gi=0;gi<targets.length;gi++){
+      var gustTarget=targets[gi];hit(gustTarget,profile.damage);
+      gustTarget.windup=0;gustTarget.lunge=0;gustTarget.attackTarget=null;gustTarget.attackCd=Math.max(gustTarget.attackCd||0,0.45);
+      if(effects&&effects.knockback)effects.knockback(gustTarget,companion,profile.knockback);
+    }
+  }else if(profile.effect==='prism'){
+    hit(target,profile.damage);
+  }
+  var support=profile.effect==='mend'||profile.effect==='ward';
+  var fxX=support?player.x:target.x,fxY=support?player.y+2.1:target.y+2.1,fxZ=support?player.z:target.z;
+  var color='#'+profile.color.toString(16).padStart(6,'0');
+  var label=profile.name;
+  if(profile.effect==='mend'&&result.healed>0)label+=' · +'+Math.round(result.healed)+' HP';
+  else if(profile.effect==='ward')label+=' · '+Math.round(profile.wardReduction*100)+'% less damage';
+  if(effects&&effects.pop)effects.pop(fxX,fxY,fxZ,label,color);
+  if(effects&&effects.sound)effects.sound(support?'creature':'warning');
+  return result;
+}
+function activateCompanionAbility(companion,target){
+  var profile=companionAbilityProfile(companion.sp);
+  var result=resolveCompanionAbility(companion,target,{player:P,wraiths:wraiths,wardTimer:companionWardTimer,wardReduction:companionWardReduction},{
+    burst:burst,pop:pop,
+    sound:function(kind){playSfx(kind);},
+    knockback:function(mob,source,power){
+      var dx=mob.x-source.x,dz=mob.z-source.z,distance=Math.hypot(dx,dz)||1;
+      mob.x=clamp(mob.x+dx/distance*power,-HALF+8,HALF-8);
+      mob.z=clamp(mob.z+dz/distance*power,-HALF+8,HALF-8);
+      pushOutBoxes(mob,0.7);
+    }
+  });
+  companionWardTimer=result.wardTimer;companionWardReduction=result.wardReduction;
+  companion.abilityCd=profile.cooldown;companion.attackAnim=0.52;companionAbilityGlobalCd=1.15;
+  return result;
+}
 var CREATURE_DIET=['berry','berry','fiber','berry','berry','fiber','berry','crystal'];
 var catchIndex=SPECIES.map(function(){return 0;});
 var RAR={
@@ -2168,11 +2265,11 @@ function renderInv(force){
     var cnt={},tn=0;
     team.forEach(function(t){cnt[t.sp]=(cnt[t.sp]||0)+1;tn++});
     var th='<div class="partyHead"><strong>Party</strong><small>'+tn+'/12 companions</small></div><div class="partyCards">';
-    team.forEach(function(t,ti){var S=SPECIES[t.sp];th+='<div class="partyCard"><span class="partyOrb" style="background:#'+S.c.toString(16).padStart(6,'0')+'"></span><span><b>'+S.n+'</b><small>'+RAR[S.r].n+' · Companion '+(ti+1)+'</small></span><em>ACTIVE</em></div>';});
+    team.forEach(function(t,ti){var S=SPECIES[t.sp];th+='<div class="partyCard"><span class="partyOrb" style="background:#'+S.c.toString(16).padStart(6,'0')+'"></span><span><b>'+S.n+'</b><small>'+S.role+' · '+RAR[S.r].n+' · Companion '+(ti+1)+'</small><small class="partyAbility">'+S.ability+'</small></span><em>ACTIVE</em></div>';});
     if(!team.length)th+='<div class="partyEmpty">No companions yet. Capture wild creatures to build your party.</div>';
     th+='</div><div class="chips">';
     SPECIES.forEach(function(S,si){th+=cnt[si]?'<span class="chip" style="color:'+RAR[S.r].c+'">'+S.n+' ×'+cnt[si]+'</span>':'<span class="chip off">???</span>'});
-    th+='</div><div class="companionCommands"><span>Companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button><button type="button" data-team-mode="attack" class="'+(companionMode==='attack'?'active':'')+'">Attack</button></div>';
+    th+='</div><div class="companionCommands"><span>Companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button><button type="button" data-team-mode="attack" class="'+(companionMode==='attack'?'active':'')+'">Attack</button><small class="companionHint">Signature abilities activate in Attack order when a Wraith is close.</small></div>';
     $('bagTeam').innerHTML=th;
     var armor=equippedArmor==='wraithguard'?'Wraithguard Armor':(equippedArmor==='frostarmor'?'Frostguard Armor':(equippedArmor==='emberarmor'?'Emberplate Armor':(equippedArmor==='ironarmor'?'Iron Armor':(equippedArmor==='copperarmor'?'Copper Armor':'No armor equipped'))));
     $('equipStatus').textContent=armor+(armor==='No armor equipped'?'':' · equipped · damage reduction active');
@@ -2191,7 +2288,7 @@ function renderInv(force){
 function setCompanionMode(mode){
   if(['follow','hold','defend','attack'].indexOf(mode)<0)return;
   companionMode=mode;renderInv(true);save();
-  say(mode==='follow'?'Companions will follow you.':(mode==='hold'?'Companions will hold their positions.':(mode==='attack'?'Companions will actively hunt nearby Wraiths.':'Companions will defend a wider area.')),3);
+  say(mode==='follow'?'Companions will follow you.':(mode==='hold'?'Companions will hold their positions.':(mode==='attack'?'Companions will hunt Wraiths and use their signature abilities.':'Companions will defend a wider area.')),3);
 }
 function slotClick(i){
   if(!bagOpen){if(i<HOT){hotSel=i;renderInv(true)}return}
@@ -3216,7 +3313,7 @@ function updateAmbient(dt){
 
 /* ---------- update ---------- */
 var hudT=0,saveT=0,flick=0,sprintEmptyNotified=false,hungerWarned=false;
-var frostSlowTimer=0,emberBurnTimer=0,emberBurnTick=0;
+var frostSlowTimer=0,emberBurnTimer=0,emberBurnTick=0,companionWardTimer=0,companionWardReduction=0,companionAbilityGlobalCd=0;
 function applyWraithStatus(mob){
   if(!mob)return;
   if(mob.kind==='frostreaver'){frostSlowTimer=Math.max(frostSlowTimer,2.4*(equippedArmor==='frostarmor'?0.35:1));pop(P.x,P.y+2.1,P.z,equippedArmor==='frostarmor'?'Frost resisted':'Frostbound','#8de5ff');}
@@ -3231,7 +3328,7 @@ function update(dt){
     var autosaveOk=save();
     $('saveStatus').textContent=autosaveOk?'Autosaved just now · every 10 seconds':'Autosave failed · check device storage';
   }
-  frostSlowTimer=Math.max(0,frostSlowTimer-dt);
+  frostSlowTimer=Math.max(0,frostSlowTimer-dt);companionWardTimer=Math.max(0,companionWardTimer-dt);companionAbilityGlobalCd=Math.max(0,companionAbilityGlobalCd-dt);if(companionWardTimer===0)companionWardReduction=0;
   if(emberBurnTimer>0){emberBurnTimer=Math.max(0,emberBurnTimer-dt);emberBurnTick-=dt;if(emberBurnTick<=0){playerDamage(1.1,'Burning');emberBurnTick=0.55;}}
   riverUpdateAccumulator+=dt;
   if(riverUpdateAccumulator>=1/12){updateRivers();riverUpdateAccumulator%=1/12;}
@@ -3547,7 +3644,7 @@ function update(dt){
 
   for(i=0;i<team.length;i++){
     var t=team[i],guard=null,guardDist=999,guardScore=Infinity;
-    t.guardCd=Math.max(0,(t.guardCd||0)-dt);
+    t.guardCd=Math.max(0,(t.guardCd||0)-dt);t.abilityCd=Math.max(0,(t.abilityCd||0)-dt);
     for(j=0;j<wraiths.length;j++){
       var candidate=wraiths[j],wd=Math.hypot(candidate.x-t.x,candidate.z-t.z);
       var threatScore=wd-(candidate.boss?5:0);
@@ -3555,6 +3652,7 @@ function update(dt){
       // instead of scattering damage across nearby lesser Wraiths.
       if(wd<(companionMode==='attack'?36:(companionMode==='defend'?19:13))&&Math.hypot(candidate.x-P.x,candidate.z-P.z)<(companionMode==='attack'?48:(companionMode==='defend'?27:19))&&threatScore<guardScore){guard=candidate;guardDist=wd;guardScore=threatScore}
     }
+    if(guard&&companionAbilityReady(t,guard,companionMode,P,companionAbilityGlobalCd,companionWardTimer))activateCompanionAbility(t,guard);
     var forwardX=Math.sin(P.face),forwardZ=Math.cos(P.face),rightX=Math.cos(P.face),rightZ=-Math.sin(P.face);
     var row=i===0?0:Math.ceil(i/2),side=i===0?0:(i%2===1?-1:1);
     var lateral=side*(1.25+row*0.18),behind=2.7+row*1.45;
@@ -3612,7 +3710,7 @@ function update(dt){
   for(i=wraiths.length-1;i>=0;i--){
     var s=wraiths[i];
     if(s.hit>0)s.hit=Math.max(0,s.hit-dt);
-    s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);
+    s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);s.rootTimer=Math.max(0,(s.rootTimer||0)-dt);
     if(s.burnTimer>0){s.burnTimer=Math.max(0,s.burnTimer-dt);s.burnTick=(s.burnTick||0)-dt;if(s.burnTick<=0){s.hp-=1.25;s.burnTick=0.65;burst(s.x,s.y+1.1,s.z,0xff7138,3);}}
     if(nightF<0.25&&!s.boss)s.hp-=3*dt;
     if(s.boss){var bossPhase=s.hp>40?1:(s.hp>18?2:3);if(bossPhase!==s.phase){s.phase=bossPhase;say(bossPhase===2?'The Night Herald enters its second phase!':(bossPhase===3?'The Night Herald is enraged!':'The Night Herald shifts form.'),4);burst(s.x,s.y+1.5,s.z,0xff684f,18);}s.moveSpeed=bossPhase===1?3.3:(bossPhase===2?4.25:5.2);s.damageScale=bossPhase===1?1.3:(bossPhase===2?1.5:1.75);s.lungeSpeed=bossPhase===1?4.8:(bossPhase===2?5.8:7);}
@@ -3640,7 +3738,8 @@ function update(dt){
         burst(s.x,s.y+1.5,s.z,0xc9a8ff,4);pop(s.x,s.y+2.3,s.z,'Guardian strike','#b8e6a1');}
     }
     s.attackCd=Math.max(0,(s.attackCd||0)-dt);
-    if(s.windup>0){
+    if(s.rootTimer>0){s.windup=0;s.lunge=0;s.attackTarget=null;}
+    else if(s.windup>0){
       s.windup=Math.max(0,s.windup-dt);
       s.x+=s.attackX*2.8*dt;s.z+=s.attackZ*2.8*dt;
       if(s.windup===0){
@@ -4098,6 +4197,7 @@ function updateHud(){
   if(P.food<=0)statuses.push('STARVING');else if(P.food<20)statuses.push('HUNGRY');
   if(P.stamina<=0.5)statuses.push('EXHAUSTED');
   if(P.dodge>0)statuses.push('DODGING');
+  if(companionWardTimer>0)statuses.push('STONE WARD · '+Math.ceil(companionWardTimer)+'s');
   if(caveMode)statuses.push('INSIDE LUMEN CAVERN');if(P.swimming)statuses.push('SWIMMING · O₂ '+Math.ceil(P.oxygen)+'%');
   if(P.wetness>35)statuses.push('WET '+Math.ceil(P.wetness)+'%');
   if(P.temperature<0.08)statuses.push('FREEZING');
@@ -4155,7 +4255,8 @@ function updateFloats(dt){
 function playerDamage(amount,label){
   if(dead||P.invulnerable>0||!isFinite(amount)||amount<=0)return;
   playSfx('damage');
-  P.hp=clamp(P.hp-amount*difficultyScale()*armorDamageMultiplier(equippedArmor),0,P.maxHp||100);
+  var wardMultiplier=companionWardTimer>0?1-clamp(companionWardReduction,0,0.6):1;
+  P.hp=clamp(P.hp-amount*difficultyScale()*armorDamageMultiplier(equippedArmor)*wardMultiplier,0,P.maxHp||100);
   var flash=$('damageFlash');
   if(flash){flash.classList.remove('hit');void flash.offsetWidth;flash.classList.add('hit');}
   if(label)pop(P.x,P.y+2.1,P.z,label,'#ff9a91');
