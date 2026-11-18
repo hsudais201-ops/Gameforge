@@ -2299,7 +2299,7 @@ function slotHtml(i){
   return '<div class="'+c+'" data-slot="'+i+'" draggable="'+(!!s)+'"'+(s?' data-id="'+s.id+'" title="'+ITEMS[s.id].n+(TOOL_MAX[s.id]?' · Durability '+Math.round(toolDurabilityNow(s.id))+'/'+TOOL_MAX[s.id]:'')+'"':'')+'>'+(i<HOT?'<i>'+(i+1)+'</i>':'')+(s?(ICON[s.id]||ICON.stone)+'<b>'+s.n+'</b>':'')+'</div>';
 }
 function renderInv(force){
-  var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.map(function(t){return companionHealth(t)}).join(',')+'|'+reserveTeam.map(function(t){return companionHealth(t)}).join(',')+'|'+companionMode+'|'+equippedArmor;
+  var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.map(function(t){return t.sp+':'+companionHealth(t)}).join(',')+'|'+reserveTeam.map(function(t){return t.sp+':'+companionHealth(t)}).join(',')+'|'+companionMode+'|'+equippedArmor;
   if(!force&&sig===lastSig)return;
   lastSig=sig;
   var h='',i;

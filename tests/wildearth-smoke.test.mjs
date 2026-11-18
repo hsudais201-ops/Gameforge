@@ -1008,7 +1008,8 @@ test('Palworld-inspired inventory includes working category filters and a compan
   assert.ok(gameScript.includes('function inventoryCategory(id)'));
   assert.ok(gameScript.includes('function setInventoryFilter(filter)'));
   assert.ok(gameScript.includes("var filterButtons=$('bag').querySelectorAll('[data-inv-filter]')"));
-  assert.ok(gameScript.includes('var th=\'<div class="partyHead"><strong>Party</strong>'));
+  assert.ok(gameScript.includes('var counts={},total=totalCompanionCount(),html=\'<div class="partyHead"><strong>ACTIVE PARTY</strong>'));
+  assert.ok(gameScript.includes('team.forEach(function(t,index){counts[t.sp]'));
   assert.ok(gameScript.includes('team.forEach(function(t,ti)'));
   assert.ok(html.includes('.partyCard'));
 });
@@ -1215,7 +1216,7 @@ test('creature faces use species-specific irises, pupils and eye highlights', ()
 test('creature models expose animated ears, eyes and torso for low-cost expressive idle motion', () => {
   assert.ok(gameScript.includes('ears.push(ear)'));
   assert.ok(gameScript.includes('eyes.push(eyeWhite)'));
-  assert.ok(gameScript.includes('return {g:g,legs:legs,head:head,tail:tail,ears:ears,eyes:eyes,torso:torso}'));
+  assert.ok(gameScript.includes('return {g:clone,legs:legs,head:head,tail:tail,ears:ears,eyes:eyes,torso:torso}'));
 });
 
 test('creature animation includes breathing, blinking, ear reactions and relaxed resting gait', () => {
@@ -1341,7 +1342,7 @@ test('companion attack order is available, saved safely, and expands target acqu
 
 test('eight original species use distinct, bounded locomotion and secondary-motion profiles', () => {
   const start = gameScript.indexOf('var CREATURE_GAITS=[');
-  const end = gameScript.indexOf('var CREATURE_ART_CACHE=[];', start);
+  const end = gameScript.indexOf('var CREATURE_ART_CACHE=', start);
   assert.ok(start >= 0 && end > start, 'species gait profiles and pure gait helper must exist');
   const source = gameScript.slice(start, end);
   const factory = new Function(source + '; return { profiles: CREATURE_GAITS, gait: creatureGait };');
@@ -1477,7 +1478,7 @@ test('eight signature ability effects heal, ward, burn, slow, chain, root, knock
   for(const run of [mend,burn,tide,ward,chain,root,gust,prism]){assert.equal(run.calls.pops,1);assert.equal(run.calls.sounds,1);}
 });
 
-test('signature abilities integrate with companion attack orders, Wraith status updates, damage mitigation and unchanged saves', () => {
+test('signature abilities integrate with companion attack orders, Wraith status updates, damage mitigation and backward-compatible saves', () => {
   assert.ok(gameScript.includes('if(guard&&companionAbilityReady(t,guard,companionMode,P,companionAbilityGlobalCd,companionWardTimer))activateCompanionAbility(t,guard);'));
   assert.ok(gameScript.includes("if(s.rootTimer>0){s.windup=0;s.lunge=0;s.attackTarget=null;s.attackCompanion=null;}"));
   assert.ok(gameScript.includes("s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);s.rootTimer=Math.max(0,(s.rootTimer||0)-dt);"));
@@ -1485,7 +1486,7 @@ test('signature abilities integrate with companion attack orders, Wraith status 
   assert.ok(gameScript.includes("if(companionWardTimer>0)statuses.push('STONE WARD · '+Math.ceil(companionWardTimer)+'s');"));
   assert.ok(gameScript.includes("team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t)}})"),'active companion health should persist without saving runtime cooldowns');
   assert.ok(gameScript.includes("reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t)}})"),'reserve companion health should persist without creating reserve meshes');
-  assert.ok(gameScript.includes("th+='</div><div class=\"companionCommands\""));
+  assert.ok(gameScript.includes("html+='</div><div class=\"companionCommands\""));
   assert.ok(gameScript.includes('Signature abilities activate in Attack order when a Wraith is close.'));
   assert.doesNotThrow(() => new Function(gameScript));
 });
