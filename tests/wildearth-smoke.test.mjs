@@ -1010,7 +1010,6 @@ test('Palworld-inspired inventory includes working category filters and a compan
   assert.ok(gameScript.includes("var filterButtons=$('bag').querySelectorAll('[data-inv-filter]')"));
   assert.ok(gameScript.includes('var counts={},total=totalCompanionCount(),html=\'<div class="partyHead"><strong>ACTIVE PARTY</strong>'));
   assert.ok(gameScript.includes('team.forEach(function(t,index){counts[t.sp]'));
-  assert.ok(gameScript.includes('team.forEach(function(t,index){counts[t.sp]'));
   assert.ok(html.includes('.partyCard'));
 });
 
@@ -1594,6 +1593,8 @@ test('party UI supports storing, deploying, swapping, and healing active or rese
     'function deployPartyCompanion(index)',
     'function swapPartyCompanion(reserveIndex,activeIndex)',
     'function healPartyCompanion(storage,index)',
+    'function releasePartyCompanion(storage,index)',
+    'data-party-action="release"',
     'data-party-action="store"',
     'data-party-action="deploy"',
     'data-party-action="swap"',
@@ -1633,4 +1634,14 @@ test('species companion models reuse cached geometry and materials across active
   for(const name of ['creature-head','creature-tail','creature-torso','creature-leg-','creature-ear-','creature-eye-']) {
     assert.ok(gameScript.includes(name),'cached model must retain animation part '+name);
   }
+});
+
+test('releasing an active or reserve companion frees a collection slot and safely returns wildlife', () => {
+  assert.ok(gameScript.includes("if(!window.confirm('Release '+name+' back into the wild? This removes them from your collection.'))return;"));
+  assert.ok(gameScript.includes("var list=storage==='reserve'?reserveTeam:team,member=list[index]"));
+  assert.ok(gameScript.includes("if(storage!=='reserve'&&member.m&&member.m.g)scene.remove(member.m.g)"));
+  assert.ok(gameScript.includes('if(wild.length<48&&!caveMode)'));
+  assert.ok(gameScript.includes('var released=spawnWild(member.sp)'));
+  assert.ok(gameScript.includes('list.splice(index,1)'));
+  assert.ok(gameScript.includes('Your collection is full (32). Release a companion from the Party panel before capturing another.'));
 });

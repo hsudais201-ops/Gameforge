@@ -2360,6 +2360,7 @@ function partyCardHtml(member,index,storage){
     if(team.length<ACTIVE_PARTY_LIMIT)html+='<button type="button" data-party-action="deploy" data-party-index="'+index+'">DEPLOY</button>';
     if(team.length)html+='<button type="button" data-party-action="swap" data-party-index="'+index+'">SWAP</button>';
   }
+  html+='<button type="button" data-party-action="release" data-party-storage="'+storage+'" data-party-index="'+index+'">RELEASE</button>';
   html+='<button type="button" data-party-action="heal" data-party-storage="'+storage+'" data-party-index="'+index+'" '+(hp>=100?'disabled':'')+'>HEAL</button></div></div>';
   return html;
 }
@@ -2411,6 +2412,19 @@ function healPartyCompanion(storage,index){
   playSfx('creature');pop(P.x,P.y+2.1,P.z,SPECIES[member.sp].n+' +'+Math.round(restored)+' HP','#b9e6a7');
   say(SPECIES[member.sp].n+' recovered '+Math.round(restored)+' health.',3);renderInv(true);save();
 }
+function releasePartyCompanion(storage,index){
+  var list=storage==='reserve'?reserveTeam:team,member=list[index];if(!member)return;
+  var name=SPECIES[member.sp].n;
+  if(!window.confirm('Release '+name+' back into the wild? This removes them from your collection.'))return;
+  if(storage!=='reserve'&&member.m&&member.m.g)scene.remove(member.m.g);
+  list.splice(index,1);
+  if(wild.length<48&&!caveMode){
+    var released=spawnWild(member.sp);
+    released.hp=Math.max(released.maxHp*0.35,released.maxHp*companionHealth(member)/100);
+    say(name+' returned to the wild. Collection space is free.',4);
+  }else say(name+' released from your collection. Collection space is free.',4);
+  renderInv(true);save();
+}
 function damageCompanion(member,amount){
   if(!member||team.indexOf(member)<0||companionHealth(member)<=0)return 0;
   var dealt=applyCompanionDamage(member,Math.max(0,amount)*difficultyScale());if(dealt<=0)return 0;
@@ -2444,6 +2458,7 @@ $('bagTeam').addEventListener('click',function(e){
   if(action==='store')storePartyCompanion(index);
   else if(action==='deploy')deployPartyCompanion(index);
   else if(action==='swap')swapPartyCompanion(index,Number($('partySwapTarget')&&$('partySwapTarget').value));
+  else if(action==='release')releasePartyCompanion(b.getAttribute('data-party-storage'),index);
   else if(action==='heal')healPartyCompanion(b.getAttribute('data-party-storage'),index);
 });
 $('bag').addEventListener('click',function(e){var f=e.target.closest('[data-inv-filter]');if(f)setInventoryFilter(f.getAttribute('data-inv-filter'));});
@@ -3190,7 +3205,7 @@ function doCatch(){
   }
   var id=ballForCatch();
   if(!id){say('You need a Capture Ball. Open the Bag to craft some.');return}
-  if(totalCompanionCount()+shots.length>=TOTAL_PARTY_LIMIT){say('Your collection is full (32). Store or release a companion before capturing another.');return}
+  if(totalCompanionCount()+shots.length>=TOTAL_PARTY_LIMIT){say('Your collection is full (32). Release a companion from the Party panel before capturing another.');return}
   var distance=Math.hypot(c.x-P.x,c.z-P.z),chance=captureChance(c,id),ok=random()<chance;
   P.lure=false;playSfx('capture');
   takeItem(id,1);renderInv(true);
