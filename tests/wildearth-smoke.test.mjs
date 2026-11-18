@@ -1010,7 +1010,7 @@ test('Palworld-inspired inventory includes working category filters and a compan
   assert.ok(gameScript.includes("var filterButtons=$('bag').querySelectorAll('[data-inv-filter]')"));
   assert.ok(gameScript.includes('var counts={},total=totalCompanionCount(),html=\'<div class="partyHead"><strong>ACTIVE PARTY</strong>'));
   assert.ok(gameScript.includes('team.forEach(function(t,index){counts[t.sp]'));
-  assert.ok(gameScript.includes('team.forEach(function(t,ti)'));
+  assert.ok(gameScript.includes('team.forEach(function(t,index){counts[t.sp]'));
   assert.ok(html.includes('.partyCard'));
 });
 
@@ -1622,6 +1622,7 @@ test('Defend and Attack companions can intercept Wraith strikes and downed compa
   assert.ok(gameScript.includes('damageCompanion(struckCompanion,companionHit)'));
   assert.ok(gameScript.includes('if(companionHealth(t)<=0){t.speed=0;t.defending=false;'));
   assert.ok(gameScript.includes('Heal them with a Healing Salve in the Party panel.'));
+  assert.ok(gameScript.includes('if(down)save();return dealt;'),'downed state is saved immediately while partial health uses autosave');
 });
 
 test('species companion models reuse cached geometry and materials across active and reserve swaps', () => {

@@ -2420,7 +2420,7 @@ function damageCompanion(member,amount){
   playSfx(down?'warning':'damage');
   if(down)say(name+' is downed. Heal them with a Healing Salve in the Party panel.',4);
   if(bagOpen)renderInv(true);
-  save();return dealt;
+  if(down)save();return dealt;
 }
 function setCompanionMode(mode){
   if(['follow','hold','defend','attack'].indexOf(mode)<0)return;
