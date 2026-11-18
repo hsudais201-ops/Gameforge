@@ -1779,7 +1779,7 @@ function creatureGait(sp,walk,speed,moving){
   result.headSway=Math.sin(phase+p.headPhase)*p.headSway*(moving?1:0.25);
   return result;
 }
-var CREATURE_ART_CACHE=[];
+var CREATURE_ART_CACHE=[],CREATURE_MODEL_CACHE=[];
 function makeCreatureArtPass(sp){
   if(CREATURE_ART_CACHE[sp])return CREATURE_ART_CACHE[sp];
   var parts=[];
@@ -1853,13 +1853,27 @@ function makeCreatureArtPass(sp){
   return CREATURE_ART_CACHE[sp];
 }
 function makeCreature(sp){
+  var cached=CREATURE_MODEL_CACHE[sp];
+  if(cached){
+    var clone=cached.g.clone(true),legs=[],ears=[],eyes=[],head=null,tail=null,torso=null;
+    clone.traverse(function(o){
+      var name=o.name||'';
+      if(name==='creature-head')head=o;
+      else if(name==='creature-tail')tail=o;
+      else if(name==='creature-torso')torso=o;
+      else if(name.indexOf('creature-leg-')===0)legs[Number(name.slice(13))]=o;
+      else if(name.indexOf('creature-ear-')===0)ears.push(o);
+      else if(name.indexOf('creature-eye-')===0)eyes.push(o);
+    });
+    return {g:clone,legs:legs,head:head,tail:tail,ears:ears,eyes:eyes,torso:torso};
+  }
   var S=SPECIES[sp],g=new THREE.Group(),legs=[],ears=[],eyes=[],s;
   var form=CREATURE_FORMS[sp]||CREATURE_FORMS[0];
   var mat=stdMat(S.c,S.rough,{flatShading:!!S.flat,metalness:sp===2?0.25:0});
   var dark=stdMat(0x1c1c1c,0.5),white=stdMat(0xffffff,0.3);
   var lowPoly=sp===3;
-  var torso=mesh(new THREE.SphereGeometry(0.6,lowPoly?7:20,lowPoly?5:14),mat,0,0.85,0,form.body[0],form.body[1]*0.85,form.body[2]*1.3);g.add(torso);
-  var head=new THREE.Group();head.position.set(form.headPosition[0],form.headPosition[1],form.headPosition[2]);head.scale.setScalar(form.headScale);g.add(head);
+  var torso=mesh(new THREE.SphereGeometry(0.6,lowPoly?7:20,lowPoly?5:14),mat,0,0.85,0,form.body[0],form.body[1]*0.85,form.body[2]*1.3);torso.name='creature-torso';g.add(torso);
+  var head=new THREE.Group();head.name='creature-head';head.position.set(form.headPosition[0],form.headPosition[1],form.headPosition[2]);head.scale.setScalar(form.headScale);g.add(head);
   head.add(mesh(new THREE.SphereGeometry(0.4,lowPoly?7:18,lowPoly?5:12),mat,0,0,0));
   head.add(mesh(new THREE.SphereGeometry(0.2,12,10),mat,0,-0.1,0.33,1,0.8,1.2));
   head.add(mesh(new THREE.SphereGeometry(0.06,8,6),dark,0,-0.06,0.55));
@@ -1868,10 +1882,11 @@ function makeCreature(sp){
   var irisMat=stdMat(irisColors[sp]||0x72b9a0,0.42,{metalness:sp===7?0.12:0});
   var eyeHighlight=stdMat(0xffffff,0.18,{emissive:0xffffff,emissiveIntensity:0.12});
   for(s=-1;s<=1;s+=2){
-    var eyeWhite=mesh(new THREE.SphereGeometry(0.095,10,8),white,s*0.17,0.08,0.3);head.add(eyeWhite);eyes.push(eyeWhite);
-    var iris=mesh(new THREE.SphereGeometry(0.064,10,8),irisMat,s*0.17,0.08,0.348,1,1,0.42);head.add(iris);eyes.push(iris);
-    var eyePupil=mesh(new THREE.SphereGeometry(0.036,9,7),dark,s*0.17,0.08,0.374);head.add(eyePupil);eyes.push(eyePupil);
-    var glint=mesh(new THREE.SphereGeometry(0.014,7,5),eyeHighlight,s*0.17-0.018,0.105,0.389);head.add(glint);eyes.push(glint);
+    var eyeSide=s<0?'left':'right';
+    var eyeWhite=mesh(new THREE.SphereGeometry(0.095,10,8),white,s*0.17,0.08,0.3);eyeWhite.name='creature-eye-'+eyeSide+'-white';head.add(eyeWhite);eyes.push(eyeWhite);
+    var iris=mesh(new THREE.SphereGeometry(0.064,10,8),irisMat,s*0.17,0.08,0.348,1,1,0.42);iris.name='creature-eye-'+eyeSide+'-iris';head.add(iris);eyes.push(iris);
+    var eyePupil=mesh(new THREE.SphereGeometry(0.036,9,7),dark,s*0.17,0.08,0.374);eyePupil.name='creature-eye-'+eyeSide+'-pupil';head.add(eyePupil);eyes.push(eyePupil);
+    var glint=mesh(new THREE.SphereGeometry(0.014,7,5),eyeHighlight,s*0.17-0.018,0.105,0.389);glint.name='creature-eye-'+eyeSide+'-glint';head.add(glint);eyes.push(glint);
     var ear;
     if(sp===0){ear=mesh(new THREE.SphereGeometry(0.15,10,8),mat,s*0.27,0.32,-0.02,1,1.3,0.7)}
     else if(sp===1){ear=mesh(new THREE.ConeGeometry(0.13,0.42,6),mat,s*0.2,0.5,0)}
@@ -1888,9 +1903,9 @@ function makeCreature(sp){
       var a2=mesh(new THREE.CylinderGeometry(0.025,0.035,0.4,6),am,s*0.3,0.8,0);a2.rotation.z=-s*0.9;head.add(a2);
       var a3=mesh(new THREE.CylinderGeometry(0.02,0.03,0.3,6),am,s*0.2,0.95,-0.1);a3.rotation.z=s*0.5;head.add(a3);
     }else{ear=mesh(new THREE.ConeGeometry(0.12,0.5,5),mat,s*0.22,0.45,0);ear.rotation.z=-s*0.35}
-    head.add(ear);ears.push(ear);
+    ear.name='creature-ear-'+(s<0?'left':'right');head.add(ear);ears.push(ear);
   }
-  var tail=new THREE.Group();tail.position.set(0,0.95,-0.78);tail.scale.set(form.tailScale[0],form.tailScale[1],form.tailScale[2]);g.add(tail);
+  var tail=new THREE.Group();tail.name='creature-tail';tail.position.set(0,0.95,-0.78);tail.scale.set(form.tailScale[0],form.tailScale[1],form.tailScale[2]);g.add(tail);
   if(sp===0){tail.add(mesh(new THREE.SphereGeometry(0.32,14,10),mat,0,0.1,-0.15))}
   else if(sp===1){
     var tc=mesh(new THREE.ConeGeometry(0.22,0.85,10),mat,0,0.15,-0.4);tc.rotation.x=-1.9;tail.add(tc);
@@ -1939,13 +1954,14 @@ function makeCreature(sp){
   sculptLayer.name='original-species-sculpt-'+S.n;sculptLayer.castShadow=true;sculptLayer.receiveShadow=true;g.add(sculptLayer);
   var lp=[[-0.32*form.legSpread,0.4*form.legSpread],[0.32*form.legSpread,0.4*form.legSpread],[-0.32*form.legSpread,-0.4*form.legSpread],[0.32*form.legSpread,-0.4*form.legSpread]];
   for(var li=0;li<4;li++){
-    var lg=new THREE.Group();lg.position.set(lp[li][0],0.6,lp[li][1]);lg.scale.set(form.legScale[0],form.legScale[1],form.legScale[2]);
+    var lg=new THREE.Group();lg.name='creature-leg-'+li;lg.position.set(lp[li][0],0.6,lp[li][1]);lg.scale.set(form.legScale[0],form.legScale[1],form.legScale[2]);
     lg.add(mesh(new THREE.CylinderGeometry(0.12,0.1,0.55,8),mat,0,-0.27,0));
     lg.add(mesh(new THREE.SphereGeometry(0.12,8,6),sp===3?mat:dark,0,-0.55,0.03,1,0.7,1.3));
     g.add(lg);legs.push(lg);
   }
   g.userData.speciesForm=S.n;
-  return {g:g,legs:legs,head:head,tail:tail,ears:ears,eyes:eyes,torso:torso};
+  CREATURE_MODEL_CACHE[sp]={g:g};
+  return makeCreature(sp);
 }
 function makeWraith(kind){
   var g=new THREE.Group(),palette={

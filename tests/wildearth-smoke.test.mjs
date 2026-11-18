@@ -8,6 +8,18 @@ const scriptEnd = html.indexOf('</script>', scriptStart);
 const gameScript = scriptStart >= 0 && scriptEnd > scriptStart ? html.slice(scriptStart + 8, scriptEnd) : '';
 const projectApi = readFileSync(new URL('../functions/api/projects/index.js', import.meta.url), 'utf8');
 
+function extractGameFunction(name) {
+  const start=gameScript.indexOf('function '+name+'(');
+  if(start<0)throw new Error('Missing game function: '+name);
+  const open=gameScript.indexOf('{',start);
+  let depth=0;
+  for(let i=open;i<gameScript.length;i++){
+    if(gameScript[i]==='{')depth++;
+    else if(gameScript[i]==='}'&&--depth===0)return gameScript.slice(start,i+1);
+  }
+  throw new Error('Unclosed game function: '+name);
+}
+
 test('game script parses without syntax errors', () => {
   assert.ok(gameScript.trim(), 'expected the game entry script');
   assert.doesNotThrow(() => new Function(gameScript));
@@ -1394,7 +1406,8 @@ test('capture throws use eased distance-scaled arcs and communicate impact, succ
   assert.ok(gameScript.includes('flightDuration:clamp(0.36+distance*0.018,0.4,0.58)'));
   assert.ok(gameScript.includes('flight=u0*u0*(3-2*u0)'));
   assert.ok(gameScript.includes("pop(sc.x,sc.y+2.2,sc.z,'Capture attempt'"), 'impact should begin a visible capture attempt');
-  assert.ok(gameScript.includes("say(SPECIES[sc.sp].n+' joined your party!'"), 'successful capture should confirm party membership');
+  assert.ok(gameScript.includes("SPECIES[sc.sp].n+' joined your active party!'"), 'successful capture should confirm active party membership');
+  assert.ok(gameScript.includes("SPECIES[sc.sp].n+' joined reserve storage."), 'full parties should explain reserve placement');
   assert.ok(gameScript.includes('broke free. Build trust or try a Great Ball.'), 'failed capture should explain recovery options');
 });
 
@@ -1466,7 +1479,7 @@ test('eight signature ability effects heal, ward, burn, slow, chain, root, knock
 
 test('signature abilities integrate with companion attack orders, Wraith status updates, damage mitigation and unchanged saves', () => {
   assert.ok(gameScript.includes('if(guard&&companionAbilityReady(t,guard,companionMode,P,companionAbilityGlobalCd,companionWardTimer))activateCompanionAbility(t,guard);'));
-  assert.ok(gameScript.includes("if(s.rootTimer>0){s.windup=0;s.lunge=0;s.attackTarget=null;}"));
+  assert.ok(gameScript.includes("if(s.rootTimer>0){s.windup=0;s.lunge=0;s.attackTarget=null;s.attackCompanion=null;}"));
   assert.ok(gameScript.includes("s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);s.rootTimer=Math.max(0,(s.rootTimer||0)-dt);"));
   assert.ok(gameScript.includes("var wardMultiplier=companionWardTimer>0?1-clamp(companionWardReduction,0,0.6):1;"));
   assert.ok(gameScript.includes("if(companionWardTimer>0)statuses.push('STONE WARD · '+Math.ceil(companionWardTimer)+'s');"));
@@ -1544,10 +1557,8 @@ test('field guide sightings and captures persist without changing the existing s
 });
 
 test('companion health is bounded, downed members stop at zero, and salves can restore them', () => {
-  const start=gameScript.indexOf('function normalizeCompanionHp(');
-  const end=gameScript.indexOf('function validStructureCounts(',start);
-  assert.ok(start>=0&&end>start,'companion health and roster helpers must exist');
-  const helpers=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',gameScript.slice(start,end)+';return {normalizeCompanionHp,companionHealth,applyCompanionDamage,restoreCompanionHealth,normalizePartyStorage};')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
+  const source=['normalizeCompanionHp','companionHealth','applyCompanionDamage','restoreCompanionHealth','normalizePartyStorage'].map(extractGameFunction).join('\n');
+  const helpers=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return {normalizeCompanionHp,companionHealth,applyCompanionDamage,restoreCompanionHealth,normalizePartyStorage};')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
   assert.equal(helpers.normalizeCompanionHp(undefined),100);
   assert.equal(helpers.normalizeCompanionHp(-8),0);
   assert.equal(helpers.normalizeCompanionHp(140),100);
@@ -1563,9 +1574,8 @@ test('companion health is bounded, downed members stop at zero, and salves can r
 });
 
 test('legacy companion saves migrate overflow into bounded reserve storage without losing health', () => {
-  const start=gameScript.indexOf('function normalizeCompanionHp(');
-  const end=gameScript.indexOf('function validStructureCounts(',start);
-  const normalize=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',gameScript.slice(start,end)+';return normalizePartyStorage;')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
+  const source=['normalizeCompanionHp','normalizePartyStorage'].map(extractGameFunction).join('\n');
+  const normalize=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return normalizePartyStorage;')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
   const legacy=Array.from({length:14},(_,i)=>({sp:i%8}));
   const normalized=normalize(legacy,[{sp:7,hp:35}],8);
   assert.equal(normalized.active.length,12);
@@ -1611,4 +1621,14 @@ test('Defend and Attack companions can intercept Wraith strikes and downed compa
   assert.ok(gameScript.includes('damageCompanion(struckCompanion,companionHit)'));
   assert.ok(gameScript.includes('if(companionHealth(t)<=0){t.speed=0;t.defending=false;'));
   assert.ok(gameScript.includes('Heal them with a Healing Salve in the Party panel.'));
+});
+
+test('species companion models reuse cached geometry and materials across active and reserve swaps', () => {
+  assert.ok(gameScript.includes('var CREATURE_ART_CACHE=[],CREATURE_MODEL_CACHE=[];'));
+  assert.ok(gameScript.includes('var clone=cached.g.clone(true),legs=[],ears=[],eyes=[],head=null,tail=null,torso=null;'));
+  assert.ok(gameScript.includes('CREATURE_MODEL_CACHE[sp]={g:g};'));
+  assert.ok(gameScript.includes('return makeCreature(sp);'));
+  for(const name of ['creature-head','creature-tail','creature-torso','creature-leg-','creature-ear-','creature-eye-']) {
+    assert.ok(gameScript.includes(name),'cached model must retain animation part '+name);
+  }
 });
