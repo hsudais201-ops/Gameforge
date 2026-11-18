@@ -488,6 +488,17 @@
   #bag.wildInventory .companionCommands button{padding:7px 2px;border:1px solid #6d7b62;background:#29372a;color:#dbe0c8;font-size:8px}
   #bag.wildInventory .companionCommands button.active{border-color:#d7c57d;background:#586243;color:#fff0bc}
   #bag.wildInventory .wildPartyNote{margin-top:12px;padding-top:9px;border-top:1px solid #71806466;color:#aeb8a1;font-size:8px;line-height:1.5}
+  #bag.wildInventory #bagTeam .partyCard{flex-wrap:wrap}
+  #bag.wildInventory #bagTeam .partyHealth{display:block;height:4px;overflow:hidden;border-radius:4px;background:#101914;border:1px solid #ffffff18}
+  #bag.wildInventory #bagTeam .partyHealth i{display:block;height:100%;background:linear-gradient(90deg,#a7d47c,#e4d28c);transition:width .18s}
+  #bag.wildInventory #bagTeam .partyCard.downed{border-color:#ad7062;background:linear-gradient(120deg,#49332f,#2d2422)}
+  #bag.wildInventory #bagTeam .partyCard.downed .partyHealth i{background:#bd6b62}
+  #bag.wildInventory #bagTeam .partyActions{display:flex;gap:5px;width:100%;margin-top:2px}
+  #bag.wildInventory #bagTeam .partyActions button{flex:1;min-width:0;padding:6px 4px;border:1px solid #6d7b62;border-radius:4px;background:#26392c;color:#e6eadb;font-size:8px;font-weight:800}
+  #bag.wildInventory #bagTeam .partyActions button:disabled{opacity:.35}
+  #bag.wildInventory #bagTeam .partyStorageHead{display:flex;justify-content:space-between;margin:12px 0 7px;color:#e6e0c9;font-size:9px}
+  #bag.wildInventory #bagTeam .partySwap{display:flex;align-items:center;gap:7px;margin:7px 0;color:#c1cbb6;font-size:8px}
+  #bag.wildInventory #bagTeam .partySwap select{flex:1;min-width:0;padding:6px;border:1px solid #75816a;border-radius:4px;background:#17231b;color:#f0f2e8;font-size:9px}
   #bag.wildInventory .wildCraftScreen{display:grid;grid-template-columns:minmax(220px,.75fr) minmax(0,1.6fr);gap:12px;padding:12px}
   #bag.wildInventory .wildCraftIntro,#bag.wildInventory .wildCraftTip{color:#b6c0aa;font-size:10px;line-height:1.5}
   #bag.wildInventory .craftBench{display:flex;align-items:center;justify-content:center;gap:16px;margin:22px auto;padding:18px;border:1px solid #718064;background:#111b15}
@@ -916,7 +927,7 @@ function addDiagnostic(type,message,stack){
 window.addEventListener('error',function(e){addDiagnostic('error',e.message,(e.error&&e.error.stack)||e.filename+':'+e.lineno)});
 window.addEventListener('unhandledrejection',function(e){addDiagnostic('unhandledrejection',e.reason&&e.reason.message||e.reason,e.reason&&e.reason.stack)});
 $('exportDiagnostics').addEventListener('click',function(){
-  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},performance:perfStats,world:{id:selectedWorldId,seed:worldSeed,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:team.length,structures:walls.length+fires.length+beds.length+chests.length,storageChests:chests.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
+  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},performance:perfStats,world:{id:selectedWorldId,seed:worldSeed,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:totalCompanionCount(),activeTeamSize:team.length,reserveTeamSize:reserveTeam.length,structures:walls.length+fires.length+beds.length+chests.length,storageChests:chests.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
   try{
     var blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
     link.href=url;link.download='wildearth-diagnostics-'+Date.now()+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000);
@@ -2272,7 +2283,7 @@ function slotHtml(i){
   return '<div class="'+c+'" data-slot="'+i+'" draggable="'+(!!s)+'"'+(s?' data-id="'+s.id+'" title="'+ITEMS[s.id].n+(TOOL_MAX[s.id]?' · Durability '+Math.round(toolDurabilityNow(s.id))+'/'+TOOL_MAX[s.id]:'')+'"':'')+'>'+(i<HOT?'<i>'+(i+1)+'</i>':'')+(s?(ICON[s.id]||ICON.stone)+'<b>'+s.n+'</b>':'')+'</div>';
 }
 function renderInv(force){
-  var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.length+'|'+companionMode+'|'+equippedArmor;
+  var sig=JSON.stringify(slots)+'|'+hotSel+'|'+moveFrom+'|'+bagOpen+'|'+team.map(function(t){return companionHealth(t)}).join(',')+'|'+reserveTeam.map(function(t){return companionHealth(t)}).join(',')+'|'+companionMode+'|'+equippedArmor;
   if(!force&&sig===lastSig)return;
   lastSig=sig;
   var h='',i;
@@ -2304,15 +2315,7 @@ function renderInv(force){
     $('quickDiscard').disabled=!mv;
     $('splitStack').disabled=!(mv&&mv.n>1);
     $('equipArmor').disabled=!(mv&&(mv.id==='ironarmor'||mv.id==='copperarmor'||mv.id==='wraithguard'||mv.id==='frostarmor'||mv.id==='emberarmor'));
-    var cnt={},tn=0;
-    team.forEach(function(t){cnt[t.sp]=(cnt[t.sp]||0)+1;tn++});
-    var th='<div class="partyHead"><strong>Party</strong><small>'+tn+'/12 companions</small></div><div class="partyCards">';
-    team.forEach(function(t,ti){var S=SPECIES[t.sp];th+='<div class="partyCard"><span class="partyOrb" style="background:#'+S.c.toString(16).padStart(6,'0')+'"></span><span><b>'+S.n+'</b><small>'+S.role+' · '+RAR[S.r].n+' · Companion '+(ti+1)+'</small><small class="partyAbility">'+S.ability+'</small></span><em>ACTIVE</em></div>';});
-    if(!team.length)th+='<div class="partyEmpty">No companions yet. Capture wild creatures to build your party.</div>';
-    th+='</div><div class="chips">';
-    SPECIES.forEach(function(S,si){th+=cnt[si]?'<span class="chip" style="color:'+RAR[S.r].c+'">'+S.n+' ×'+cnt[si]+'</span>':'<span class="chip off">???</span>'});
-    th+='</div><div class="companionCommands"><span>Companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button><button type="button" data-team-mode="attack" class="'+(companionMode==='attack'?'active':'')+'">Attack</button><small class="companionHint">Signature abilities activate in Attack order when a Wraith is close.</small></div>';
-    $('bagTeam').innerHTML=th;
+    $('bagTeam').innerHTML=renderPartyPanel();
     var armor=equippedArmor==='wraithguard'?'Wraithguard Armor':(equippedArmor==='frostarmor'?'Frostguard Armor':(equippedArmor==='emberarmor'?'Emberplate Armor':(equippedArmor==='ironarmor'?'Iron Armor':(equippedArmor==='copperarmor'?'Copper Armor':'No armor equipped'))));
     $('equipStatus').textContent=armor+(armor==='No armor equipped'?'':' · equipped · damage reduction active');
     $('armorChest').style.borderColor=equippedArmor==='wraithguard'?'#bca4ff':(equippedArmor==='frostarmor'?'#8de5ff':(equippedArmor==='emberarmor'?'#ff8248':(equippedArmor==='ironarmor'?'#f0d27b':(equippedArmor==='copperarmor'?'#d58a58':'#aab4aa'))));
@@ -2326,6 +2329,82 @@ function renderInv(force){
     }
     updateRecipePanel();
   }
+}
+function makeActiveCompanion(record,index){
+  var m=makeCreature(record.sp),angle=(Math.max(0,index||0)*2.39996323),radius=2.35+Math.floor((index||0)/6)*0.65;
+  var x=P.x+Math.sin(angle)*radius,z=P.z-Math.cos(angle)*radius,y=heightAt(x,z);
+  m.g.position.set(x,y,z);m.g.visible=true;scene.add(m.g);
+  return {sp:record.sp,m:m,x:x,z:z,y:y,work:rand(3,9),yaw:P.face||0,walk:0,speed:0,hp:normalizeCompanionHp(record.hp)};
+}
+function partyCardHtml(member,index,storage){
+  var S=SPECIES[member.sp],hp=companionHealth(member),down=hp<=0,active=storage==='active';
+  var html='<div class="partyCard'+(down?' downed':'')+'"><span class="partyOrb" style="background:#'+S.c.toString(16).padStart(6,'0')+'"></span><span><b>'+S.n+'</b><small>'+S.role+' · '+RAR[S.r].n+' · '+(active?'Active slot '+(index+1):'Reserve')+'</small><small class="partyAbility">'+S.ability+'</small><span class="partyHealth"><i style="width:'+hp+'%"></i></span><small>'+Math.ceil(hp)+'% HEALTH'+(down?' · DOWNED':'')+'</small></span><em>'+(down?'DOWNED':(active?'ACTIVE':'STORED'))+'</em><div class="partyActions">';
+  if(active)html+='<button type="button" data-party-action="store" data-party-index="'+index+'" '+(reserveTeam.length>=RESERVE_PARTY_LIMIT?'disabled':'')+'>STORE</button>';
+  else{
+    if(team.length<ACTIVE_PARTY_LIMIT)html+='<button type="button" data-party-action="deploy" data-party-index="'+index+'">DEPLOY</button>';
+    if(team.length)html+='<button type="button" data-party-action="swap" data-party-index="'+index+'">SWAP</button>';
+  }
+  html+='<button type="button" data-party-action="heal" data-party-storage="'+storage+'" data-party-index="'+index+'" '+(hp>=100?'disabled':'')+'>HEAL</button></div></div>';
+  return html;
+}
+function renderPartyPanel(){
+  var counts={},total=totalCompanionCount(),html='<div class="partyHead"><strong>ACTIVE PARTY</strong><small>'+team.length+'/'+ACTIVE_PARTY_LIMIT+' · '+total+'/'+TOTAL_PARTY_LIMIT+' TOTAL</small></div><div class="partyCards">';
+  team.forEach(function(t,index){counts[t.sp]=(counts[t.sp]||0)+1;html+=partyCardHtml(t,index,'active');});
+  if(!team.length)html+='<div class="partyEmpty">No active companions. Deploy one from reserve storage or capture a wild creature.</div>';
+  html+='</div><div class="partyStorageHead"><strong>RESERVE STORAGE</strong><small>'+reserveTeam.length+'/'+RESERVE_PARTY_LIMIT+'</small></div>';
+  if(reserveTeam.length&&team.length){
+    html+='<label class="partySwap">Swap active slot <select id="partySwapTarget" aria-label="Choose active companion to swap">';
+    team.forEach(function(t,index){html+='<option value="'+index+'">#'+(index+1)+' '+SPECIES[t.sp].n+'</option>';});
+    html+='</select></label>';
+  }
+  html+='<div class="partyCards">';
+  reserveTeam.forEach(function(t,index){counts[t.sp]=(counts[t.sp]||0)+1;html+=partyCardHtml(t,index,'reserve');});
+  if(!reserveTeam.length)html+='<div class="partyEmpty">Reserve storage is empty. Captured creatures join the active party first, then move here when it is full.</div>';
+  html+='</div><div class="chips">';
+  SPECIES.forEach(function(S,index){html+=counts[index]?'<span class="chip" style="color:'+RAR[S.r].c+'">'+S.n+' ×'+counts[index]+'</span>':'<span class="chip off">???</span>';});
+  html+='</div><div class="companionCommands"><span>Active companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button><button type="button" data-team-mode="attack" class="'+(companionMode==='attack'?'active':'')+'">Attack</button><small class="companionHint">Signature abilities activate in Attack order when a Wraith is close. Downed companions recover with Healing Salves.</small></div>';
+  return html;
+}
+function storePartyCompanion(index){
+  var member=team[index];if(!member)return;
+  if(reserveTeam.length>=RESERVE_PARTY_LIMIT){say('Reserve storage is full. Make room before storing another companion.',3);return;}
+  if(member.m&&member.m.g)scene.remove(member.m.g);
+  reserveTeam.push({sp:member.sp,hp:companionHealth(member)});team.splice(index,1);
+  renderInv(true);save();say(SPECIES[member.sp].n+' moved to reserve storage.',3);
+}
+function deployPartyCompanion(index){
+  var member=reserveTeam[index];if(!member)return;
+  if(team.length>=ACTIVE_PARTY_LIMIT){say('Your active party is full. Choose a reserve companion and swap with an active slot.',3);return;}
+  reserveTeam.splice(index,1);team.push(makeActiveCompanion(member,team.length));
+  renderInv(true);save();say(SPECIES[member.sp].n+' joined your active party.',3);
+}
+function swapPartyCompanion(reserveIndex,activeIndex){
+  var incoming=reserveTeam[reserveIndex],outgoing=team[activeIndex];
+  if(!incoming||!outgoing||!Number.isInteger(activeIndex)||activeIndex<0||activeIndex>=team.length)return;
+  if(outgoing.m&&outgoing.m.g)scene.remove(outgoing.m.g);
+  team[activeIndex]=makeActiveCompanion(incoming,activeIndex);
+  reserveTeam[reserveIndex]={sp:outgoing.sp,hp:companionHealth(outgoing)};
+  renderInv(true);save();say(SPECIES[incoming.sp].n+' swapped into active slot '+(activeIndex+1)+'.',3);
+}
+function healPartyCompanion(storage,index){
+  var list=storage==='reserve'?reserveTeam:team,member=list[index];if(!member)return;
+  if(companionHealth(member)>=100){say(SPECIES[member.sp].n+' is already at full health.',2);return;}
+  var item=countOf('strongsalve')>0?'strongsalve':(countOf('salve')>0?'salve':null);
+  if(!item){say('Craft a Healing Salve or Greater Healing Salve to recover companions.',3);return;}
+  takeItem(item,1);var restored=restoreCompanionHealth(member,item==='strongsalve'?75:40);
+  playSfx('creature');pop(P.x,P.y+2.1,P.z,SPECIES[member.sp].n+' +'+Math.round(restored)+' HP','#b9e6a7');
+  say(SPECIES[member.sp].n+' recovered '+Math.round(restored)+' health.',3);renderInv(true);save();
+}
+function damageCompanion(member,amount){
+  if(!member||team.indexOf(member)<0||companionHealth(member)<=0)return 0;
+  var dealt=applyCompanionDamage(member,Math.max(0,amount)*difficultyScale());if(dealt<=0)return 0;
+  var down=companionHealth(member)<=0,name=SPECIES[member.sp].n;
+  burst(member.x,member.y+1.2,member.z,down?0xff9d9d:0xc9a8ff,down?10:5);
+  pop(member.x,member.y+2.1,member.z,down?'DOWNED · '+name:'-'+Math.ceil(dealt)+' HP',down?'#ff9d9d':'#c9a8ff');
+  playSfx(down?'warning':'damage');
+  if(down)say(name+' is downed. Heal them with a Healing Salve in the Party panel.',4);
+  if(bagOpen)renderInv(true);
+  save();return dealt;
 }
 function setCompanionMode(mode){
   if(['follow','hold','defend','attack'].indexOf(mode)<0)return;
@@ -2342,7 +2421,15 @@ function slotClick(i){
   else{slots[i]=a;slots[moveFrom]=b}
   moveFrom=-1;renderInv(true);
 }
-$('bagTeam').addEventListener('click',function(e){var b=e.target.closest('[data-team-mode]');if(b)setCompanionMode(b.getAttribute('data-team-mode'));});
+$('bagTeam').addEventListener('click',function(e){
+  var mode=e.target.closest('[data-team-mode]');if(mode){setCompanionMode(mode.getAttribute('data-team-mode'));return;}
+  var b=e.target.closest('[data-party-action]');if(!b)return;
+  var action=b.getAttribute('data-party-action'),index=Number(b.getAttribute('data-party-index'));
+  if(action==='store')storePartyCompanion(index);
+  else if(action==='deploy')deployPartyCompanion(index);
+  else if(action==='swap')swapPartyCompanion(index,Number($('partySwapTarget')&&$('partySwapTarget').value));
+  else if(action==='heal')healPartyCompanion(b.getAttribute('data-party-storage'),index);
+});
 $('bag').addEventListener('click',function(e){var f=e.target.closest('[data-inv-filter]');if(f)setInventoryFilter(f.getAttribute('data-inv-filter'));});
 var activeBagTab='inventory';
 function setBagTab(tab){if(tab!=='inventory'&&tab!=='crafting')return;activeBagTab=tab;$('inventoryScreen').hidden=tab!=='inventory';$('craftingScreen').hidden=tab!=='crafting';var tabs=$('bag').querySelectorAll('[data-bag-tab]');for(var ti=0;ti<tabs.length;ti++){var on=tabs[ti].getAttribute('data-bag-tab')===tab;tabs[ti].classList.toggle('active',on);tabs[ti].setAttribute('aria-selected',on?'true':'false');}}
@@ -2369,7 +2456,20 @@ function craftFromBench(){if(!benchResult)return;var key=benchResult,n=OUT[key]|
 function toggleBag(){bagOpen=!bagOpen;moveFrom=-1;$('bag').hidden=!bagOpen;renderInv(true)}
 var autosaveElapsed=0;
 var clock=0,nights=0,inNight=false,dayF=1,nightF=0,spawnT=0,wildT=0,eatCool=0,winShown=false,wraithsDefeated=0,craftedCount=0,achievementIds=[];
-var wild=[],team=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[],bossDefeated=false,rareEvent=null,rareEventClaimed=false,cosmeticUnlockIds=[],caveEntrances=[],caveMode=false,activeCave=null;
+var wild=[],team=[],reserveTeam=[],walls=[],fires=[],beds=[],chests=[],wraiths=[],shots=[],floats=[],sparks=[],falls=[],bossDefeated=false,rareEvent=null,rareEventClaimed=false,cosmeticUnlockIds=[],caveEntrances=[],caveMode=false,activeCave=null;
+var ACTIVE_PARTY_LIMIT=12,RESERVE_PARTY_LIMIT=20,TOTAL_PARTY_LIMIT=32;
+function normalizeCompanionHp(value){return value===undefined?100:(isFinite(value)?clamp(Number(value),0,100):100);}
+function companionHealth(member){return member&&member.hp!==undefined?normalizeCompanionHp(member.hp):100;}
+function applyCompanionDamage(member,amount){if(!member)return 0;var before=companionHealth(member),damage=Math.max(0,Number(amount)||0);member.hp=clamp(before-damage,0,100);member.downed=member.hp<=0;return before-member.hp;}
+function restoreCompanionHealth(member,amount){if(!member)return 0;var before=companionHealth(member),healing=Math.max(0,Number(amount)||0);member.hp=clamp(before+healing,0,100);member.downed=member.hp<=0;return member.hp-before;}
+function normalizePartyStorage(active,reserve,speciesCount){
+  var activeOut=[],reserveOut=[],limit=Math.max(0,Math.floor(Number(speciesCount)||0));
+  function record(member){if(!member||!Number.isInteger(member.sp)||member.sp<0||member.sp>=limit)return null;return {sp:member.sp,hp:normalizeCompanionHp(member.hp)};}
+  (Array.isArray(active)?active:[]).forEach(function(member){var value=record(member);if(!value)return;if(activeOut.length<ACTIVE_PARTY_LIMIT)activeOut.push(value);else if(reserveOut.length<RESERVE_PARTY_LIMIT)reserveOut.push(value);});
+  (Array.isArray(reserve)?reserve:[]).forEach(function(member){var value=record(member);if(value&&reserveOut.length<RESERVE_PARTY_LIMIT)reserveOut.push(value);});
+  return {active:activeOut,reserve:reserveOut};
+}
+function totalCompanionCount(){return team.length+reserveTeam.length;}
 var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34,stormLevel=0,lightningCooldown=0,lightningFlashTime=0,snowing=false;
@@ -2576,11 +2676,17 @@ function validStructureCounts(parsed){
       if(keys[i]==='chests'&&item.slots!==undefined&&(!Array.isArray(item.slots)||item.slots.length>18))return false;
     }
   }
-  if(parsed.team!==undefined){
-    if(!Array.isArray(parsed.team)||parsed.team.length>32)return false;
-    for(var ti=0;ti<parsed.team.length;ti++){
-      var member=parsed.team[ti];
+  var rosterKeys=['team','reserve'],rosterTotal=0;
+  for(var rk=0;rk<rosterKeys.length;rk++){
+    var roster=parsed[rosterKeys[rk]];
+    if(roster===undefined)continue;
+    if(!Array.isArray(roster)||roster.length>32)return false;
+    if(rosterKeys[rk]==='reserve'&&roster.length>RESERVE_PARTY_LIMIT)return false;
+    rosterTotal+=roster.length;if(rosterTotal>TOTAL_PARTY_LIMIT)return false;
+    for(var ri=0;ri<roster.length;ri++){
+      var member=roster[ri];
       if(!member||!Number.isInteger(member.sp)||member.sp<0||member.sp>=SPECIES.length)return false;
+      if(member.hp!==undefined&&(typeof member.hp!=='number'||!isFinite(member.hp)||member.hp<0||member.hp>100))return false;
     }
   }
   if(parsed.progress!==undefined&&(!parsed.progress||typeof parsed.progress!=='object'||Array.isArray(parsed.progress)))return false;
@@ -2594,7 +2700,7 @@ function save(){
   try{
     snapshot=JSON.stringify({
       version:6,mapVersion:2,worldSeed:worldSeed,progress:{level:P.level,xp:P.xp,statPoints:P.statPoints,stats:P.stats,caught:catchIndex,discoveredSpecies:discoveredSpecies},bossDefeated:bossDefeated,rareEventClaimed:rareEventClaimed,toolDurability:toolDurability,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
-      team:team.map(function(t){return {sp:t.sp}}),
+      team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t)}}),reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t)}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t,open:!!w.open}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
       beds:beds.map(function(b){return {x:b.x,z:b.z}}),chests:chests.map(function(c){return {x:c.x,z:c.z,slots:c.slots.map(function(it){return it?{id:it.id,n:it.n}:null})}}),
@@ -2646,16 +2752,16 @@ function load(){
     }
     if(!d)d=validSave(localStorage.getItem(OLD_KEY));
     if(!d)return false;
-    P.x=d.P.x;P.z=d.P.z;if(d.progress){P.level=clamp(Math.floor(d.progress.level)||1,1,100);P.xp=Math.max(0,Math.floor(d.progress.xp)||0);P.statPoints=Math.max(0,Math.floor(d.progress.statPoints)||0);P.stats={vitality:clamp(Math.floor(d.progress.stats&&d.progress.stats.vitality)||0,0,10),power:clamp(Math.floor(d.progress.stats&&d.progress.stats.power)||0,0,10),tamer:clamp(Math.floor(d.progress.stats&&d.progress.stats.tamer)||0,0,10)};P.maxHp=100+P.stats.vitality*10;P.hp=Math.min(P.maxHp,P.hp);}if(Array.isArray(d.progress&&d.progress.caught))catchIndex=d.progress.caught.slice(0,SPECIES.length).map(function(v){return Math.max(0,Math.floor(v)||0)});else if(Array.isArray(d.team))d.team.forEach(function(t){if(t&&Number.isInteger(t.sp)&&t.sp>=0&&t.sp<SPECIES.length)catchIndex[t.sp]++;});discoveredSpecies=normalizeSpeciesDiscovery(d.progress&&d.progress.discoveredSpecies,catchIndex);bossDefeated=d.bossDefeated===true;rareEventClaimed=d.rareEventClaimed===true;cosmeticUnlockIds=Array.isArray(d.cosmeticUnlockIds)?d.cosmeticUnlockIds.filter(function(id){return ['aurora_hair','wraith_violet','pathfinder_gold'].indexOf(id)>=0}):[];toolDurability={};if(d.toolDurability&&typeof d.toolDurability==='object')Object.keys(TOOL_MAX).forEach(function(id){if(isFinite(d.toolDurability[id]))toolDurability[id]=clamp(d.toolDurability[id],0,TOOL_MAX[id]);});companionMode=['follow','hold','defend','attack'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,P.maxHp||100):(P.maxHp||100);P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
+    P.x=d.P.x;P.z=d.P.z;if(d.progress){P.level=clamp(Math.floor(d.progress.level)||1,1,100);P.xp=Math.max(0,Math.floor(d.progress.xp)||0);P.statPoints=Math.max(0,Math.floor(d.progress.statPoints)||0);P.stats={vitality:clamp(Math.floor(d.progress.stats&&d.progress.stats.vitality)||0,0,10),power:clamp(Math.floor(d.progress.stats&&d.progress.stats.power)||0,0,10),tamer:clamp(Math.floor(d.progress.stats&&d.progress.stats.tamer)||0,0,10)};P.maxHp=100+P.stats.vitality*10;P.hp=Math.min(P.maxHp,P.hp);}if(Array.isArray(d.progress&&d.progress.caught))catchIndex=d.progress.caught.slice(0,SPECIES.length).map(function(v){return Math.max(0,Math.floor(v)||0)});else if(Array.isArray(d.team)||Array.isArray(d.reserve))(Array.isArray(d.team)?d.team:[]).concat(Array.isArray(d.reserve)?d.reserve:[]).forEach(function(t){if(t&&Number.isInteger(t.sp)&&t.sp>=0&&t.sp<SPECIES.length)catchIndex[t.sp]++;});discoveredSpecies=normalizeSpeciesDiscovery(d.progress&&d.progress.discoveredSpecies,catchIndex);bossDefeated=d.bossDefeated===true;rareEventClaimed=d.rareEventClaimed===true;cosmeticUnlockIds=Array.isArray(d.cosmeticUnlockIds)?d.cosmeticUnlockIds.filter(function(id){return ['aurora_hair','wraith_violet','pathfinder_gold'].indexOf(id)>=0}):[];toolDurability={};if(d.toolDurability&&typeof d.toolDurability==='object')Object.keys(TOOL_MAX).forEach(function(id){if(isFinite(d.toolDurability[id]))toolDurability[id]=clamp(d.toolDurability[id],0,TOOL_MAX[id]);});companionMode=['follow','hold','defend','attack'].indexOf(d.companionMode)>=0?d.companionMode:'follow';explorationDistance=isFinite(d.explorationDistance)?Math.max(0,d.explorationDistance):0;P.hp=isFinite(d.P.hp)?clamp(d.P.hp,0,P.maxHp||100):(P.maxHp||100);P.food=isFinite(d.P.food)?clamp(d.P.food,0,100):60;P.stamina=isFinite(d.P.stamina)?clamp(d.P.stamina,0,100):100;P.wetness=isFinite(d.P.wetness)?clamp(d.P.wetness,0,100):0;P.oxygen=isFinite(d.P.oxygen)?clamp(d.P.oxygen,0,100):100;P.y=heightAt(P.x,P.z);
     if(Array.isArray(d.slots)){
       slots=migrateInventorySlots(d.slots,ITEMS,NSLOTS,HOT);
       hotSel=clamp(d.hot|0,0,HOT-1);
       equippedArmor=(['ironarmor','copperarmor','wraithguard','frostarmor','emberarmor'].indexOf(d.equippedArmor)>=0)?d.equippedArmor:null;
     }else if(d.inv){for(var k in d.inv){var kk=k==='cage'?'ball':k;if(ITEMS[kk]&&d.inv[k]>0)addItem(kk,d.inv[k])}}
-    (d.team||[]).forEach(function(t){
-      var m=makeCreature(t.sp);m.g.position.set(P.x,P.y,P.z);scene.add(m.g);
-      team.push({sp:t.sp,m:m,x:P.x+rand(-3,3),z:P.z+rand(-3,3),y:P.y,work:rand(3,9),yaw:0,walk:0,speed:0});
-    });
+    var savedParty=normalizePartyStorage(d.team,d.reserve,SPECIES.length);
+    team.length=0;reserveTeam.length=0;
+    savedParty.active.forEach(function(t){team.push(makeActiveCompanion(t,team.length));});
+    savedParty.reserve.forEach(function(t){reserveTeam.push(t);});
     (d.walls||[]).forEach(function(w){var kind=w.t==='stone'?'stonewall':(w.t==='floor'?'floor':(w.t==='door'||w.t==='gate'||w.t==='roof'||w.t==='workbench'||w.t==='cookpot'?w.t:'wall'));addStructure(kind,w.x,w.z);if(w.open&&(kind==='door'||kind==='gate')){walls[walls.length-1].open=true;walls[walls.length-1].g.rotation.y=Math.PI/2;}});
     (d.fires||[]).forEach(function(f){addStructure(f.t==='torch'?'torch':'fire',f.x,f.z)});
     (d.beds||[]).forEach(function(b){addStructure('bed',b.x,b.z)});
@@ -3068,7 +3174,7 @@ function doCatch(){
   }
   var id=ballForCatch();
   if(!id){say('You need a Capture Ball. Open the Bag to craft some.');return}
-  if(team.length+shots.length>=12){say('Your team is full (12).');return}
+  if(totalCompanionCount()+shots.length>=TOTAL_PARTY_LIMIT){say('Your collection is full (32). Store or release a companion before capturing another.');return}
   var distance=Math.hypot(c.x-P.x,c.z-P.z),chance=captureChance(c,id),ok=random()<chance;
   P.lure=false;playSfx('capture');
   takeItem(id,1);renderInv(true);
@@ -3687,6 +3793,7 @@ function update(dt){
 
   for(i=0;i<team.length;i++){
     var t=team[i],guard=null,guardDist=999,guardScore=Infinity;
+    if(companionHealth(t)<=0){t.speed=0;t.defending=false;t.y+=(heightAt(t.x,t.z)-t.y)*Math.min(1,dt*10);animCreature(t,dt);continue;}
     t.guardCd=Math.max(0,(t.guardCd||0)-dt);t.abilityCd=Math.max(0,(t.abilityCd||0)-dt);
     for(j=0;j<wraiths.length;j++){
       var candidate=wraiths[j],wd=Math.hypot(candidate.x-t.x,candidate.z-t.z);
@@ -3757,7 +3864,7 @@ function update(dt){
     if(s.burnTimer>0){s.burnTimer=Math.max(0,s.burnTimer-dt);s.burnTick=(s.burnTick||0)-dt;if(s.burnTick<=0){s.hp-=1.25;s.burnTick=0.65;burst(s.x,s.y+1.1,s.z,0xff7138,3);}}
     if(nightF<0.25&&!s.boss)s.hp-=3*dt;
     if(s.boss){var bossPhase=s.hp>40?1:(s.hp>18?2:3);if(bossPhase!==s.phase){s.phase=bossPhase;say(bossPhase===2?'The Night Herald enters its second phase!':(bossPhase===3?'The Night Herald is enraged!':'The Night Herald shifts form.'),4);burst(s.x,s.y+1.5,s.z,0xff684f,18);}s.moveSpeed=bossPhase===1?3.3:(bossPhase===2?4.25:5.2);s.damageScale=bossPhase===1?1.3:(bossPhase===2?1.5:1.75);s.lungeSpeed=bossPhase===1?4.8:(bossPhase===2?5.8:7);}
-    var sx=P.x-s.x,sz=P.z-s.z,sl=Math.hypot(sx,sz)||1,targetWild=null;
+    var sx=P.x-s.x,sz=P.z-s.z,sl=Math.hypot(sx,sz)||1,targetWild=null,targetCompanion=null;
     // Wraiths prioritize the player, but may stalk nearby adult wildlife when the player is far away.
     if(sl>15&&!safe){
       var huntDistance=12;
@@ -3767,6 +3874,16 @@ function update(dt){
         if(preyDistance<huntDistance){huntDistance=preyDistance;targetWild=prey;}
       }
       if(targetWild){sx=targetWild.x-s.x;sz=targetWild.z-s.z;sl=Math.hypot(sx,sz)||1;}
+    }
+    // Defend and Attack orders let healthy active companions intercept nearby strikes.
+    if(!targetWild&&(companionMode==='defend'||companionMode==='attack')){
+      var interceptRange=companionMode==='attack'?4.6:3.4,bestIntercept=interceptRange;
+      for(var cti=0;cti<team.length;cti++){
+        var candidateCompanion=team[cti];if(companionHealth(candidateCompanion)<=0)continue;
+        var interceptDistance=Math.hypot(candidateCompanion.x-s.x,candidateCompanion.z-s.z);
+        if(interceptDistance<bestIntercept&&interceptDistance<sl+0.4){targetCompanion=candidateCompanion;bestIntercept=interceptDistance;}
+      }
+      if(targetCompanion){sx=targetCompanion.x-s.x;sz=targetCompanion.z-s.z;sl=Math.hypot(sx,sz)||1;}
     }
     // Adults defending frightened young can drive Wraiths back with timed counterattacks.
     s.guardHitCd=Math.max(0,(s.guardHitCd||0)-dt);
@@ -3781,17 +3898,20 @@ function update(dt){
         burst(s.x,s.y+1.5,s.z,0xc9a8ff,4);pop(s.x,s.y+2.3,s.z,'Guardian strike','#b8e6a1');}
     }
     s.attackCd=Math.max(0,(s.attackCd||0)-dt);
-    if(s.rootTimer>0){s.windup=0;s.lunge=0;s.attackTarget=null;}
+    if(s.rootTimer>0){s.windup=0;s.lunge=0;s.attackTarget=null;s.attackCompanion=null;}
     else if(s.windup>0){
       s.windup=Math.max(0,s.windup-dt);
       s.x+=s.attackX*2.8*dt;s.z+=s.attackZ*2.8*dt;
       if(s.windup===0){
-        var struckWild=s.attackTarget;s.attackTarget=null;
+        var struckWild=s.attackTarget,struckCompanion=s.attackCompanion;s.attackTarget=null;s.attackCompanion=null;
         if(struckWild&&wild.indexOf(struckWild)>=0&&Math.hypot(struckWild.x-s.x,struckWild.z-s.z)<2.6){
           struckWild.hp=Math.max(0,struckWild.hp-14);struckWild.hitTimer=0.22;struckWild.attackAnim=0.38;struckWild.flee=Math.max(struckWild.flee,3.2+random()*1.4);struckWild.state='flee';struckWild.alertT=1.4;struckWild.threatX=s.x;struckWild.threatZ=s.z;
           s.attackCd=2.1;pop(struckWild.x,struckWild.y+1.8,struckWild.z,'Wraith -14','#c9a8ff');
           if(struckWild.hp<=0){var preyIndex=wild.indexOf(struckWild);if(struckWild.parent)struckWild.parent.young=null;if(struckWild.secondParent)struckWild.secondParent.young=null;if(struckWild.young){struckWild.young.parent=null;struckWild.young.secondParent=null;}scene.remove(struckWild.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[struckWild.sp].w,1,struckWild.x,struckWild.y+1,struckWild.z,'#b8a6d8');pop(struckWild.x,struckWild.y+2,struckWild.z,'Wildlife lost','#c9a8ff');}
-        }else if(!struckWild){
+        }else if(struckCompanion&&team.indexOf(struckCompanion)>=0&&companionHealth(struckCompanion)>0&&Math.hypot(struckCompanion.x-s.x,struckCompanion.z-s.z)<2.6){
+          var companionHit=Math.min(18,(9+nights*0.65)*(s.damageScale||1));
+          damageCompanion(struckCompanion,companionHit);s.attackCd=1.15;
+        }else if(!struckWild&&!struckCompanion){
           var playerDistance=Math.hypot(P.x-s.x,P.z-s.z);
           if(playerDistance<2.35&&!safe){
             playerDamage(Math.min(18,(9+nights*0.65)*(s.damageScale||1)),'Wraith strike');
@@ -3811,8 +3931,8 @@ function update(dt){
           applyWraithStatus(s);
         }
       }
-    }else if(sl<2.45&&s.attackCd<=0&&(!safe||targetWild)){
-      s.windup=s.boss?(s.phase===3?0.28:0.52):0.42;s.attackX=sx/sl;s.attackZ=sz/sl;s.attackTarget=targetWild||null;s.lungeHit=false;
+    }else if(sl<2.45&&s.attackCd<=0&&(!safe||targetWild||targetCompanion)){
+      s.windup=s.boss?(s.phase===3?0.28:0.52):0.42;s.attackX=sx/sl;s.attackZ=sz/sl;s.attackTarget=targetWild||null;s.attackCompanion=targetCompanion||null;s.lungeHit=false;
       s.attackCd=1.7;
     }else{
       var swp=Math.min(9.5,(s.moveSpeed||5.1)+nights*0.32)*(s.frostTimer>0?0.62:1);
@@ -3867,9 +3987,13 @@ function update(dt){
           var rar=RAR[SPECIES[sc.sp].r];
           if(sh.ok){
             wild.splice(wild.indexOf(sc),1);
-            sc.work=rand(4,9);team.push(sc);catchIndex[sc.sp]=(catchIndex[sc.sp]||0)+1;discoverSpecies(sc.sp,false);awardXP(25+(SPECIES[sc.sp].r==='rare'?15:SPECIES[sc.sp].r==='uncommon'?8:0),'capture');checkAchievements();
+            sc.work=rand(4,9);sc.hp=normalizeCompanionHp(sc.maxHp>0?sc.hp/sc.maxHp*100:100);sc.maxHp=100;sc.downed=false;
+            var destination='active';
+            if(team.length<ACTIVE_PARTY_LIMIT)team.push(sc);
+            else{scene.remove(sc.m.g);reserveTeam.push({sp:sc.sp,hp:companionHealth(sc)});destination='reserve';}
+            catchIndex[sc.sp]=(catchIndex[sc.sp]||0)+1;discoverSpecies(sc.sp,false);awardXP(25+(SPECIES[sc.sp].r==='rare'?15:SPECIES[sc.sp].r==='uncommon'?8:0),'capture');checkAchievements();
             burst(sc.x,sc.y+0.6,sc.z,0xffe58a,22);burst(sc.x,sc.y+0.6,sc.z,0xffffff,8);
-            pop(sc.x,sc.y+2.6,sc.z,'Gotcha! '+SPECIES[sc.sp].n+' joined',rar.c);playSfx('creature');say(SPECIES[sc.sp].n+' joined your party!',3);
+            pop(sc.x,sc.y+2.6,sc.z,'Gotcha! '+SPECIES[sc.sp].n+' joined',rar.c);playSfx('creature');say(destination==='active'?SPECIES[sc.sp].n+' joined your active party!':SPECIES[sc.sp].n+' joined reserve storage. Swap or deploy them from the Party panel.',4);
             renderInv(true);save();
           }else{
             sc.flee=4;sc.alertT=1.5;sc.state='flee';sc.threatX=P.x;sc.threatZ=P.z;
@@ -3905,7 +4029,7 @@ function update(dt){
   animPlayer(dt);
   animFires();
   if(hintT>0){hintT-=dt;if(hintT<=0)hintEl.style.opacity=0}
-  if(!winShown&&team.length>=10&&nights>=3){winShown=true;say('Thriving base! 10 creatures tamed and 3 nights survived. Keep playing.',7)}
+  if(!winShown&&totalCompanionCount()>=10&&nights>=3){winShown=true;say('Thriving base! 10 creatures tamed and 3 nights survived. Keep playing.',7)}
   hudT-=dt;if(hudT<=0){hudT=0.2;updateHud()}
   saveT+=dt;if(saveT>10){saveT=0;save()}
 }
@@ -4052,10 +4176,11 @@ function refreshCosmeticUnlocks(){
 function checkAchievements(){
   var totalStructures=walls.length+fires.length+beds.length,uniqueSpecies={};
   for(var us=0;us<team.length;us++)uniqueSpecies[team[us].sp]=true;
-  var speciesCount=Object.keys(uniqueSpecies).length;
+  for(var ur=0;ur<reserveTeam.length;ur++)uniqueSpecies[reserveTeam[ur].sp]=true;
+  var speciesCount=Object.keys(uniqueSpecies).length,collectionCount=totalCompanionCount();
   var tests=[
-    ['first_friend',team.length>=1,'First Friend','Tame your first creature'],
-    ['pack_leader',team.length>=10,'Pack Leader','Tame 10 creatures'],
+    ['first_friend',collectionCount>=1,'First Friend','Tame your first creature'],
+    ['pack_leader',collectionCount>=10,'Pack Leader','Tame 10 creatures'],
     ['first_dawn',nights>=1,'First Dawn','Survive your first night'],
     ['three_nights',nights>=3,'Night Survivor','Survive three nights'],
     ['wraith_hunter',wraithsDefeated>=1,'Wraith Hunter','Defeat your first Wraith'],
@@ -4134,15 +4259,16 @@ $('mapPanel').addEventListener('click',function(e){if(e.target===$('mapPanel'))$
 function questData(){
   var structures=walls.length+fires.length+beds.length,unique={},i;
   for(i=0;i<team.length;i++)unique[team[i].sp]=true;
-  var speciesCount=Object.keys(unique).length;
+  for(i=0;i<reserveTeam.length;i++)unique[reserveTeam[i].sp]=true;
+  var speciesCount=Object.keys(unique).length,collectionCount=totalCompanionCount();
   return [
-    {id:'first_companion',name:'A Friend in the Wild',desc:'Tame your first creature and begin building your team.',value:Math.min(team.length,1),target:1},
+    {id:'first_companion',name:'A Friend in the Wild',desc:'Tame your first creature and begin building your team.',value:Math.min(collectionCount,1),target:1},
     {id:'first_shelter',name:'A Place to Call Home',desc:'Place five structures to establish your first camp.',value:Math.min(structures,5),target:5},
     {id:'first_craft',name:'Field Crafting',desc:'Craft five items using the crafting grid.',value:Math.min(craftedCount,5),target:5},
     {id:'first_night',name:'Into the Darkness',desc:'Survive your first full night in the wild.',value:Math.min(nights,1),target:1},
     {id:'long_walk',name:'The Long Trail',desc:'Travel 500 world units and discover more of the wilderness.',value:Math.min(Math.floor(explorationDistance),500),target:500},
     {id:'wraith_bane',name:'First Wraith',desc:'Defeat a Wraith and protect the wilds.',value:Math.min(wraithsDefeated,1),target:1},
-    {id:'team_builder',name:'Pack Leader',desc:'Tame five creatures to grow your companion team.',value:Math.min(team.length,5),target:5},
+    {id:'team_builder',name:'Pack Leader',desc:'Tame five creatures to grow your companion team.',value:Math.min(collectionCount,5),target:5},
     {id:'wild_collector',name:'Wildlife Observer',desc:'Tame three different creature species.',value:Math.min(speciesCount,3),target:3},
     {id:'discover_three',name:'Cartographer',desc:'Discover three named landmarks.',value:Math.min(discoveredLandmarks.length,3),target:3}
   ];
@@ -4193,16 +4319,16 @@ function renderQuestJournal(){
     {name:'Take your first steps',desc:'Explore at least 10 world units.',value:Math.min(Math.floor(explorationDistance),10),target:10},
     {name:'Gather supplies',desc:'Carry at least 3 wood.',value:Math.min(countOf('wood'),3),target:3},
     {name:'Learn to craft',desc:'Craft your first item.',value:Math.min(craftedCount,1),target:1},
-    {name:'Meet a companion',desc:'Tame your first creature.',value:Math.min(team.length,1),target:1}
+    {name:'Meet a companion',desc:'Tame your first creature.',value:Math.min(totalCompanionCount(),1),target:1}
   ];
   var th='';
   for(var ti=0;ti<tutorials.length;ti++){var t=tutorials[ti],td=t.value>=t.target;th+='<div class="questItem'+(td?' done':'')+'"><div class="questItemTop"><span>'+(td?'✓ ':'')+t.name+'</span><span>'+(td?'DONE':t.value+'/'+t.target)+'</span></div><div class="questDesc">'+t.desc+'</div><div class="questTrack"><i style="width:'+Math.round(t.value/t.target*100)+'%"></i></div></div>';}
   $('tutorialList').innerHTML=th;
   var story=[
-    {name:'The First Bond',desc:'Tame a creature to form your first alliance.',done:team.length>=1},
-    {name:'A Safe Haven',desc:'Build five structures to establish a camp.',done:team.length>=1&&walls.length+fires.length+beds.length>=5},
-    {name:'Survive the Long Night',desc:'Survive one night after establishing your camp.',done:team.length>=1&&walls.length+fires.length+beds.length>=5&&nights>=1},
-    {name:'The Shadow Threat',desc:'Defeat a Wraith and protect your new home.',done:team.length>=1&&walls.length+fires.length+beds.length>=5&&nights>=1&&wraithsDefeated>=1}
+    {name:'The First Bond',desc:'Tame a creature to form your first alliance.',done:totalCompanionCount()>=1},
+    {name:'A Safe Haven',desc:'Build five structures to establish a camp.',done:totalCompanionCount()>=1&&walls.length+fires.length+beds.length>=5},
+    {name:'Survive the Long Night',desc:'Survive one night after establishing your camp.',done:totalCompanionCount()>=1&&walls.length+fires.length+beds.length>=5&&nights>=1},
+    {name:'The Shadow Threat',desc:'Defeat a Wraith and protect your new home.',done:totalCompanionCount()>=1&&walls.length+fires.length+beds.length>=5&&nights>=1&&wraithsDefeated>=1}
   ];
   var stage=0;while(stage<story.length&&story[stage].done)stage++;
   var sh='';
@@ -4294,7 +4420,7 @@ function updateHud(){
   checkAchievements();
   updateExplorationMap();
   updateQuestJournal();
-  $('goal').textContent='Goals: tame 10 ('+team.length+'/10) · nights 3 ('+nights+'/3) · Wraiths '+wraithsDefeated+' · crafts '+craftedCount+' · explored '+Math.floor(explorationDistance)+' units · achievements '+achievementIds.length+'/15';
+  $('goal').textContent='Goals: tame 10 ('+totalCompanionCount()+'/10) · nights 3 ('+nights+'/3) · Wraiths '+wraithsDefeated+' · crafts '+craftedCount+' · explored '+Math.floor(explorationDistance)+' units · achievements '+achievementIds.length+'/15';
   var aimFace=captureAimFace(),tc=selectCaptureTarget(wild,P.x,P.z,aimFace,12,0.92,2.4,false),te=$('target');
   if(tc){
     var TS=SPECIES[tc.sp],TR=RAR[TS.r],bid=ballForCatch(),distance=Math.hypot(tc.x-P.x,tc.z-P.z);

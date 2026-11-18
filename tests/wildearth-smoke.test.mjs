@@ -953,10 +953,14 @@ test('save validation rejects malformed or out-of-bounds world records before lo
   const start=gameScript.indexOf('function validStructureCounts(parsed)');
   const end=gameScript.indexOf('function awardXP',start);
   assert.ok(start>=0&&end>start,'save validator must be present');
-  const validate=new Function('SPECIES','HALF','NSLOTS',gameScript.slice(start,end)+';return validStructureCounts;')([{id:0},{id:1}],300,36);
+  const validate=new Function('SPECIES','HALF','NSLOTS','RESERVE_PARTY_LIMIT','TOTAL_PARTY_LIMIT',gameScript.slice(start,end)+';return validStructureCounts;')([{id:0},{id:1}],300,36,20,32);
   assert.equal(validate({P:{x:0,z:0},team:[{sp:0}],walls:[{x:10,z:10,t:'wall'}]}),true);
   assert.equal(validate({team:[{sp:99}]}),false,'unknown creature species must be rejected');
   assert.equal(validate({team:Array.from({length:33},()=>({sp:0}))}),false,'oversized companion lists must be rejected');
+  assert.equal(validate({team:Array.from({length:12},()=>({sp:0,hp:100})),reserve:Array.from({length:20},()=>({sp:1,hp:60}))}),true,'active and reserve storage should support the bounded 32-creature collection');
+  assert.equal(validate({team:[{sp:0,hp:101}]}),false,'companion health outside 0-100 must be rejected');
+  assert.equal(validate({reserve:Array.from({length:21},()=>({sp:0}))}),false,'reserve storage must remain bounded');
+  assert.equal(validate({team:Array.from({length:13},()=>({sp:0})),reserve:Array.from({length:20},()=>({sp:1}))}),false,'the total collection must remain bounded');
   assert.equal(validate({walls:[{x:301,z:0,t:'wall'}]}),false,'out-of-bounds structures must be rejected');
   assert.equal(validate({walls:[{x:0,z:0,t:'unknown'}]}),false,'unknown structure types must be rejected');
   assert.equal(validate({chests:[{x:0,z:0,slots:Array(19).fill(null)}]}),false,'oversized chest inventories must be rejected');
@@ -1466,7 +1470,8 @@ test('signature abilities integrate with companion attack orders, Wraith status 
   assert.ok(gameScript.includes("s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);s.rootTimer=Math.max(0,(s.rootTimer||0)-dt);"));
   assert.ok(gameScript.includes("var wardMultiplier=companionWardTimer>0?1-clamp(companionWardReduction,0,0.6):1;"));
   assert.ok(gameScript.includes("if(companionWardTimer>0)statuses.push('STONE WARD · '+Math.ceil(companionWardTimer)+'s');"));
-  assert.ok(gameScript.includes("team:team.map(function(t){return {sp:t.sp}})"),'signature cooldowns remain runtime-only and do not alter saved party data');
+  assert.ok(gameScript.includes("team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t)}})"),'active companion health should persist without saving runtime cooldowns');
+  assert.ok(gameScript.includes("reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t)}})"),'reserve companion health should persist without creating reserve meshes');
   assert.ok(gameScript.includes("th+='</div><div class=\"companionCommands\""));
   assert.ok(gameScript.includes('Signature abilities activate in Attack order when a Wraith is close.'));
   assert.doesNotThrow(() => new Function(gameScript));
@@ -1536,4 +1541,74 @@ test('field guide sightings and captures persist without changing the existing s
   assert.ok(gameScript.includes("var filter=e.target.closest('button[data-creature-filter]')"));
   assert.ok(gameScript.includes("'SIGHTED '+seen"));
   assert.ok(gameScript.includes("'Preferred habitat: '+habitatText"));
+});
+
+test('companion health is bounded, downed members stop at zero, and salves can restore them', () => {
+  const start=gameScript.indexOf('function normalizeCompanionHp(');
+  const end=gameScript.indexOf('function validStructureCounts(',start);
+  assert.ok(start>=0&&end>start,'companion health and roster helpers must exist');
+  const helpers=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',gameScript.slice(start,end)+';return {normalizeCompanionHp,companionHealth,applyCompanionDamage,restoreCompanionHealth,normalizePartyStorage};')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
+  assert.equal(helpers.normalizeCompanionHp(undefined),100);
+  assert.equal(helpers.normalizeCompanionHp(-8),0);
+  assert.equal(helpers.normalizeCompanionHp(140),100);
+  const member={hp:14};
+  assert.equal(helpers.applyCompanionDamage(member,20),14);
+  assert.equal(member.hp,0);
+  assert.equal(member.downed,true);
+  assert.equal(helpers.restoreCompanionHealth(member,45),45);
+  assert.equal(member.hp,45);
+  assert.equal(member.downed,false);
+  assert.equal(helpers.restoreCompanionHealth(member,100),55);
+  assert.equal(member.hp,100);
+});
+
+test('legacy companion saves migrate overflow into bounded reserve storage without losing health', () => {
+  const start=gameScript.indexOf('function normalizeCompanionHp(');
+  const end=gameScript.indexOf('function validStructureCounts(',start);
+  const normalize=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',gameScript.slice(start,end)+';return normalizePartyStorage;')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
+  const legacy=Array.from({length:14},(_,i)=>({sp:i%8}));
+  const normalized=normalize(legacy,[{sp:7,hp:35}],8);
+  assert.equal(normalized.active.length,12);
+  assert.equal(normalized.reserve.length,3);
+  assert.equal(normalized.active[0].hp,100,'legacy companions without health start fully recovered');
+  assert.equal(normalized.reserve[0].sp,4,'legacy overflow keeps its original collection order');
+  assert.equal(normalized.reserve[0].hp,100);
+  assert.equal(normalized.reserve[2].hp,35,'existing reserve health remains intact');
+});
+
+test('party UI supports storing, deploying, swapping, and healing active or reserve companions', () => {
+  for(const marker of [
+    'function makeActiveCompanion(record,index)',
+    'function storePartyCompanion(index)',
+    'function deployPartyCompanion(index)',
+    'function swapPartyCompanion(reserveIndex,activeIndex)',
+    'function healPartyCompanion(storage,index)',
+    'data-party-action="store"',
+    'data-party-action="deploy"',
+    'data-party-action="swap"',
+    'data-party-action="heal"',
+    'id="partySwapTarget"',
+    'reserveTeam.length>=RESERVE_PARTY_LIMIT',
+    'team.length>=ACTIVE_PARTY_LIMIT'
+  ]) assert.ok(gameScript.includes(marker),'missing party management behavior: '+marker);
+  assert.ok(gameScript.includes("var b=e.target.closest('[data-party-action]')"));
+  assert.ok(gameScript.includes("var item=countOf('strongsalve')>0?'strongsalve':(countOf('salve')>0?'salve':null)"));
+  assert.ok(gameScript.includes("restoreCompanionHealth(member,item==='strongsalve'?75:40)"));
+});
+
+test('full active parties capture into reserve while the entire collection stays capped at 32', () => {
+  assert.ok(gameScript.includes('if(totalCompanionCount()+shots.length>=TOTAL_PARTY_LIMIT)'));
+  assert.ok(gameScript.includes('if(team.length<ACTIVE_PARTY_LIMIT)team.push(sc)'));
+  assert.ok(gameScript.includes('reserveTeam.push({sp:sc.sp,hp:companionHealth(sc)})'));
+  assert.ok(gameScript.includes('var savedParty=normalizePartyStorage(d.team,d.reserve,SPECIES.length)'));
+  assert.ok(gameScript.includes('version:6,mapVersion:2'),'party expansion must remain additive to the existing save version');
+});
+
+test('Defend and Attack companions can intercept Wraith strikes and downed companions cannot fight', () => {
+  assert.ok(gameScript.includes("var interceptRange=companionMode==='attack'?4.6:3.4"));
+  assert.ok(gameScript.includes('targetCompanion=candidateCompanion'));
+  assert.ok(gameScript.includes('s.attackCompanion=targetCompanion||null'));
+  assert.ok(gameScript.includes('damageCompanion(struckCompanion,companionHit)'));
+  assert.ok(gameScript.includes('if(companionHealth(t)<=0){t.speed=0;t.defending=false;'));
+  assert.ok(gameScript.includes('Heal them with a Healing Salve in the Party panel.'));
 });
