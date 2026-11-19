@@ -1120,12 +1120,90 @@ test('graphics upgrades color output and increases shadow quality without changi
   assert.ok(gameScript.includes('renderer.setSize(vw,vh,false)'));
 });
 
-test('companions resolve movement against world obstacles and avoid invalid water or world-edge positions', () => {
-  assert.ok(gameScript.includes('var companionNext={x:t.x+ddx/dl*sp2*dt,z:t.z+ddz/dl*sp2*dt}'));
-  assert.ok(gameScript.includes('pushOutBoxes(companionNext,0.72)'));
-  assert.ok(gameScript.includes('heightAt(companionNext.x,companionNext.z)>WATER+0.2'));
-  assert.ok(gameScript.includes('t.x=companionNext.x;t.z=companionNext.z;t.speed=Math.min(1,sp2/6)'));
-  assert.ok(gameScript.includes('else{t.speed=0;}'));
+test('companions use cached steering around trees, rocks, structures, water, slopes, and cave walls', () => {
+  for (const marker of [
+    'function companionNavigationStep(member,target,options)',
+    'offsets=[0,-0.65,0.65,-1.3,1.3]',
+    'function companionGroundSafe(x,z)',
+    'riverDepthAt(x,z)<0.55',
+    'function companionCanStand(x,z,sp)',
+    'function resolveCompanionNavigationPoint(point,radius)',
+    't.navT=0.18',
+    'companionGroundSafe(companionNext.x,companionNext.z)',
+    'pushOutBoxes(e,r)'
+  ]) assert.ok(gameScript.includes(marker), 'missing companion navigation behavior: '+marker);
+  assert.ok(gameScript.includes('if(dd<rr){if(dd===0){ddx=1;ddz=0;}'), 'resource collision must resolve exact-center overlaps');
+  assert.ok(gameScript.includes('caveMode?0.6+row*0.72:2.7+row*1.45'), 'cave followers need a compact formation');
+});
+
+test('companion steering selects a safe side route, stops near its target, and reports fully blocked paths', () => {
+  const navigate=new Function(extractGameFunction('companionNavigationStep')+';return companionNavigationStep;')();
+  const routed=navigate({x:0,z:0,sp:0,navSide:0},{x:10,z:0},{maxSpeed:9,probeDistance:1.8,radius:0.72,canStand:()=>true,resolve(point){if(point.x>1.2&&point.x<2.8&&Math.abs(point.z)<1.0)point.z+=Math.sign(point.z||1)*1.1;}});
+  assert.equal(routed.blocked,false);
+  assert.ok(routed.vx>0,'the chosen route should continue toward the destination');
+  assert.ok(Math.abs(routed.vz)>0.1,'the chosen route should steer around the obstacle');
+  const blocked=navigate({x:0,z:0,sp:0},{x:10,z:0},{canStand:()=>false});
+  assert.equal(blocked.blocked,true);
+  assert.equal(blocked.vx,0);
+  const arrived=navigate({x:0,z:0},{x:0.2,z:0.1},{});
+  assert.equal(arrived.arrived,true);
+  assert.equal(arrived.vx,0);
+});
+
+test('companion ground checks reject water, rivers, steep slopes, and world edges while allowing cave floors', () => {
+  const source=extractGameFunction('companionGroundSafe')+'\n'+extractGameFunction('companionCanStand');
+  const build=(cave,active,height,river)=>new Function('caveMode','activeCave','HALF','WATER','heightAt','riverDepthAt','clamp',source+';return {companionGroundSafe,companionCanStand};')(cave,active,50,1,height,river,(v,a,b)=>Math.max(a,Math.min(b,v)));
+  assert.equal(build(false,null,()=>3,()=>0).companionCanStand(0,0,0),true);
+  assert.equal(build(false,null,()=>0,()=>0).companionCanStand(0,0,0),false,'deep water is not walkable');
+  assert.equal(build(false,null,()=>3,()=>0.82).companionCanStand(0,0,0),false,'rivers are avoided when companions cannot swim');
+  assert.equal(build(false,null,()=>3,()=>0).companionCanStand(43,0,0),false,'world-edge margins remain enforced');
+  assert.equal(build(false,null,(x)=>x>0?9:0,()=>0).companionCanStand(0,0,0),false,'species slope limits prevent unsafe climbs');
+  const cave=build(true,{x:0,z:0,floorY:-18},()=>0,()=>0);
+  assert.equal(cave.companionGroundSafe(6,0),true,'the cave interior uses its own safe floor bounds');
+  assert.equal(cave.companionGroundSafe(6.7,0),false,'companions cannot pass through cave walls');
+});
+
+test('safe companion regroup positions avoid occupied slots and return null when every slot is blocked', () => {
+  const place=new Function(extractGameFunction('companionSafePosition')+';return companionSafePosition;')();
+  const safe=place(0,{x:0,z:0},{sp:0},{radii:[2],canStand:()=>true,isOccupied:(x)=>x>0.5});
+  assert.ok(safe);
+  assert.ok(safe.x<=0.5,'the selected slot must not overlap an occupied party position');
+  assert.equal(place(0,{x:0,z:0},{sp:0},{radii:[2],canStand:()=>false}),null);
+});
+
+test('collision push-out resolves exact-center overlaps with walls, resource nodes, and campfires', () => {
+  const push=new Function('walls','res','fires','clamp',extractGameFunction('pushOutBoxes')+';return pushOutBoxes;');
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const wallPush=push([{x:0,z:0,t:'wall',open:false}],[],[],clamp),wallPoint={x:0,z:0};
+  wallPush(wallPoint,0.72);assert.ok(Math.abs(wallPoint.z)>0.8,'wall overlap should exit through the nearest wall edge');
+  const treePush=push([],[{x:0,z:0,rad:1,dead:0}],[],clamp),treePoint={x:0,z:0};
+  treePush(treePoint,0.72);assert.ok(treePoint.x>1.7,'tree overlap should be pushed fully beyond its radius');
+  const firePush=push([],[],[{x:0,z:0,t:'fire'}],clamp),firePoint={x:0,z:0};
+  firePush(firePoint,0.72);assert.ok(firePoint.x>1.5,'campfire overlap should be pushed fully beyond its safety radius');
+});
+
+test('party recall safely regroups companions and cave transitions carry the active party', () => {
+  for (const marker of [
+    'function companionSafePosition(index,origin,member,options)',
+    'function findCompanionSafePosition(index,origin,member)',
+    'function regroupCompanionsNearPlayer()',
+    'function recallCompanions()',
+    'data-team-command="recall"',
+    'var recall=e.target.closest(\'[data-team-command="recall"]\')',
+    'companionMode=\'follow\';',
+    'regroupCompanionsNearPlayer();say(\'Entered the Lumen Cavern.',
+    'activeCave=null;P.oxygen=100;regroupCompanionsNearPlayer();',
+    'function companionNeedsRecovery(distance,stuck,mode)',
+    'playerDistance>34?12',
+    'companionNeedsRecovery(playerDistance,t.navStuck||0,companionMode)',
+    'distance>72||(distance>8.5&&stuck>3.4)'
+  ]) assert.ok(gameScript.includes(marker) || html.includes(marker), 'missing companion recall or recovery behavior: '+marker);
+  const recovery=new Function(extractGameFunction('companionNeedsRecovery')+';return companionNeedsRecovery;')();
+  assert.equal(recovery(73,0,'follow'),true);
+  assert.equal(recovery(10,4,'follow'),true);
+  assert.equal(recovery(90,0,'hold'),false);
+  assert.equal(recovery(10,2,'follow'),false);
+  assert.ok(gameScript.includes('version:6,mapVersion:2'), 'navigation state must remain transient and save-compatible');
 });
 
 

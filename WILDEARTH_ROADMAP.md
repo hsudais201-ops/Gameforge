@@ -91,8 +91,8 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Improve capture feedback: camera-aligned aiming, eased distance-scaled throw arcs, impact and capture pulses, clear success/escape feedback, and qualitative odds without exposing hidden formulas.
 - [x] Add a collection journal with first-sighting discovery, biome hints, preferred-food care tips, signature abilities, caught counts, and missing-species filters.
 - [x] Add persistent active-party and reserve storage management with deploy, slot swapping, release back to the wild, individual health, salve healing, and clear command feedback.
-- [ ] Improve companion navigation around slopes, trees, buildings, water, caves, and narrow spaces.
-- [ ] Add reliable recall, regroup, stuck recovery, and leash-distance behavior.
+- [x] Improve companion navigation with bounded side-steering around trees, rocks, building collision volumes, water, steep terrain, and cave boundaries.
+- [x] Add safe party recall/regroup, cave-transition positioning, stuck recovery, and soft/hard leash-distance behavior.
 - [ ] Balance creature progression, trust, breeding, offspring inheritance, and population caps.
 - [ ] Add creature status, bond progression, and meaningful non-combat utility.
 - [x] Add recoverable companion downed states: Wraiths can intercept companions in Defend/Attack orders, downed companions stop fighting, and Healing Salves restore them without permanent loss.

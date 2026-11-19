@@ -487,6 +487,8 @@
   #bag.wildInventory .companionCommands span{grid-column:1/-1;color:#aeb9a2;font-size:8px;letter-spacing:.1em;text-transform:uppercase}
   #bag.wildInventory .companionCommands button{padding:7px 2px;border:1px solid #6d7b62;background:#29372a;color:#dbe0c8;font-size:8px}
   #bag.wildInventory .companionCommands button.active{border-color:#d7c57d;background:#586243;color:#fff0bc}
+  #bag.wildInventory .companionCommands button[data-team-command="recall"]{grid-column:1/-1;border-color:#b6c17b;background:#3b4a31;color:#f4efcf;font-weight:900;letter-spacing:.08em}
+  #bag.wildInventory .companionCommands button[data-team-command="recall"]{grid-column:1/-1;border-color:#b6c17b;background:#3b4a31;color:#f4efcf;font-weight:900;letter-spacing:.08em}
   #bag.wildInventory .wildPartyNote{margin-top:12px;padding-top:9px;border-top:1px solid #71806466;color:#aeb8a1;font-size:8px;line-height:1.5}
   #bag.wildInventory #bagTeam .partyCard{flex-wrap:wrap}
   #bag.wildInventory #bagTeam .partyHealth{display:block;height:4px;overflow:hidden;border-radius:4px;background:#101914;border:1px solid #ffffff18}
@@ -2348,9 +2350,11 @@ function renderInv(force){
 }
 function makeActiveCompanion(record,index){
   var m=makeCreature(record.sp),angle=(Math.max(0,index||0)*2.39996323),radius=2.35+Math.floor((index||0)/6)*0.65;
-  var x=P.x+Math.sin(angle)*radius,z=P.z-Math.cos(angle)*radius,y=heightAt(x,z);
+  var x=P.x+Math.sin(angle)*radius,z=P.z-Math.cos(angle)*radius,safe=findCompanionSafePosition(index||0,{x:P.x,z:P.z},record);
+  if(safe){x=safe.x;z=safe.z;}
+  var y=companionGroundHeight(x,z);
   m.g.position.set(x,y,z);m.g.visible=true;scene.add(m.g);
-  return {sp:record.sp,m:m,x:x,z:z,y:y,work:rand(3,9),yaw:P.face||0,walk:0,speed:0,hp:normalizeCompanionHp(record.hp)};
+  return {sp:record.sp,m:m,x:x,z:z,y:y,work:rand(3,9),yaw:P.face||0,walk:0,speed:0,hp:normalizeCompanionHp(record.hp),navT:0,navVX:0,navVZ:0,navSide:0,navStuck:0,navBlocked:false,navLastX:x,navLastZ:z};
 }
 function partyCardHtml(member,index,storage){
   var S=SPECIES[member.sp],hp=companionHealth(member),down=hp<=0,active=storage==='active';
@@ -2379,7 +2383,7 @@ function renderPartyPanel(){
   if(!reserveTeam.length)html+='<div class="partyEmpty">Reserve storage is empty. Captured creatures join the active party first, then move here when it is full.</div>';
   html+='</div><div class="chips">';
   SPECIES.forEach(function(S,index){html+=counts[index]?'<span class="chip" style="color:'+RAR[S.r].c+'">'+S.n+' ×'+counts[index]+'</span>':'<span class="chip off">???</span>';});
-  html+='</div><div class="companionCommands"><span>Active companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button><button type="button" data-team-mode="attack" class="'+(companionMode==='attack'?'active':'')+'">Attack</button><small class="companionHint">Signature abilities activate in Attack order when a Wraith is close. Downed companions recover with Healing Salves.</small></div>';
+  html+='</div><div class="companionCommands"><span>Active companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button><button type="button" data-team-mode="attack" class="'+(companionMode==='attack'?'active':'')+'">Attack</button><button type="button" data-team-command="recall" aria-label="Recall and regroup active companions">RECALL / REGROUP</button><small class="companionHint">Recall safely regroups the active party. Follow, Hold, Defend, and Attack control normal companion behavior.</small></div>';
   return html;
 }
 function storePartyCompanion(index){
@@ -2436,9 +2440,16 @@ function damageCompanion(member,amount){
   if(bagOpen)renderInv(true);
   if(down)save();return dealt;
 }
+function recallCompanions(){
+  if(!team.length){say('No active companions to recall.',3);return;}
+  companionMode='follow';
+  var moved=regroupCompanionsNearPlayer();
+  renderInv(true);save();
+  say(moved===team.length?'Your party has regrouped around you.':'Regrouped '+moved+'/'+team.length+' companions. Move to safe ground and recall again.',4);
+}
 function setCompanionMode(mode){
   if(['follow','hold','defend','attack'].indexOf(mode)<0)return;
-  companionMode=mode;renderInv(true);save();
+  companionMode=mode;team.forEach(function(t){t.navT=0;t.navStuck=0;});renderInv(true);save();
   say(mode==='follow'?'Companions will follow you.':(mode==='hold'?'Companions will hold their positions.':(mode==='attack'?'Companions will actively hunt nearby Wraiths. Signature abilities are enabled.':'Companions will defend a wider area.')),3);
 }
 function slotClick(i){
@@ -2452,6 +2463,7 @@ function slotClick(i){
   moveFrom=-1;renderInv(true);
 }
 $('bagTeam').addEventListener('click',function(e){
+  var recall=e.target.closest('[data-team-command="recall"]');if(recall){recallCompanions();return;}
   var mode=e.target.closest('[data-team-mode]');if(mode){setCompanionMode(mode.getAttribute('data-team-mode'));return;}
   var b=e.target.closest('[data-party-action]');if(!b)return;
   var action=b.getAttribute('data-party-action'),index=Number(b.getAttribute('data-party-index'));
@@ -2501,7 +2513,7 @@ function normalizePartyStorage(active,reserve,speciesCount){
   return {active:activeOut,reserve:reserveOut};
 }
 function totalCompanionCount(){return team.length+reserveTeam.length;}
-var companionMode='follow',explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
+var companionMode='follow',companionRecoveryNoticeCooldown=0,explorationDistance=0,questCompletedIds=[],questAbandonedIds=[],discoveredLandmarks=[],exploredCells=[];
 /* Lightweight local weather: a short rain shower in each long clear-weather cycle. */
 var rainLevel=0,rainWasActive=false,rainWindX=0.72,rainWindZ=0.34,stormLevel=0,lightningCooldown=0,lightningFlashTime=0,snowing=false;
 var rainCount=Math.max(40,Math.round((isMobile?150:280)*renderProfiles[renderLevel].particleScale)),rainGeo=new THREE.BufferGeometry(),rainPositions=new Float32Array(rainCount*3);
@@ -2573,8 +2585,8 @@ function addCaveEntrance(x,z){
   room.position.set(x,floorY,z);scene.add(room);
   var cave={x:x,z:z,surfaceY:surfaceY,floorY:floorY,entrance:entrance,room:room};caveEntrances.push(cave);return cave;
 }
-function enterCave(cave){if(!cave)return;caveMode=true;activeCave=cave;cave.room.visible=true;P.x=cave.x;P.z=cave.z+2.5;P.y=cave.floorY+1;P.swimming=false;P.oxygen=100;P.face=Math.PI;say('Entered the Lumen Cavern. Follow the glowing crystals back to the exit.',5);$('cavePrompt').hidden=true;}
-function exitCave(){if(!activeCave)return;var cave=activeCave;P.x=cave.x;P.z=cave.z-4;P.y=cave.surfaceY+1;caveMode=false;activeCave=null;P.oxygen=100;$('cavePrompt').hidden=true;say('You returned to the wilderness.',3);}
+function enterCave(cave){if(!cave)return;caveMode=true;activeCave=cave;cave.room.visible=true;P.x=cave.x;P.z=cave.z+2.5;P.y=cave.floorY+1;P.swimming=false;P.oxygen=100;P.face=Math.PI;regroupCompanionsNearPlayer();say('Entered the Lumen Cavern. Follow the glowing crystals back to the exit.',5);$('cavePrompt').hidden=true;}
+function exitCave(){if(!activeCave)return;var cave=activeCave;P.x=cave.x;P.z=cave.z-4;P.y=cave.surfaceY+1;caveMode=false;activeCave=null;P.oxygen=100;regroupCompanionsNearPlayer();$('cavePrompt').hidden=true;say('You returned to the wilderness.',3);}
 var initialCave=addCaveEntrance(-52,42);
 var riverPaths=[
   [[-138,-92],[-95,-62],[-54,-36],[-12,-8],[34,18],[78,43],[132,78]],
@@ -3040,22 +3052,98 @@ function pushOutBoxes(e,r){
     var w=walls[i];if(w.t==='floor'||w.t==='roof'||w.t==='workbench'||w.t==='cookpot'||((w.t==='door'||w.t==='gate')&&w.open))continue;
     var cx=clamp(e.x,w.x-1.5,w.x+1.5),cz=clamp(e.z,w.z-0.18,w.z+0.18);
     var dx=e.x-cx,dz=e.z-cz,d=Math.hypot(dx,dz);
-    if(d<r){if(d===0){dx=1;dz=0;d=1}var o=(r-d)/d;e.x+=dx*o;e.z+=dz*o}
+    if(d<r){
+      if(d===0){
+        var left=Math.abs(e.x-(w.x-1.5)),right=Math.abs(w.x+1.5-e.x),near=Math.abs(e.z-(w.z-0.18)),far=Math.abs(w.z+0.18-e.z),edge=Math.min(left,right,near,far);
+        if(near===edge){dx=0;dz=-1;d=-near;}else if(far===edge){dx=0;dz=1;d=-far;}else if(left===edge){dx=-1;dz=0;d=-left;}else{dx=1;dz=0;d=-right;}
+      }
+      var o=(r-d)/(d>0?d:1);e.x+=dx*o;e.z+=dz*o;
+    }
   }
   for(var j=0;j<res.length;j++){
-    var q=res[j];
-    if(q.dead>0||q.rad===0)continue;
-    var ddx=e.x-q.x,ddz=e.z-q.z;
-    if(ddx>4||ddx<-4||ddz>4||ddz<-4)continue;
+    var q=res[j];if(q.dead>0||q.rad===0)continue;
+    var ddx=e.x-q.x,ddz=e.z-q.z;if(ddx>4||ddx<-4||ddz>4||ddz<-4)continue;
     var dd=Math.hypot(ddx,ddz),rr=r+q.rad;
-    if(dd<rr&&dd>0){var oo=(rr-dd)/dd;e.x+=ddx*oo;e.z+=ddz*oo}
+    if(dd<rr){if(dd===0){ddx=1;ddz=0;}var oo=(rr-dd)/(dd||1);e.x+=ddx*oo;e.z+=ddz*oo}
   }
   for(var k=0;k<fires.length;k++){
-    var fx=e.x-fires[k].x,fz=e.z-fires[k].z,fd=Math.hypot(fx,fz);
-    var fr=fires[k].t==='torch'?0.35:0.8;
-    if(fd<r+fr&&fd>0){var fo=(r+fr-fd)/fd;e.x+=fx*fo;e.z+=fz*fo}
+    var fx=e.x-fires[k].x,fz=e.z-fires[k].z,fd=Math.hypot(fx,fz),fr=fires[k].t==='torch'?0.35:0.8;
+    if(fd<r+fr){if(fd===0){fx=1;fz=0;}var fo=(r+fr-fd)/(fd||1);e.x+=fx*fo;e.z+=fz*fo}
   }
 }
+function companionGroundSafe(x,z){
+  if(!isFinite(x)||!isFinite(z))return false;
+  if(caveMode&&activeCave)return x>activeCave.x-6.6&&x<activeCave.x+6.6&&z>activeCave.z-5.1&&z<activeCave.z+5.1;
+  return Math.abs(x)<HALF-8&&Math.abs(z)<HALF-8&&heightAt(x,z)>WATER+0.2&&riverDepthAt(x,z)<0.55;
+}
+function companionCanStand(x,z,sp){
+  if(!companionGroundSafe(x,z))return false;
+  if(caveMode&&activeCave)return true;
+  var sample=2.2,center=heightAt(x,z),low=center,high=center,heights=[heightAt(x+sample,z),heightAt(x-sample,z),heightAt(x,z+sample),heightAt(x,z-sample)];
+  for(var i=0;i<heights.length;i++){low=Math.min(low,heights[i]);high=Math.max(high,heights[i]);}
+  var limits=[2.6,2.8,2.5,4.2,3.1,2.9,3.4,3.2],limit=limits[sp]||2.8;
+  return high-low<=limit+0.25;
+}
+function companionGroundHeight(x,z){return caveMode&&activeCave?activeCave.floorY+0.24:heightAt(x,z);}
+function resolveCompanionNavigationPoint(point,radius){
+  if(caveMode&&activeCave){point.x=clamp(point.x,activeCave.x-6.55,activeCave.x+6.55);point.z=clamp(point.z,activeCave.z-5.05,activeCave.z+5.05);}
+  else pushOutBoxes(point,radius||0.72);
+  return point;
+}
+function companionNavigationStep(member,target,options){
+  options=options||{};
+  var dx=target.x-member.x,dz=target.z-member.z,dist=Math.hypot(dx,dz);
+  if(!isFinite(dist)||dist<=0.65)return {vx:0,vz:0,blocked:false,arrived:true,side:0,progress:Math.max(0,dist||0)};
+  var maxSpeed=Math.max(0.1,Number(options.maxSpeed)||9),desiredSpeed=Math.min(maxSpeed,dist*2.2);
+  var probeDistance=Math.max(0.75,Math.min(Number(options.probeDistance)||1.8,Math.max(0.75,dist*0.45)));
+  var baseAngle=Math.atan2(dx,dz),offsets=[0,-0.65,0.65,-1.3,1.3],best=null,bestScore=Infinity;
+  for(var i=0;i<offsets.length;i++){
+    var offset=offsets[i],angle=baseAngle+offset,point={x:member.x+Math.sin(angle)*probeDistance,z:member.z+Math.cos(angle)*probeDistance};
+    if(options.canStand&&!options.canStand(point.x,point.z,member.sp))continue;
+    if(options.resolve)options.resolve(point,options.radius||0.72,member);
+    var pushed=Math.hypot(point.x-(member.x+Math.sin(angle)*probeDistance),point.z-(member.z+Math.cos(angle)*probeDistance));
+    if(pushed>(options.maxPush||1.15))continue;
+    if(options.canStand&&!options.canStand(point.x,point.z,member.sp))continue;
+    var remaining=Math.hypot(target.x-point.x,target.z-point.z),progress=dist-remaining,side=offset>0?1:(offset<0?-1:0);
+    var score=remaining+Math.abs(offset)*0.42+pushed*1.6+(progress<-0.08?Math.min(1.25,-progress*1.4):0)+(member.navSide&&side&&side!==member.navSide?0.12:0);
+    if(score<bestScore){bestScore=score;best={x:point.x,z:point.z,side:side,progress:progress};}
+  }
+  if(!best)return {vx:0,vz:0,blocked:true,arrived:false,side:member.navSide||0,progress:0};
+  var length=Math.hypot(best.x-member.x,best.z-member.z)||1;
+  return {vx:(best.x-member.x)/length*desiredSpeed,vz:(best.z-member.z)/length*desiredSpeed,blocked:false,arrived:false,side:best.side,progress:best.progress};
+}
+function companionSafePosition(index,origin,member,options){
+  options=options||{};
+  var radii=options.radii||[2.25,3.15,4.05],baseAngle=Math.max(0,index||0)*2.39996323;
+  for(var ring=0;ring<radii.length;ring++)for(var attempt=0;attempt<8;attempt++){
+    var angle=baseAngle+attempt*Math.PI/4,point={x:origin.x+Math.cos(angle)*radii[ring],z:origin.z+Math.sin(angle)*radii[ring]};
+    if(options.resolve)options.resolve(point,options.radius||0.72,member);
+    if(options.canStand&&!options.canStand(point.x,point.z,member&&member.sp))continue;
+    if(options.isOccupied&&options.isOccupied(point.x,point.z,member))continue;
+    return point;
+  }
+  return null;
+}
+function findCompanionSafePosition(index,origin,member){
+  return companionSafePosition(index,origin,member,{radius:0.72,resolve:resolveCompanionNavigationPoint,canStand:companionCanStand,isOccupied:function(x,z,ignore){
+    for(var i=0;i<team.length;i++){var other=team[i];if(other!==ignore&&Math.hypot(other.x-x,other.z-z)<1.25)return true;}
+    return false;
+  }});
+}
+function regroupCompanionsNearPlayer(){
+  var moved=0;
+  for(var i=0;i<team.length;i++){
+    var member=team[i],point=findCompanionSafePosition(i,{x:P.x,z:P.z},member);
+    if(!point&&caveMode&&activeCave){point={x:activeCave.x+((i%4)-1.5)*1.2,z:activeCave.z-1.3+Math.floor(i/4)*1.3};resolveCompanionNavigationPoint(point,0.72);if(!companionCanStand(point.x,point.z,member.sp))point=null;}
+    if(!point)continue;
+    member.x=point.x;member.z=point.z;member.y=companionGroundHeight(point.x,point.z);member.speed=0;
+    member.navT=0;member.navVX=0;member.navVZ=0;member.navSide=0;member.navStuck=0;member.navBlocked=false;member.navLastX=member.x;member.navLastZ=member.z;
+    if(member.m&&member.m.g){member.m.g.position.set(member.x,member.y,member.z);member.m.g.visible=true;}
+    moved++;
+  }
+  return moved;
+}
+function companionNeedsRecovery(distance,stuck,mode){return mode!=='hold'&&(distance>72||(distance>8.5&&stuck>3.4));}
 function nearFire(x,z,r){
   for(var i=0;i<fires.length;i++){if(Math.hypot(fires[i].x-x,fires[i].z-z)<r*(fires[i].k||1))return true}
   return false;
@@ -3822,9 +3910,20 @@ function update(dt){
     wildT=6;
   }
 
+  companionRecoveryNoticeCooldown=Math.max(0,companionRecoveryNoticeCooldown-dt);
   for(i=0;i<team.length;i++){
-    var t=team[i],guard=null,guardDist=999,guardScore=Infinity;
-    if(companionHealth(t)<=0){t.speed=0;t.defending=false;t.y+=(heightAt(t.x,t.z)-t.y)*Math.min(1,dt*10);animCreature(t,dt);continue;}
+    var t=team[i],guard=null,guardDist=999,guardScore=Infinity,playerDistance=Math.hypot(P.x-t.x,P.z-t.z);
+    if(companionNeedsRecovery(playerDistance,t.navStuck||0,companionMode)){
+      var recovered=findCompanionSafePosition(i,{x:P.x,z:P.z},t);
+      if(recovered){
+        t.x=recovered.x;t.z=recovered.z;t.y=companionGroundHeight(t.x,t.z);t.speed=0;
+        t.navT=0;t.navVX=0;t.navVZ=0;t.navStuck=0;t.navSide=0;t.navBlocked=false;
+        if(t.m&&t.m.g)t.m.g.position.set(t.x,t.y,t.z);
+        if(companionRecoveryNoticeCooldown<=0){say('A companion was regrouped nearby after getting stuck.',4);companionRecoveryNoticeCooldown=5;}
+        playerDistance=Math.hypot(P.x-t.x,P.z-t.z);
+      }
+    }
+    if(companionHealth(t)<=0){t.speed=0;t.defending=false;t.y+=(companionGroundHeight(t.x,t.z)-t.y)*Math.min(1,dt*10);animCreature(t,dt);continue;}
     t.guardCd=Math.max(0,(t.guardCd||0)-dt);t.abilityCd=Math.max(0,(t.abilityCd||0)-dt);
     for(j=0;j<wraiths.length;j++){
       var candidate=wraiths[j],wd=Math.hypot(candidate.x-t.x,candidate.z-t.z);
@@ -3835,32 +3934,43 @@ function update(dt){
     }
     if(guard&&companionAbilityReady(t,guard,companionMode,P,companionAbilityGlobalCd,companionWardTimer))activateCompanionAbility(t,guard);
     var forwardX=Math.sin(P.face),forwardZ=Math.cos(P.face),rightX=Math.cos(P.face),rightZ=-Math.sin(P.face);
-    var row=i===0?0:Math.ceil(i/2),side=i===0?0:(i%2===1?-1:1);
-    var lateral=side*(1.25+row*0.18),behind=2.7+row*1.45;
+    var row=caveMode?Math.floor(i/4):(i===0?0:Math.ceil(i/2)),side=caveMode?(i%4-1.5):(i===0?0:(i%2===1?-1:1));
+    var lateral=caveMode?side*1.1:side*(1.25+row*0.18),behind=caveMode?0.6+row*0.72:2.7+row*1.45;
     var tx=companionMode==='hold'?t.x:P.x-forwardX*behind+rightX*lateral,tz=companionMode==='hold'?t.z:P.z-forwardZ*behind+rightZ*lateral;
     if(companionMode!=='hold'&&guard&&guardDist>2.25){tx=guard.x+(t.x-guard.x)/Math.max(0.01,guardDist)*1.7;tz=guard.z+(t.z-guard.z)/Math.max(0.01,guardDist)*1.7}
     var ddx=tx-t.x,ddz=tz-t.z,dl=Math.hypot(ddx,ddz);
     t.speed=0;t.defending=!!guard;
     if(dl>0.6){
-      var sp2=Math.min(guard?7.5:9,dl*(guard?2.5:2.2));
-      // Companions use the same world collision volumes as the player and wildlife.
-      // Resolve walls, closed gates, trees, rocks and campfire clearance before committing movement.
-      var companionNext={x:t.x+ddx/dl*sp2*dt,z:t.z+ddz/dl*sp2*dt};
-      pushOutBoxes(companionNext,0.72);
-      if(Math.abs(companionNext.x)<HALF-8&&Math.abs(companionNext.z)<HALF-8&&heightAt(companionNext.x,companionNext.z)>WATER+0.2){
-        t.x=companionNext.x;t.z=companionNext.z;t.speed=Math.min(1,sp2/6);
-      }else{t.speed=0;}
+      var maxSpeed=playerDistance>34?12:(guard?7.5:9);
+      t.navT=Math.max(0,(t.navT||0)-dt);
+      if(t.navT<=0||!isFinite(t.navVX)||!isFinite(t.navVZ)){
+        var nav=companionNavigationStep(t,{x:tx,z:tz},{maxSpeed:maxSpeed,probeDistance:caveMode?1.25:1.8,radius:0.72,maxPush:1.15,canStand:companionCanStand,resolve:resolveCompanionNavigationPoint});
+        t.navT=0.18;t.navVX=nav.vx;t.navVZ=nav.vz;t.navBlocked=nav.blocked;t.navSide=nav.side;
+      }
+      var beforeX=t.x,beforeZ=t.z,companionNext={x:t.x+(t.navVX||0)*dt,z:t.z+(t.navVZ||0)*dt};
+      resolveCompanionNavigationPoint(companionNext,0.72);
+      if(companionGroundSafe(companionNext.x,companionNext.z)){
+        t.x=companionNext.x;t.z=companionNext.z;t.speed=Math.min(1,Math.hypot(t.navVX||0,t.navVZ||0)/9);
+      }else{t.speed=0;t.navBlocked=true;t.navVX=0;t.navVZ=0;t.navT=0;}
+      var movedDistance=Math.hypot(t.x-beforeX,t.z-beforeZ);
+      if(companionMode!=='hold'&&dl>2){
+        if(movedDistance<Math.max(0.025,dt*0.45))t.navStuck=Math.min(8,(t.navStuck||0)+dt);
+        else t.navStuck=Math.max(0,(t.navStuck||0)-dt*1.8);
+      }else t.navStuck=0;
       var ty2=Math.atan2(ddx,ddz),dy2=ty2-t.yaw;dy2=Math.atan2(Math.sin(dy2),Math.cos(dy2));t.yaw+=dy2*Math.min(1,dt*8);
-    }else if(guard){
-      var faceX=guard.x-t.x,faceZ=guard.z-t.z,faceY=Math.atan2(faceX,faceZ),faceD=faceY-t.yaw;
-      faceD=Math.atan2(Math.sin(faceD),Math.cos(faceD));t.yaw+=faceD*Math.min(1,dt*10);
+    }else{
+      t.navVX=0;t.navVZ=0;t.navStuck=0;
+      if(guard){
+        var faceX=guard.x-t.x,faceZ=guard.z-t.z,faceY=Math.atan2(faceX,faceZ),faceD=faceY-t.yaw;
+        faceD=Math.atan2(Math.sin(faceD),Math.cos(faceD));t.yaw+=faceD*Math.min(1,dt*10);
+      }
     }
     if(guard&&guardDist<3.1&&t.guardCd<=0){
       var companionDamage=t.sp===4?1.6:(t.sp===1||t.sp===7?1.35:1);
       guard.hp-=companionDamage;guard.hit=0.18;t.guardCd=1.15;t.attackAnim=0.38;
       burst(guard.x,guard.y+1.5,guard.z,0xc9a8ff,4);
     }
-    t.y+=(heightAt(t.x,t.z)-t.y)*Math.min(1,dt*10);
+    t.y+=(companionGroundHeight(t.x,t.z)-t.y)*Math.min(1,dt*10);
     animCreature(t,dt);
     t.work-=dt;
     if(t.work<=0){t.work=10;var k=SPECIES[t.sp].w;gain(k,1,t.x,t.y+2.2,t.z,'#bfe8ff')}
