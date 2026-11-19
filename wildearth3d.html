@@ -488,7 +488,6 @@
   #bag.wildInventory .companionCommands button{padding:7px 2px;border:1px solid #6d7b62;background:#29372a;color:#dbe0c8;font-size:8px}
   #bag.wildInventory .companionCommands button.active{border-color:#d7c57d;background:#586243;color:#fff0bc}
   #bag.wildInventory .companionCommands button[data-team-command="recall"]{grid-column:1/-1;border-color:#b6c17b;background:#3b4a31;color:#f4efcf;font-weight:900;letter-spacing:.08em}
-  #bag.wildInventory .companionCommands button[data-team-command="recall"]{grid-column:1/-1;border-color:#b6c17b;background:#3b4a31;color:#f4efcf;font-weight:900;letter-spacing:.08em}
   #bag.wildInventory .wildPartyNote{margin-top:12px;padding-top:9px;border-top:1px solid #71806466;color:#aeb8a1;font-size:8px;line-height:1.5}
   #bag.wildInventory #bagTeam .partyCard{flex-wrap:wrap}
   #bag.wildInventory #bagTeam .partyHealth{display:block;height:4px;overflow:hidden;border-radius:4px;background:#101914;border:1px solid #ffffff18}
@@ -2383,7 +2382,7 @@ function renderPartyPanel(){
   if(!reserveTeam.length)html+='<div class="partyEmpty">Reserve storage is empty. Captured creatures join the active party first, then move here when it is full.</div>';
   html+='</div><div class="chips">';
   SPECIES.forEach(function(S,index){html+=counts[index]?'<span class="chip" style="color:'+RAR[S.r].c+'">'+S.n+' ×'+counts[index]+'</span>':'<span class="chip off">???</span>';});
-  html+='</div><div class="companionCommands"><span>Active companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button><button type="button" data-team-mode="attack" class="'+(companionMode==='attack'?'active':'')+'">Attack</button><button type="button" data-team-command="recall" aria-label="Recall and regroup active companions">RECALL / REGROUP</button><small class="companionHint">Recall safely regroups the active party. Follow, Hold, Defend, and Attack control normal companion behavior.</small></div>';
+  html+='</div><div class="companionCommands"><span>Active companion orders</span><button type="button" data-team-mode="follow" class="'+(companionMode==='follow'?'active':'')+'">Follow</button><button type="button" data-team-mode="hold" class="'+(companionMode==='hold'?'active':'')+'">Hold</button><button type="button" data-team-mode="defend" class="'+(companionMode==='defend'?'active':'')+'">Defend</button><button type="button" data-team-mode="attack" class="'+(companionMode==='attack'?'active':'')+'">Attack</button><button type="button" data-team-command="recall" aria-label="Recall and regroup active companions">RECALL / REGROUP</button><small class="companionHint">Signature abilities activate in Attack order when a Wraith is close. Downed companions recover with Healing Salves. Use Recall / Regroup to safely reposition the active party.</small></div>';
   return html;
 }
 function storePartyCompanion(index){
