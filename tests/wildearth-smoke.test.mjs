@@ -971,6 +971,9 @@ test('save validation rejects malformed or out-of-bounds world records before lo
   assert.equal(validate({team:Array.from({length:33},()=>({sp:0}))}),false,'oversized companion lists must be rejected');
   assert.equal(validate({team:Array.from({length:12},()=>({sp:0,hp:100})),reserve:Array.from({length:20},()=>({sp:1,hp:60}))}),true,'active and reserve storage should support the bounded 32-creature collection');
   assert.equal(validate({team:[{sp:0,hp:101}]}),false,'companion health outside 0-100 must be rejected');
+  assert.equal(validate({team:[{sp:0,bondXp:421}]}),false,'bond XP above the level cap must be rejected');
+  assert.equal(validate({team:[{sp:0,bondXp:-1}]}),false,'negative bond XP must be rejected');
+  assert.equal(validate({reserve:[{sp:0,bondXp:'420'}]}),false,'bond XP must be stored as a finite number');
   assert.equal(validate({reserve:Array.from({length:21},()=>({sp:0}))}),false,'reserve storage must remain bounded');
   assert.equal(validate({team:Array.from({length:13},()=>({sp:0})),reserve:Array.from({length:20},()=>({sp:1}))}),false,'the total collection must remain bounded');
   assert.equal(validate({walls:[{x:301,z:0,t:'wall'}]}),false,'out-of-bounds structures must be rejected');
@@ -1527,8 +1530,9 @@ test('signature abilities require Attack order, range, cooldown and appropriate 
 test('eight signature ability effects heal, ward, burn, slow, chain, root, knock back and finish Wraiths', () => {
   const start=gameScript.indexOf('var COMPANION_ABILITIES=[');
   const end=gameScript.indexOf('function activateCompanionAbility',start);
-  const system=new Function(gameScript.slice(start,end)+';return {resolve:resolveCompanionAbility};')();
-  function scenario(sp,boss){
+  const bondHelpers='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','companionBondLevel','companionBondDamageMultiplier'].map(extractGameFunction).join('\n');
+  const system=new Function(bondHelpers+'\n'+gameScript.slice(start,end)+';return {resolve:resolveCompanionAbility};')();
+  function scenario(sp,boss,bondXp){
     const mobs=[
       {x:0,z:0,y:0,hp:20,boss:!!boss,damageTaken:1,windup:0.4,lunge:0.2,attackCd:0.2},
       {x:2,z:0,y:0,hp:20,damageTaken:1,windup:0.2,lunge:0.1,attackCd:0.1},
@@ -1536,7 +1540,7 @@ test('eight signature ability effects heal, ward, burn, slow, chain, root, knock
       {x:4,z:0,y:0,hp:20,damageTaken:1},
       {x:8,z:0,y:0,hp:20,damageTaken:1}
     ];
-    const companion={sp,x:-1,y:0,z:0};
+    const companion={sp,x:-1,y:0,z:0,bondXp:Number(bondXp)||0};
     const player={x:0,y:0,z:0,hp:70,maxHp:100,stamina:40};
     const calls={bursts:0,pops:0,knockbacks:0,sounds:0};
     const result=system.resolve(companion,mobs[0],{player,wraiths:mobs,wardTimer:0,wardReduction:0},{
@@ -1552,6 +1556,7 @@ test('eight signature ability effects heal, ward, burn, slow, chain, root, knock
   const root=scenario(5);assert.ok(root.mobs[0].rootTimer>0);assert.equal(root.mobs[0].windup,0);assert.equal(root.mobs[0].lunge,0);
   const gust=scenario(6);assert.equal(gust.result.affected,4);assert.equal(gust.calls.knockbacks,4);assert.equal(gust.mobs[0].attackCd,0.45);
   const prism=scenario(7,true);assert.ok(Math.abs(prism.mobs[0].hp-(20-2.4*1.35))<0.0001);
+  const bondedPrism=scenario(7,true,420);assert.ok(Math.abs(bondedPrism.mobs[0].hp-(20-2.4*1.35*1.1))<0.0001,'maximum bond adds a capped 10% signature-ability bonus');
   for(const run of [mend,burn,tide,ward,chain,root,gust,prism]){assert.equal(run.calls.pops,1);assert.equal(run.calls.sounds,1);}
 });
 
@@ -1561,10 +1566,11 @@ test('signature abilities integrate with companion attack orders, Wraith status 
   assert.ok(gameScript.includes("s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);s.rootTimer=Math.max(0,(s.rootTimer||0)-dt);"));
   assert.ok(gameScript.includes("var wardMultiplier=companionWardTimer>0?1-clamp(companionWardReduction,0,0.6):1;"));
   assert.ok(gameScript.includes("if(companionWardTimer>0)statuses.push('STONE WARD · '+Math.ceil(companionWardTimer)+'s');"));
-  assert.ok(gameScript.includes("team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t)}})"),'active companion health should persist without saving runtime cooldowns');
-  assert.ok(gameScript.includes("reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t)}})"),'reserve companion health should persist without creating reserve meshes');
+  assert.ok(gameScript.includes("team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp)}})"),'active companion health and bond should persist without saving runtime cooldowns');
+  assert.ok(gameScript.includes("reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp)}})"),'reserve companion health and bond should persist without creating reserve meshes');
   assert.ok(gameScript.includes("html+='</div><div class=\"companionCommands\""));
   assert.ok(gameScript.includes('Signature abilities activate in Attack order when a Wraith is close.'));
+  for(const marker of ['function companionBondProgress(member)','function gainCompanionBond(member,amount)','gainCompanionBond(companion,result.affected>0?6:4)','gainCompanionBond(t,2)','gainCompanionBond(member,3)','t.bondTimer>=60','companionWorkYield(t,random())',"BOND LVL '+bond.level",'sc.bondXp=Math.round(clamp(sc.trust||0,0,1)*20)'])assert.ok(gameScript.includes(marker),'missing bond progression integration: '+marker);
   assert.doesNotThrow(() => new Function(gameScript));
 });
 
@@ -1635,8 +1641,8 @@ test('field guide sightings and captures persist without changing the existing s
 });
 
 test('companion health is bounded, downed members stop at zero, and salves can restore them', () => {
-  const source=['normalizeCompanionHp','companionHealth','applyCompanionDamage','restoreCompanionHealth','normalizePartyStorage'].map(extractGameFunction).join('\n');
-  const helpers=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return {normalizeCompanionHp,companionHealth,applyCompanionDamage,restoreCompanionHealth,normalizePartyStorage};')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
+  const source='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','normalizeCompanionHp','companionHealth','applyCompanionDamage','restoreCompanionHealth','normalizePartyStorage'].map(extractGameFunction).join('\n');
+  const helpers=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return {normalizeCompanionBondXp,normalizeCompanionHp,companionHealth,applyCompanionDamage,restoreCompanionHealth,normalizePartyStorage};')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
   assert.equal(helpers.normalizeCompanionHp(undefined),100);
   assert.equal(helpers.normalizeCompanionHp(-8),0);
   assert.equal(helpers.normalizeCompanionHp(140),100);
@@ -1651,8 +1657,32 @@ test('companion health is bounded, downed members stop at zero, and salves can r
   assert.equal(member.hp,100);
 });
 
+test('companion bond progression is bounded and unlocks measured combat and work bonuses', () => {
+  const source='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','companionBondLevel','companionBondProgress','companionBondDamageMultiplier','companionWorkYield','awardCompanionBond'].map(extractGameFunction).join('\n');
+  const helpers=new Function('clamp',source+';return {normalizeCompanionBondXp,companionBondLevel,companionBondProgress,companionBondDamageMultiplier,companionWorkYield,awardCompanionBond};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  const member={bondXp:0};
+  assert.equal(helpers.companionBondLevel(member),1);
+  assert.equal(helpers.companionBondDamageMultiplier(member),1);
+  assert.equal(helpers.companionWorkYield(member,0.01),1);
+  assert.equal(helpers.awardCompanionBond(member,60).level,2);
+  assert.equal(helpers.companionBondProgress(member).needed,90);
+  assert.equal(helpers.awardCompanionBond(member,90).level,3);
+  assert.equal(helpers.companionBondDamageMultiplier(member),1.05);
+  assert.equal(helpers.companionWorkYield(member,0.05),2);
+  assert.equal(helpers.companionWorkYield(member,0.5),1);
+  assert.equal(helpers.awardCompanionBond(member,120).level,4);
+  assert.equal(helpers.awardCompanionBond(member,150).level,5);
+  assert.equal(helpers.companionBondDamageMultiplier(member),1.1);
+  assert.equal(helpers.companionWorkYield(member,0.2),2);
+  assert.equal(helpers.companionWorkYield(member,0.3),1);
+  assert.equal(helpers.awardCompanionBond(member,50).xp,420,'bond XP is capped at the final level');
+  assert.equal(helpers.awardCompanionBond(member,-20).gained,0);
+  assert.equal(helpers.normalizeCompanionBondXp(NaN),0);
+  assert.equal(helpers.normalizeCompanionBondXp(999),420);
+});
+
 test('legacy companion saves migrate overflow into bounded reserve storage without losing health', () => {
-  const source=['normalizeCompanionHp','normalizePartyStorage'].map(extractGameFunction).join('\n');
+  const source='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','normalizeCompanionHp','normalizePartyStorage'].map(extractGameFunction).join('\n');
   const normalize=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return normalizePartyStorage;')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
   const legacy=Array.from({length:14},(_,i)=>({sp:i%8}));
   const normalized=normalize(legacy,[{sp:7,hp:35}],8);

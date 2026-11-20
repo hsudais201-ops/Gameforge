@@ -492,6 +492,9 @@
   #bag.wildInventory #bagTeam .partyCard{flex-wrap:wrap}
   #bag.wildInventory #bagTeam .partyHealth{display:block;height:4px;overflow:hidden;border-radius:4px;background:#101914;border:1px solid #ffffff18}
   #bag.wildInventory #bagTeam .partyHealth i{display:block;height:100%;background:linear-gradient(90deg,#a7d47c,#e4d28c);transition:width .18s}
+  #bag.wildInventory #bagTeam .partyBond{display:block;height:3px;overflow:hidden;border-radius:4px;background:#101914;border:1px solid #ffffff18}
+  #bag.wildInventory #bagTeam .partyBond i{display:block;height:100%;background:linear-gradient(90deg,#86c6d9,#d8cb83);transition:width .2s}
+  #bag.wildInventory #bagTeam .partyCard .partyBondText{color:#d9dfc4;font-size:7px;letter-spacing:.035em}
   #bag.wildInventory #bagTeam .partyCard.downed{border-color:#ad7062;background:linear-gradient(120deg,#49332f,#2d2422)}
   #bag.wildInventory #bagTeam .partyCard.downed .partyHealth i{background:#bd6b62}
   #bag.wildInventory #bagTeam .partyActions{display:flex;gap:5px;width:100%;margin-top:2px}
@@ -1602,6 +1605,35 @@ var SPECIES=[
   {n:'Mistral',c:0xdfe8f2,w:'berry',rough:0.7,r:'rare',role:'Disruptor',ability:'Gale Break',habitats:['highland','forest']},
   {n:'Glimmer',c:0x9b6bd6,w:'stone',rough:0.35,r:'rare',role:'Finisher',ability:'Prism Lance',habitats:['frost','highland']}
 ];
+var COMPANION_BOND_XP_CAP=420;
+function normalizeCompanionBondXp(value){return typeof value==='number'&&isFinite(value)?clamp(Math.floor(value),0,COMPANION_BOND_XP_CAP):0;}
+function companionBondLevel(member){var xp=normalizeCompanionBondXp(member&&member.bondXp);return xp>=420?5:(xp>=270?4:(xp>=150?3:(xp>=60?2:1)));}
+function companionBondProgress(member){
+  var xp=normalizeCompanionBondXp(member&&member.bondXp),level=companionBondLevel(member);
+  var floor=level===5?420:(level===4?270:(level===3?150:(level===2?60:0)));
+  var next=level===5?420:(level===4?420:(level===3?270:(level===2?150:60)));
+  return {level:level,xp:xp,into:xp-floor,needed:next-floor,percent:level===5?100:Math.round(clamp((xp-floor)/(next-floor)*100,0,100))};
+}
+function companionBondDamageMultiplier(member){return 1+(companionBondLevel(member)-1)*0.025;}
+function companionWorkYield(member,roll){
+  var level=companionBondLevel(member),chance=level>=5?0.25:(level>=3?0.1:0),sample=isFinite(roll)?Number(roll):1;
+  return sample<chance?2:1;
+}
+function awardCompanionBond(member,amount){
+  if(!member||typeof member!=='object')return {gained:0,level:1,leveledUp:false,xp:0};
+  var before=companionBondLevel(member),previous=normalizeCompanionBondXp(member.bondXp),gain=Math.max(0,Math.floor(Number(amount)||0));
+  member.bondXp=normalizeCompanionBondXp(previous+gain);
+  var level=companionBondLevel(member);
+  return {gained:member.bondXp-previous,level:level,leveledUp:level>before,xp:member.bondXp};
+}
+function gainCompanionBond(member,amount){
+  var result=awardCompanionBond(member,amount);
+  if(result.leveledUp){
+    say(SPECIES[member.sp].n+' reached Bond level '+result.level+'! Companion combat and work bonuses improved.',4);
+    save();if(bagOpen)renderInv(true);
+  }
+  return result;
+}
 var COMPANION_ABILITIES=[
   {role:'Support',name:'Pollen Mend',effect:'mend',color:0x9bdc77,cooldown:12,range:6.4,supportRange:10,heal:8,stamina:14},
   {role:'Striker',name:'Cinder Burst',effect:'burn',color:0xff8744,cooldown:9.5,range:6.8,damage:1.45,burn:1.45},
@@ -1641,7 +1673,7 @@ function resolveCompanionAbility(companion,target,context,effects){
   var result={name:profile.name,effect:profile.effect,affected:0,healed:0,staminaRestored:0,wardTimer:Math.max(0,context.wardTimer||0),wardReduction:Math.max(0,context.wardReduction||0)};
   function hit(mob,baseDamage){
     if(!mob||wraithList.indexOf(mob)<0||mob.hp<=0)return;
-    var amount=companionAbilityDamage(profile,mob,baseDamage);
+    var amount=companionAbilityDamage(profile,mob,baseDamage)*companionBondDamageMultiplier(companion);
     mob.hp=Math.max(0,mob.hp-amount);mob.hit=0.22;result.affected++;
     if(effects&&effects.burst)effects.burst(mob.x,mob.y+1.4,mob.z,profile.color,profile.effect==='chain'?4:6);
   }
@@ -1697,6 +1729,7 @@ function activateCompanionAbility(companion,target){
   });
   companionWardTimer=result.wardTimer;companionWardReduction=result.wardReduction;
   companion.abilityCd=profile.cooldown;companion.attackAnim=0.52;companionAbilityGlobalCd=1.15;
+  gainCompanionBond(companion,result.affected>0?6:4);
   return result;
 }
 var CREATURE_DIET=['berry','berry','fiber','berry','berry','fiber','berry','crystal'];
@@ -2353,11 +2386,12 @@ function makeActiveCompanion(record,index){
   if(safe){x=safe.x;z=safe.z;}
   var y=companionGroundHeight(x,z);
   m.g.position.set(x,y,z);m.g.visible=true;scene.add(m.g);
-  return {sp:record.sp,m:m,x:x,z:z,y:y,work:rand(3,9),yaw:P.face||0,walk:0,speed:0,hp:normalizeCompanionHp(record.hp),navT:0,navVX:0,navVZ:0,navSide:0,navStuck:0,navBlocked:false,navLastX:x,navLastZ:z};
+  return {sp:record.sp,m:m,x:x,z:z,y:y,work:rand(3,9),yaw:P.face||0,walk:0,speed:0,hp:normalizeCompanionHp(record.hp),bondXp:normalizeCompanionBondXp(record.bondXp),navT:0,navVX:0,navVZ:0,navSide:0,navStuck:0,navBlocked:false,navLastX:x,navLastZ:z};
 }
 function partyCardHtml(member,index,storage){
   var S=SPECIES[member.sp],hp=companionHealth(member),down=hp<=0,active=storage==='active';
-  var html='<div class="partyCard'+(down?' downed':'')+'"><span class="partyOrb" style="background:#'+S.c.toString(16).padStart(6,'0')+'"></span><span><b>'+S.n+'</b><small>'+S.role+' · '+RAR[S.r].n+' · '+(active?'Active slot '+(index+1):'Reserve')+'</small><small class="partyAbility">'+S.ability+'</small><span class="partyHealth"><i style="width:'+hp+'%"></i></span><small>'+Math.ceil(hp)+'% HEALTH'+(down?' · DOWNED':'')+'</small></span><em>'+(down?'DOWNED':(active?'ACTIVE':'STORED'))+'</em><div class="partyActions">';
+  var bond=companionBondProgress(member),bondDamage=Math.round((bond.level-1)*2.5),bondWork=bond.level>=5?25:(bond.level>=3?10:0);
+  var html='<div class="partyCard'+(down?' downed':'')+'"><span class="partyOrb" style="background:#'+S.c.toString(16).padStart(6,'0')+'"></span><span><b>'+S.n+'</b><small>'+S.role+' · '+RAR[S.r].n+' · '+(active?'Active slot '+(index+1):'Reserve')+'</small><small class="partyAbility">'+S.ability+'</small><small class="partyBondText">BOND LVL '+bond.level+' · +'+bondDamage+'% COMBAT · +'+bondWork+'% WORK</small><span class="partyBond" aria-label="Bond progress '+bond.percent+' percent"><i style="width:'+bond.percent+'%"></i></span><small class="partyBondText">'+(bond.level===5?'MAX BOND':bond.into+'/'+bond.needed+' BOND XP')+'</small><span class="partyHealth"><i style="width:'+hp+'%"></i></span><small>'+Math.ceil(hp)+'% HEALTH'+(down?' · DOWNED':'')+'</small></span><em>'+(down?'DOWNED':(active?'ACTIVE':'STORED'))+'</em><div class="partyActions">';
   if(active)html+='<button type="button" data-party-action="store" data-party-index="'+index+'" '+(reserveTeam.length>=RESERVE_PARTY_LIMIT?'disabled':'')+'>STORE</button>';
   else{
     if(team.length<ACTIVE_PARTY_LIMIT)html+='<button type="button" data-party-action="deploy" data-party-index="'+index+'">DEPLOY</button>';
@@ -2389,7 +2423,7 @@ function storePartyCompanion(index){
   var member=team[index];if(!member)return;
   if(reserveTeam.length>=RESERVE_PARTY_LIMIT){say('Reserve storage is full. Make room before storing another companion.',3);return;}
   if(member.m&&member.m.g)scene.remove(member.m.g);
-  reserveTeam.push({sp:member.sp,hp:companionHealth(member)});team.splice(index,1);
+  reserveTeam.push({sp:member.sp,hp:companionHealth(member),bondXp:normalizeCompanionBondXp(member.bondXp)});team.splice(index,1);
   renderInv(true);save();say(SPECIES[member.sp].n+' moved to reserve storage.',3);
 }
 function deployPartyCompanion(index){
@@ -2403,7 +2437,7 @@ function swapPartyCompanion(reserveIndex,activeIndex){
   if(!incoming||!outgoing||!Number.isInteger(activeIndex)||activeIndex<0||activeIndex>=team.length)return;
   if(outgoing.m&&outgoing.m.g)scene.remove(outgoing.m.g);
   team[activeIndex]=makeActiveCompanion(incoming,activeIndex);
-  reserveTeam[reserveIndex]={sp:outgoing.sp,hp:companionHealth(outgoing)};
+  reserveTeam[reserveIndex]={sp:outgoing.sp,hp:companionHealth(outgoing),bondXp:normalizeCompanionBondXp(outgoing.bondXp)};
   renderInv(true);save();say(SPECIES[incoming.sp].n+' swapped into active slot '+(activeIndex+1)+'.',3);
 }
 function healPartyCompanion(storage,index){
@@ -2411,7 +2445,7 @@ function healPartyCompanion(storage,index){
   if(companionHealth(member)>=100){say(SPECIES[member.sp].n+' is already at full health.',2);return;}
   var item=countOf('strongsalve')>0?'strongsalve':(countOf('salve')>0?'salve':null);
   if(!item){say('Craft a Healing Salve or Greater Healing Salve to recover companions.',3);return;}
-  takeItem(item,1);var restored=restoreCompanionHealth(member,item==='strongsalve'?75:40);
+  takeItem(item,1);var restored=restoreCompanionHealth(member,item==='strongsalve'?75:40);gainCompanionBond(member,3);
   playSfx('creature');pop(P.x,P.y+2.1,P.z,SPECIES[member.sp].n+' +'+Math.round(restored)+' HP','#b9e6a7');
   say(SPECIES[member.sp].n+' recovered '+Math.round(restored)+' health.',3);renderInv(true);save();
 }
@@ -2506,7 +2540,7 @@ function applyCompanionDamage(member,amount){if(!member)return 0;var before=comp
 function restoreCompanionHealth(member,amount){if(!member)return 0;var before=companionHealth(member),healing=Math.max(0,Number(amount)||0);member.hp=clamp(before+healing,0,100);member.downed=member.hp<=0;return member.hp-before;}
 function normalizePartyStorage(active,reserve,speciesCount){
   var activeOut=[],reserveOut=[],limit=Math.max(0,Math.floor(Number(speciesCount)||0));
-  function record(member){if(!member||!Number.isInteger(member.sp)||member.sp<0||member.sp>=limit)return null;return {sp:member.sp,hp:normalizeCompanionHp(member.hp)};}
+  function record(member){if(!member||!Number.isInteger(member.sp)||member.sp<0||member.sp>=limit)return null;return {sp:member.sp,hp:normalizeCompanionHp(member.hp),bondXp:normalizeCompanionBondXp(member.bondXp)};}
   (Array.isArray(active)?active:[]).forEach(function(member){var value=record(member);if(!value)return;if(activeOut.length<ACTIVE_PARTY_LIMIT)activeOut.push(value);else if(reserveOut.length<RESERVE_PARTY_LIMIT)reserveOut.push(value);});
   (Array.isArray(reserve)?reserve:[]).forEach(function(member){var value=record(member);if(value&&reserveOut.length<RESERVE_PARTY_LIMIT)reserveOut.push(value);});
   return {active:activeOut,reserve:reserveOut};
@@ -2729,6 +2763,7 @@ function validStructureCounts(parsed){
       var member=roster[ri];
       if(!member||!Number.isInteger(member.sp)||member.sp<0||member.sp>=SPECIES.length)return false;
       if(member.hp!==undefined&&(typeof member.hp!=='number'||!isFinite(member.hp)||member.hp<0||member.hp>100))return false;
+      if(member.bondXp!==undefined&&(typeof member.bondXp!=='number'||!isFinite(member.bondXp)||member.bondXp<0||member.bondXp>420||Math.floor(member.bondXp)!==member.bondXp))return false;
     }
   }
   if(parsed.progress!==undefined&&(!parsed.progress||typeof parsed.progress!=='object'||Array.isArray(parsed.progress)))return false;
@@ -2742,7 +2777,7 @@ function save(){
   try{
     snapshot=JSON.stringify({
       version:6,mapVersion:2,worldSeed:worldSeed,progress:{level:P.level,xp:P.xp,statPoints:P.statPoints,stats:P.stats,caught:catchIndex,discoveredSpecies:discoveredSpecies},bossDefeated:bossDefeated,rareEventClaimed:rareEventClaimed,toolDurability:toolDurability,P:{x:P.x,z:P.z,hp:P.hp,food:P.food,stamina:P.stamina,wetness:P.wetness,oxygen:P.oxygen},slots:slots,hot:hotSel,equippedArmor:equippedArmor,
-      team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t)}}),reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t)}}),
+      team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp)}}),reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp)}}),
       walls:walls.map(function(w){return {x:w.x,z:w.z,t:w.t,open:!!w.open}}),
       fires:fires.map(function(f){return {x:f.x,z:f.z,t:f.t}}),
       beds:beds.map(function(b){return {x:b.x,z:b.z}}),chests:chests.map(function(c){return {x:c.x,z:c.z,slots:c.slots.map(function(it){return it?{id:it.id,n:it.n}:null})}}),
@@ -3924,6 +3959,7 @@ function update(dt){
     }
     if(companionHealth(t)<=0){t.speed=0;t.defending=false;t.y+=(companionGroundHeight(t.x,t.z)-t.y)*Math.min(1,dt*10);animCreature(t,dt);continue;}
     t.guardCd=Math.max(0,(t.guardCd||0)-dt);t.abilityCd=Math.max(0,(t.abilityCd||0)-dt);
+    if(companionMode==='follow'&&playerDistance<14&&P.speed>0.8){t.bondTimer=(t.bondTimer||0)+dt;if(t.bondTimer>=60){t.bondTimer-=60;gainCompanionBond(t,1);}}else t.bondTimer=0;
     for(j=0;j<wraiths.length;j++){
       var candidate=wraiths[j],wd=Math.hypot(candidate.x-t.x,candidate.z-t.z);
       var threatScore=wd-(candidate.boss?5:0);
@@ -3965,14 +4001,14 @@ function update(dt){
       }
     }
     if(guard&&guardDist<3.1&&t.guardCd<=0){
-      var companionDamage=t.sp===4?1.6:(t.sp===1||t.sp===7?1.35:1);
-      guard.hp-=companionDamage;guard.hit=0.18;t.guardCd=1.15;t.attackAnim=0.38;
+      var companionDamage=(t.sp===4?1.6:(t.sp===1||t.sp===7?1.35:1))*companionBondDamageMultiplier(t);
+      guard.hp-=companionDamage;guard.hit=0.18;t.guardCd=1.15;t.attackAnim=0.38;gainCompanionBond(t,2);
       burst(guard.x,guard.y+1.5,guard.z,0xc9a8ff,4);
     }
     t.y+=(companionGroundHeight(t.x,t.z)-t.y)*Math.min(1,dt*10);
     animCreature(t,dt);
     t.work-=dt;
-    if(t.work<=0){t.work=10;var k=SPECIES[t.sp].w;gain(k,1,t.x,t.y+2.2,t.z,'#bfe8ff')}
+    if(t.work<=0){t.work=10;var k=SPECIES[t.sp].w;gain(k,companionWorkYield(t,random()),t.x,t.y+2.2,t.z,'#bfe8ff')}
   }
 
   spawnT-=dt;
@@ -4129,8 +4165,9 @@ function update(dt){
             wild.splice(wild.indexOf(sc),1);
             sc.work=rand(4,9);sc.hp=normalizeCompanionHp(sc.maxHp>0?sc.hp/sc.maxHp*100:100);sc.maxHp=100;sc.downed=false;
             var destination='active';
+            sc.bondXp=Math.round(clamp(sc.trust||0,0,1)*20);
             if(team.length<ACTIVE_PARTY_LIMIT)team.push(sc);
-            else{scene.remove(sc.m.g);reserveTeam.push({sp:sc.sp,hp:companionHealth(sc)});destination='reserve';}
+            else{scene.remove(sc.m.g);reserveTeam.push({sp:sc.sp,hp:companionHealth(sc),bondXp:normalizeCompanionBondXp(sc.bondXp)});destination='reserve';}
             catchIndex[sc.sp]=(catchIndex[sc.sp]||0)+1;discoverSpecies(sc.sp,false);awardXP(25+(SPECIES[sc.sp].r==='rare'?15:SPECIES[sc.sp].r==='uncommon'?8:0),'capture');checkAchievements();
             burst(sc.x,sc.y+0.6,sc.z,0xffe58a,22);burst(sc.x,sc.y+0.6,sc.z,0xffffff,8);
             pop(sc.x,sc.y+2.6,sc.z,'Gotcha! '+SPECIES[sc.sp].n+' joined',rar.c);playSfx('creature');say(destination==='active'?SPECIES[sc.sp].n+' joined your active party!':SPECIES[sc.sp].n+' joined reserve storage. Swap or deploy them from the Party panel.',4);
