@@ -1530,7 +1530,7 @@ test('signature abilities require Attack order, range, cooldown and appropriate 
 test('eight signature ability effects heal, ward, burn, slow, chain, root, knock back and finish Wraiths', () => {
   const start=gameScript.indexOf('var COMPANION_ABILITIES=[');
   const end=gameScript.indexOf('function activateCompanionAbility',start);
-  const bondHelpers='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','companionBondLevel','companionBondDamageMultiplier'].map(extractGameFunction).join('\n');
+  const bondHelpers='function clamp(v,a,b){return Math.max(a,Math.min(b,v));}\nvar COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','companionBondLevel','companionBondDamageMultiplier'].map(extractGameFunction).join('\n');
   const system=new Function(bondHelpers+'\n'+gameScript.slice(start,end)+';return {resolve:resolveCompanionAbility};')();
   function scenario(sp,boss,bondXp){
     const mobs=[
@@ -1719,7 +1719,7 @@ test('party UI supports storing, deploying, swapping, and healing active or rese
 test('full active parties capture into reserve while the entire collection stays capped at 32', () => {
   assert.ok(gameScript.includes('if(totalCompanionCount()+shots.length>=TOTAL_PARTY_LIMIT)'));
   assert.ok(gameScript.includes('if(team.length<ACTIVE_PARTY_LIMIT)team.push(sc)'));
-  assert.ok(gameScript.includes('reserveTeam.push({sp:sc.sp,hp:companionHealth(sc)})'));
+  assert.ok(gameScript.includes('reserveTeam.push({sp:sc.sp,hp:companionHealth(sc),bondXp:normalizeCompanionBondXp(sc.bondXp)})'));
   assert.ok(gameScript.includes('var savedParty=normalizePartyStorage(d.team,d.reserve,SPECIES.length)'));
   assert.ok(gameScript.includes('version:6,mapVersion:2'),'party expansion must remain additive to the existing save version');
 });
