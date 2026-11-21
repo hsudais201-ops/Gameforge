@@ -95,7 +95,7 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Add safe party recall/regroup, cave-transition positioning, stuck recovery, and soft/hard leash-distance behavior.
 - [ ] Balance creature progression, trust, breeding, offspring inheritance, and population caps.
 - [x] Add persistent companion bond progression: earn bond through exploration, care, combat, and signature abilities; gain up to 10% companion damage and modest work-yield bonuses; display and validate progress in active/reserve storage.
-- [ ] Expand meaningful non-combat utility with species-specific work assignments and habitat roles.
+- [x] Add assignable companion work roles: native species specialties, foraging, lumbering, quarrying, prospecting, guard duty, and rest; preferred habitats improve work yields and guard effectiveness.
 - [x] Add recoverable companion downed states: Wraiths can intercept companions in Defend/Attack orders, downed companions stop fighting, and Healing Salves restore them without permanent loss.
 - [ ] Add clear wild-creature death/knockout and recovery rules that are fair and communicated.
 

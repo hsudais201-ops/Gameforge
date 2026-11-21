@@ -1566,8 +1566,8 @@ test('signature abilities integrate with companion attack orders, Wraith status 
   assert.ok(gameScript.includes("s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);s.rootTimer=Math.max(0,(s.rootTimer||0)-dt);"));
   assert.ok(gameScript.includes("var wardMultiplier=companionWardTimer>0?1-clamp(companionWardReduction,0,0.6):1;"));
   assert.ok(gameScript.includes("if(companionWardTimer>0)statuses.push('STONE WARD · '+Math.ceil(companionWardTimer)+'s');"));
-  assert.ok(gameScript.includes("team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp)}})"),'active companion health and bond should persist without saving runtime cooldowns');
-  assert.ok(gameScript.includes("reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp)}})"),'reserve companion health and bond should persist without creating reserve meshes');
+  assert.ok(gameScript.includes("team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp),workJob:normalizeCompanionWorkJob(t.workJob)}})"),'active companion health and bond should persist without saving runtime cooldowns');
+  assert.ok(gameScript.includes("reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp),workJob:normalizeCompanionWorkJob(t.workJob)}})"),'reserve companion health and bond should persist without creating reserve meshes');
   assert.ok(gameScript.includes("html+='</div><div class=\"companionCommands\""));
   assert.ok(gameScript.includes('Signature abilities activate in Attack order when a Wraith is close.'));
   for(const marker of ['function companionBondProgress(member)','function gainCompanionBond(member,amount)','gainCompanionBond(companion,result.affected>0?6:4)','gainCompanionBond(t,2)','gainCompanionBond(member,3)','t.bondTimer>=60','companionWorkYield(t,random())',"BOND LVL '+bond.level",'sc.bondXp=Math.round(clamp(sc.trust||0,0,1)*20)'])assert.ok(gameScript.includes(marker),'missing bond progression integration: '+marker);
@@ -1719,7 +1719,7 @@ test('party UI supports storing, deploying, swapping, and healing active or rese
 test('full active parties capture into reserve while the entire collection stays capped at 32', () => {
   assert.ok(gameScript.includes('if(totalCompanionCount()+shots.length>=TOTAL_PARTY_LIMIT)'));
   assert.ok(gameScript.includes('if(team.length<ACTIVE_PARTY_LIMIT)team.push(sc)'));
-  assert.ok(gameScript.includes('reserveTeam.push({sp:sc.sp,hp:companionHealth(sc),bondXp:normalizeCompanionBondXp(sc.bondXp)})'));
+  assert.ok(gameScript.includes('reserveTeam.push({sp:sc.sp,hp:companionHealth(sc),bondXp:normalizeCompanionBondXp(sc.bondXp),workJob:normalizeCompanionWorkJob(sc.workJob)})'));
   assert.ok(gameScript.includes('var savedParty=normalizePartyStorage(d.team,d.reserve,SPECIES.length)'));
   assert.ok(gameScript.includes('version:6,mapVersion:2'),'party expansion must remain additive to the existing save version');
 });
@@ -1752,4 +1752,76 @@ test('releasing an active or reserve companion frees a collection slot and safel
   assert.ok(gameScript.includes('var released=spawnWild(member.sp)'));
   assert.ok(gameScript.includes('list.splice(index,1)'));
   assert.ok(gameScript.includes('Your collection is full (32). Release a companion from the Party panel before capturing another.'));
+});
+
+test('companion work assignments use species specialties and preferred habitat affinity', () => {
+  const speciesStart=gameScript.indexOf('var SPECIES=['),speciesEnd=gameScript.indexOf('];',speciesStart)+2;
+  const jobsStart=gameScript.indexOf('var COMPANION_WORK_JOBS='),jobsEnd=gameScript.indexOf('\nfunction normalizeCompanionWorkJob',jobsStart);
+  assert.ok(speciesStart>=0&&speciesEnd>speciesStart&&jobsStart>=0&&jobsEnd>jobsStart);
+  const source='var COMPANION_BOND_XP_CAP=420;'+gameScript.slice(speciesStart,speciesEnd)+'\n'+gameScript.slice(jobsStart,jobsEnd)+'\n'+
+    ['normalizeCompanionBondXp','companionBondLevel','normalizeCompanionWorkJob','companionWorkProfile','companionWorkYield','companionWorkGuardMultiplier'].map(extractGameFunction).join('\n');
+  const helpers=new Function('clamp',source+';return {normalizeCompanionWorkJob,companionWorkProfile,companionWorkYield,companionWorkGuardMultiplier};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  const member={sp:0,bondXp:0};
+  assert.equal(helpers.normalizeCompanionWorkJob('invalid'),'native');
+  const native=helpers.companionWorkProfile(member,'meadow');
+  assert.equal(native.item,'wood','legacy native resource specialization is preserved');
+  assert.equal(native.label,'Woodland gatherer');
+  assert.equal(native.habitatMatch,true);
+  assert.equal(helpers.companionWorkProfile(member,'desert').habitatMatch,false);
+  member.workJob='forage';
+  const forage=helpers.companionWorkProfile(member,'forest');
+  assert.equal(forage.item,'berry');
+  assert.equal(forage.bonusItem,'fiber');
+  assert.equal(forage.habitatMatch,true);
+  member.workJob='quarry';
+  const quarry=helpers.companionWorkProfile(member,'desert');
+  assert.equal(quarry.item,'stone');
+  assert.equal(quarry.bonusItem,'copperOre');
+  member.workJob='guard';
+  assert.equal(helpers.companionWorkProfile(member,'forest').produces,false);
+  assert.equal(helpers.companionWorkGuardMultiplier(member,'forest'),1.15);
+  assert.equal(helpers.companionWorkGuardMultiplier(member,'desert'),1.08);
+  member.workJob='rest';
+  assert.equal(helpers.companionWorkProfile(member,'forest').produces,false);
+  assert.equal(helpers.companionWorkGuardMultiplier(member,'forest'),1);
+});
+
+test('bond and habitat bonuses stack within a bounded work-yield chance', () => {
+  const source='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','companionBondLevel','companionWorkYield'].map(extractGameFunction).join('\n');
+  const helpers=new Function('clamp',source+';return {companionWorkYield};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  assert.equal(helpers.companionWorkYield({bondXp:0},0.05,false),1);
+  assert.equal(helpers.companionWorkYield({bondXp:0},0.05,true),2);
+  assert.equal(helpers.companionWorkYield({bondXp:150},0.15,true),2);
+  assert.equal(helpers.companionWorkYield({bondXp:150},0.25,true),1);
+  assert.equal(helpers.companionWorkYield({bondXp:420},0.34,true),2);
+  assert.equal(helpers.companionWorkYield({bondXp:420},0.36,true),1);
+});
+
+test('work assignments migrate safely and persist across active and reserve storage', () => {
+  const jobsStart=gameScript.indexOf('var COMPANION_WORK_JOBS='),jobsEnd=gameScript.indexOf('\nfunction normalizeCompanionWorkJob',jobsStart);
+  const source='var COMPANION_BOND_XP_CAP=420;'+gameScript.slice(jobsStart,jobsEnd)+'\n'+
+    ['normalizeCompanionWorkJob','normalizeCompanionBondXp','normalizeCompanionHp','normalizePartyStorage'].map(extractGameFunction).join('\n');
+  const normalize=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return normalizePartyStorage;')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
+  const result=normalize([{sp:0},{sp:1,workJob:'quarry'}],[{sp:2,workJob:'rest'},{sp:3,workJob:'invalid'}],8);
+  assert.equal(result.active[0].workJob,'native');
+  assert.equal(result.active[1].workJob,'quarry');
+  assert.equal(result.reserve[0].workJob,'rest');
+  assert.equal(result.reserve[1].workJob,'native');
+  assert.ok(gameScript.includes('version:6,mapVersion:2'),'work assignments remain additive to save version 6');
+  assert.ok(gameScript.includes('workJob:normalizeCompanionWorkJob(record.workJob)'));
+  assert.ok(gameScript.includes('workJob:normalizeCompanionWorkJob(member.workJob)'));
+  assert.ok(gameScript.includes('workJob:normalizeCompanionWorkJob(t.workJob)'));
+});
+
+test('party UI and live companion updates apply assigned jobs and habitat effects', () => {
+  assert.ok(gameScript.includes('data-companion-work="1"'));
+  assert.ok(gameScript.includes('data-companion-storage="'+storage+'"'));
+  assert.ok(gameScript.includes("$('bagTeam').addEventListener('change'"));
+  assert.ok(gameScript.includes("e.target.closest('select[data-companion-work]')"));
+  assert.ok(gameScript.includes('COMPANION_WORK_JOB_ORDER.forEach'));
+  assert.ok(gameScript.includes('var workProfile=companionWorkProfile(t,biomeAt(t.x,t.z).id)'));
+  assert.ok(gameScript.includes('workProfile.bonusItem'));
+  assert.ok(gameScript.includes('companionWorkGuardMultiplier(t,biomeAt(t.x,t.z).id)'));
+  assert.ok(gameScript.includes('(guardAssignment?1.2:1)'));
+  assert.ok(gameScript.includes('member.workJob=job;member.work=10;'));
 });
