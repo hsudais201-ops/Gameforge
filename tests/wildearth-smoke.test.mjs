@@ -1570,7 +1570,7 @@ test('signature abilities integrate with companion attack orders, Wraith status 
   assert.ok(gameScript.includes("reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp),workJob:normalizeCompanionWorkJob(t.workJob)}})"),'reserve companion health and bond should persist without creating reserve meshes');
   assert.ok(gameScript.includes("html+='</div><div class=\"companionCommands\""));
   assert.ok(gameScript.includes('Signature abilities activate in Attack order when a Wraith is close.'));
-  for(const marker of ['function companionBondProgress(member)','function gainCompanionBond(member,amount)','gainCompanionBond(companion,result.affected>0?6:4)','gainCompanionBond(t,2)','gainCompanionBond(member,3)','t.bondTimer>=60','companionWorkYield(t,random())',"BOND LVL '+bond.level",'sc.bondXp=Math.round(clamp(sc.trust||0,0,1)*20)'])assert.ok(gameScript.includes(marker),'missing bond progression integration: '+marker);
+  for(const marker of ['function companionBondProgress(member)','function gainCompanionBond(member,amount)','gainCompanionBond(companion,result.affected>0?6:4)','gainCompanionBond(t,2)','gainCompanionBond(member,3)','t.bondTimer>=60','companionWorkYield(t,random(),workProfile.habitatMatch)',"BOND LVL '+bond.level",'sc.bondXp=Math.round(clamp(sc.trust||0,0,1)*20)'])assert.ok(gameScript.includes(marker),'missing bond progression integration: '+marker);
   assert.doesNotThrow(() => new Function(gameScript));
 });
 
@@ -1682,7 +1682,8 @@ test('companion bond progression is bounded and unlocks measured combat and work
 });
 
 test('legacy companion saves migrate overflow into bounded reserve storage without losing health', () => {
-  const source='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','normalizeCompanionHp','normalizePartyStorage'].map(extractGameFunction).join('\n');
+  const jobsStart=gameScript.indexOf('var COMPANION_WORK_JOBS='),jobsEnd=gameScript.indexOf('\nfunction normalizeCompanionWorkJob',jobsStart);
+  const source='var COMPANION_BOND_XP_CAP=420;\n'+gameScript.slice(jobsStart,jobsEnd)+'\n'+['normalizeCompanionWorkJob','normalizeCompanionBondXp','normalizeCompanionHp','normalizePartyStorage'].map(extractGameFunction).join('\n');
   const normalize=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return normalizePartyStorage;')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
   const legacy=Array.from({length:14},(_,i)=>({sp:i%8}));
   const normalized=normalize(legacy,[{sp:7,hp:35}],8);
@@ -1815,13 +1816,15 @@ test('work assignments migrate safely and persist across active and reserve stor
 
 test('party UI and live companion updates apply assigned jobs and habitat effects', () => {
   assert.ok(gameScript.includes('data-companion-work="1"'));
-  assert.ok(gameScript.includes('data-companion-storage="'+storage+'"'));
+  assert.ok(gameScript.includes("data-companion-storage=\"'+storage+'\""));
   assert.ok(gameScript.includes("$('bagTeam').addEventListener('change'"));
   assert.ok(gameScript.includes("e.target.closest('select[data-companion-work]')"));
   assert.ok(gameScript.includes('COMPANION_WORK_JOB_ORDER.forEach'));
-  assert.ok(gameScript.includes('var workProfile=companionWorkProfile(t,biomeAt(t.x,t.z).id)'));
+  assert.ok(gameScript.includes('t.workProfileT=Math.max(0,(t.workProfileT||0)-dt)'));
+  assert.ok(gameScript.includes('if(!t.workProfile||t.workProfileT<=0)'));
+  assert.ok(gameScript.includes('var workProfile=t.workProfile,guardAssignment=workProfile.guard'));
   assert.ok(gameScript.includes('workProfile.bonusItem'));
-  assert.ok(gameScript.includes('companionWorkGuardMultiplier(t,biomeAt(t.x,t.z).id)'));
+  assert.ok(gameScript.includes('(workProfile.guard?(workProfile.habitatMatch?1.15:1.08):1)'));
   assert.ok(gameScript.includes('(guardAssignment?1.2:1)'));
-  assert.ok(gameScript.includes('member.workJob=job;member.work=10;'));
+  assert.ok(gameScript.includes('member.workJob=job;member.work=10;member.workProfile=null;member.workProfileT=0;'));
 });

@@ -2414,7 +2414,7 @@ function makeActiveCompanion(record,index){
   if(safe){x=safe.x;z=safe.z;}
   var y=companionGroundHeight(x,z);
   m.g.position.set(x,y,z);m.g.visible=true;scene.add(m.g);
-  return {sp:record.sp,m:m,x:x,z:z,y:y,work:rand(3,9),yaw:P.face||0,walk:0,speed:0,hp:normalizeCompanionHp(record.hp),bondXp:normalizeCompanionBondXp(record.bondXp),workJob:normalizeCompanionWorkJob(record.workJob),navT:0,navVX:0,navVZ:0,navSide:0,navStuck:0,navBlocked:false,navLastX:x,navLastZ:z};
+  return {sp:record.sp,m:m,x:x,z:z,y:y,work:rand(3,9),yaw:P.face||0,walk:0,speed:0,hp:normalizeCompanionHp(record.hp),bondXp:normalizeCompanionBondXp(record.bondXp),workJob:normalizeCompanionWorkJob(record.workJob),workProfile:null,workProfileT:0,navT:0,navVX:0,navVZ:0,navSide:0,navStuck:0,navBlocked:false,navLastX:x,navLastZ:z};
 }
 function partyCardHtml(member,index,storage){
   var S=SPECIES[member.sp],hp=companionHealth(member),down=hp<=0,active=storage==='active';
@@ -2542,7 +2542,7 @@ $('bagTeam').addEventListener('change',function(e){
   var storage=select.getAttribute('data-companion-storage'),list=storage==='reserve'?reserveTeam:team,index=Number(select.getAttribute('data-companion-index'));
   if(!Number.isInteger(index)||index<0||!list[index])return;
   var member=list[index],job=normalizeCompanionWorkJob(select.value);
-  member.workJob=job;member.work=10;
+  member.workJob=job;member.work=10;member.workProfile=null;member.workProfileT=0;
   save();renderInv(true);
   var profile=companionWorkProfile(member,SPECIES[member.sp].habitats[0]);
   say(SPECIES[member.sp].n+' assigned to '+profile.label+'.'+(job==='guard'?' Guard duty extends Wraith detection and damage.':(job==='rest'?' Passive gathering is paused.':' Work yields every 10 seconds; preferred habitats improve extra yields.')),3.5);
@@ -4001,7 +4001,9 @@ function update(dt){
     if(companionHealth(t)<=0){t.speed=0;t.defending=false;t.y+=(companionGroundHeight(t.x,t.z)-t.y)*Math.min(1,dt*10);animCreature(t,dt);continue;}
     t.guardCd=Math.max(0,(t.guardCd||0)-dt);t.abilityCd=Math.max(0,(t.abilityCd||0)-dt);
     if(companionMode==='follow'&&playerDistance<14&&P.speed>0.8){t.bondTimer=(t.bondTimer||0)+dt;if(t.bondTimer>=60){t.bondTimer-=60;gainCompanionBond(t,1);}}else t.bondTimer=0;
-    var guardAssignment=normalizeCompanionWorkJob(t.workJob)==='guard';
+    t.workProfileT=Math.max(0,(t.workProfileT||0)-dt);
+    if(!t.workProfile||t.workProfileT<=0){t.workProfile=companionWorkProfile(t,biomeAt(t.x,t.z).id);t.workProfileT=0.5;}
+    var workProfile=t.workProfile,guardAssignment=workProfile.guard;
     for(j=0;j<wraiths.length;j++){
       var candidate=wraiths[j],wd=Math.hypot(candidate.x-t.x,candidate.z-t.z);
       var threatScore=wd-(candidate.boss?5:0);
@@ -4043,13 +4045,12 @@ function update(dt){
       }
     }
     if(guard&&guardDist<3.1&&t.guardCd<=0){
-      var companionDamage=(t.sp===4?1.6:(t.sp===1||t.sp===7?1.35:1))*companionBondDamageMultiplier(t)*companionWorkGuardMultiplier(t,biomeAt(t.x,t.z).id);
+      var companionDamage=(t.sp===4?1.6:(t.sp===1||t.sp===7?1.35:1))*companionBondDamageMultiplier(t)*(workProfile.guard?(workProfile.habitatMatch?1.15:1.08):1);
       guard.hp-=companionDamage;guard.hit=0.18;t.guardCd=1.15;t.attackAnim=0.38;gainCompanionBond(t,2);
       burst(guard.x,guard.y+1.5,guard.z,0xc9a8ff,4);
     }
     t.y+=(companionGroundHeight(t.x,t.z)-t.y)*Math.min(1,dt*10);
     animCreature(t,dt);
-    var workProfile=companionWorkProfile(t,biomeAt(t.x,t.z).id);
     if(!workProfile.produces)t.work=10;
     else{
       t.work-=dt;
