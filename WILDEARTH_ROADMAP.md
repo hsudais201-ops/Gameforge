@@ -97,7 +97,7 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Add persistent companion bond progression: earn bond through exploration, care, combat, and signature abilities; gain up to 10% companion damage and modest work-yield bonuses; display and validate progress in active/reserve storage.
 - [x] Add assignable companion work roles: native species specialties, foraging, lumbering, quarrying, prospecting, guard duty, and rest; preferred habitats improve work yields and guard effectiveness.
 - [x] Add recoverable companion downed states: Wraiths can intercept companions in Defend/Attack orders, downed companions stop fighting, and Healing Salves restore them without permanent loss.
-- [x] Add clear wild-creature knockout and recovery rules: player/Wraith damage causes a recoverable 18-second unconscious state, weakened creatures gain a bounded capture bonus, preferred feeding speeds recovery, and downed wildlife is excluded from predators, breeding, and further attacks.
+- [x] Add clear wild-creature knockout and recovery rules: player/Wraith damage causes a recoverable 18-second unconscious state, weakened creatures gain a bounded capture bonus, preferred feeding speeds recovery, native material drops remain available once per knockout cycle, and downed wildlife is excluded from predators, breeding, and further attacks.
 
 **Exit gate:** Capturing, collecting, raising, commanding, and fighting alongside creatures is a complete repeatable gameplay loop.
 

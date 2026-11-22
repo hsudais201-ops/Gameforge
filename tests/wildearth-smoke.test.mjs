@@ -263,9 +263,9 @@ test('creatures have food preferences, hunger needs, and trust-based catch bonus
 test('wildlife knockouts are recoverable, stop movement, and restore bounded health', () => {
   const source=[
     'var WILD_KNOCKOUT_RECOVERY_SECONDS=18,WILD_KNOCKOUT_RECOVERY_HEALTH=0.45,WILD_KNOCKOUT_CAPTURE_BONUS=0.22;',
-    ...['beginWildKnockout','recoverWildCreature','tickWildKnockout','wildCaptureConditionBonus'].map(extractGameFunction)
+    ...['beginWildKnockout','recoverWildCreature','tickWildKnockout','wildCaptureConditionBonus','claimWildKnockoutDrop'].map(extractGameFunction)
   ].join('\n');
-  const helpers=new Function('clamp',source+';return {beginWildKnockout,recoverWildCreature,tickWildKnockout,wildCaptureConditionBonus};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  const helpers=new Function('clamp',source+';return {beginWildKnockout,recoverWildCreature,tickWildKnockout,wildCaptureConditionBonus,claimWildKnockoutDrop};')((v,a,b)=>Math.max(a,Math.min(b,v)));
   const creature={hp:0,maxHp:100,downed:false,recoverT:0,flee:2,vx:3,vz:4,speed:2,state:'flee',alertT:1,hitTimer:0.2};
   assert.equal(helpers.beginWildKnockout(creature),true);
   assert.equal(creature.hp,0);
@@ -290,6 +290,14 @@ test('wildlife knockouts are recoverable, stop movement, and restore bounded hea
   assert.equal(helpers.wildCaptureConditionBonus({downed:true}),0.22);
   assert.equal(helpers.wildCaptureConditionBonus({downed:false}),0);
   assert.equal(helpers.wildCaptureConditionBonus(null),0);
+  const shed={hp:0,maxHp:90,downed:true,harvested:false};
+  assert.equal(helpers.claimWildKnockoutDrop(shed),true);
+  assert.equal(helpers.claimWildKnockoutDrop(shed),false);
+  assert.equal(helpers.recoverWildCreature(shed,0.45),true);
+  assert.equal(shed.harvested,false);
+  shed.hp=0;
+  assert.equal(helpers.beginWildKnockout(shed),true);
+  assert.equal(helpers.claimWildKnockoutDrop(shed),true);
   const bounded={hp:0,maxHp:100,downed:true};
   assert.equal(helpers.recoverWildCreature(bounded,2),true);
   assert.equal(bounded.hp,100);
@@ -300,8 +308,8 @@ test('wildlife knockouts are recoverable, stop movement, and restore bounded hea
 
 test('player and Wraith attacks knock out wildlife without deleting population entries', () => {
   for (const marker of [
-    'if(prey.hp<=0&&beginWildKnockout(prey))',
-    'if(struckWild.hp<=0&&beginWildKnockout(struckWild))',
+    'if(prey.hp<=0&&beginWildKnockout(prey)){if(claimWildKnockoutDrop(prey))gain(SPECIES[prey.sp].w,prey.sp===3?3:2,prey.x,prey.y+1.2,prey.z,\'#d8c6a1\');',
+    'if(struckWild.hp<=0&&beginWildKnockout(struckWild)){if(claimWildKnockoutDrop(struckWild))gain(SPECIES[struckWild.sp].w,1,struckWild.x,struckWild.y+1,struckWild.z,\'#b8a6d8\');',
     'if(struckWild&&wild.indexOf(struckWild)>=0&&!struckWild.downed',
     'var prey=wild[hi];if(prey.held||prey.downed||prey.isJuvenile)continue;',
     'var protector=wild[gi];if(!protector.defending||protector.held||protector.downed)continue;',

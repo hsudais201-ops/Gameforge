@@ -2750,7 +2750,7 @@ function recoverWildCreature(c,healthFraction){
   var requested=healthFraction===undefined?WILD_KNOCKOUT_RECOVERY_HEALTH:Number(healthFraction);
   var fraction=clamp(isFinite(requested)?requested:WILD_KNOCKOUT_RECOVERY_HEALTH,0.1,1);
   var maxHp=Number(c.maxHp);if(!isFinite(maxHp)||maxHp<=0)maxHp=90;maxHp=Math.max(1,maxHp);
-  c.hp=clamp(maxHp*fraction,1,maxHp);c.downed=false;c.recoverT=0;
+  c.hp=clamp(maxHp*fraction,1,maxHp);c.downed=false;c.recoverT=0;c.harvested=false;
   c.vx=0;c.vz=0;c.speed=0;c.flee=1.8;c.state='flee';c.alertT=0.8;c.hitTimer=0;
   return true;
 }
@@ -2763,6 +2763,10 @@ function tickWildKnockout(c,dt){
   return true;
 }
 function wildCaptureConditionBonus(c){return c&&c.downed?WILD_KNOCKOUT_CAPTURE_BONUS:0;}
+function claimWildKnockoutDrop(c){
+  if(!c||!c.downed||c.harvested)return false;
+  c.harvested=true;return true;
+}
 function tryBreed(c,dt){
   if(c.isJuvenile||c.held||c.downed||c.young||c.flee>0.1||c.alertT>0.1||wild.length>=48)return;
   c.breedT=Math.max(0,(c.breedT||0)-dt);if(c.breedT>0)return;
@@ -3299,7 +3303,7 @@ function doGather(){
   if(w){var weapon=activeElementalWeapon(),weaponLevel=weapon.damage;var dealt=Math.max(1,(weaponLevel+weapon.bonus)*(w.damageTaken||1));w.hp-=dealt;if(weapon.id==='frostblade'){w.frostTimer=Math.max(w.frostTimer||0,2.8);pop(w.x,w.y+2.5,w.z,'FROZEN','#a8edff');}else if(weapon.id==='emberblade'){w.burnTimer=Math.max(w.burnTimer||0,3.2);w.burnTick=0.15;pop(w.x,w.y+2.5,w.z,'BURNING','#ffb17c');}wearTool(weapon.id,1);w.hit=0.25;burst(w.x,w.y+1.2,w.z,weapon.color,weapon.id==='frostblade'||weapon.id==='emberblade'?12:6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),weapon.textColor);return}
   var prey=nearestOf(wild,P.x,P.z,3.4,function(o){return !o.held&&!o.downed&&inWeaponArc(o,3.4,0.35)});
   if(prey){var preyWeapon=activeElementalWeapon(),preyDamage=12+preyWeapon.damage*7+preyWeapon.bonus*4;prey.hp=Math.max(0,prey.hp-preyDamage);wearTool(preyWeapon.id,1);prey.hitTimer=0.22;prey.attackAnim=0.38;prey.flee=Math.max(prey.flee,2.6);prey.state='flee';prey.alertT=1.2;P.face=Math.atan2(prey.x-P.x,prey.z-P.z);burst(prey.x,prey.y+1.1,prey.z,SPECIES[prey.sp].c,5);pop(prey.x,prey.y+2.1,prey.z,'-'+preyDamage,'#ffd08a');
-    if(prey.hp<=0&&beginWildKnockout(prey)){pop(prey.x,prey.y+2.1,prey.z,'UNCONSCIOUS · CAPTURE READY','#b9e6a7');say(SPECIES[prey.sp].n+' is unconscious. Capture it now, or feed it to help it recover.',5);}
+    if(prey.hp<=0&&beginWildKnockout(prey)){if(claimWildKnockoutDrop(prey))gain(SPECIES[prey.sp].w,prey.sp===3?3:2,prey.x,prey.y+1.2,prey.z,'#d8c6a1');pop(prey.x,prey.y+2.1,prey.z,'UNCONSCIOUS · CAPTURE READY','#b9e6a7');say(SPECIES[prey.sp].n+' is unconscious. Capture it now, or feed it to help it recover.',5);}
     return;
   }
   var r=nearestOf(res,P.x,P.z,4.6,function(o){
@@ -4164,7 +4168,7 @@ function update(dt){
         if(struckWild&&wild.indexOf(struckWild)>=0&&!struckWild.downed&&Math.hypot(struckWild.x-s.x,struckWild.z-s.z)<2.6){
           struckWild.hp=Math.max(0,struckWild.hp-14);struckWild.hitTimer=0.22;struckWild.attackAnim=0.38;struckWild.flee=Math.max(struckWild.flee,3.2+random()*1.4);struckWild.state='flee';struckWild.alertT=1.4;struckWild.threatX=s.x;struckWild.threatZ=s.z;
           s.attackCd=2.1;pop(struckWild.x,struckWild.y+1.8,struckWild.z,'Wraith -14','#c9a8ff');
-           if(struckWild.hp<=0&&beginWildKnockout(struckWild)){pop(struckWild.x,struckWild.y+2,struckWild.z,'WILDLIFE DOWNED','#b9e6a7');say(SPECIES[struckWild.sp].n+' was knocked unconscious by a Wraith. It can recover or be captured.',5);}
+           if(struckWild.hp<=0&&beginWildKnockout(struckWild)){if(claimWildKnockoutDrop(struckWild))gain(SPECIES[struckWild.sp].w,1,struckWild.x,struckWild.y+1,struckWild.z,'#b8a6d8');pop(struckWild.x,struckWild.y+2,struckWild.z,'WILDLIFE DOWNED','#b9e6a7');say(SPECIES[struckWild.sp].n+' was knocked unconscious by a Wraith. It can recover or be captured.',5);}
         }else if(struckCompanion&&team.indexOf(struckCompanion)>=0&&companionHealth(struckCompanion)>0&&Math.hypot(struckCompanion.x-s.x,struckCompanion.z-s.z)<2.6){
           var companionHit=Math.min(18,(9+nights*0.65)*(s.damageScale||1));
           damageCompanion(struckCompanion,companionHit);s.attackCd=1.15;
