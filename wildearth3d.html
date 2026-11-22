@@ -3786,7 +3786,7 @@ function update(dt){
   for(i=0;i<wild.length;i++){
     var c=wild[i],moving=false,nxw,nzw;
     if(c.held)continue;
-    if(c.downed){tickWildKnockout(c,dt);if(!c.downed){pop(c.x,c.y+2.1,c.z,'RECOVERED','#b9e6a7');say(SPECIES[c.sp].n+' recovered and is moving away to rest.',4);}c.speed=0;c.vx=0;c.vz=0;c.y+=(heightAt(c.x,c.z)-c.y)*Math.min(1,dt*8);animCreature(c,dt);continue;}
+    if(c.downed){if(!discoveredSpecies[c.sp]&&Math.hypot(c.x-P.x,c.z-P.z)<=18)discoverSpecies(c.sp,true);tickWildKnockout(c,dt);if(!c.downed){pop(c.x,c.y+2.1,c.z,'RECOVERED','#b9e6a7');say(SPECIES[c.sp].n+' recovered and is moving away to rest.',4);}c.speed=0;c.vx=0;c.vz=0;c.y+=(heightAt(c.x,c.z)-c.y)*Math.min(1,dt*8);animCreature(c,dt);continue;}
     if(c.hp<c.maxHp&&c.hitTimer<=0){var recovery=c.state==='rest'?2.4:(c.state==='graze'?1.2:0.45);c.hp=Math.min(c.maxHp,c.hp+recovery*dt);}
     c.hunger=clamp((c.hunger||0)+dt*0.16,0,100);
     if(c.isJuvenile){c.ageSeconds=(c.ageSeconds||0)+dt;c.growthScale=0.72+0.28*clamp(c.ageSeconds/720,0,1);if(c.growthScale>=1){if(c.parent&&c.parent.young===c)c.parent.young=null;if(c.secondParent&&c.secondParent.young===c)c.secondParent.young=null;c.isJuvenile=false;c.parent=null;c.secondParent=null;c.boldness=Math.max(c.boldness||0,0.28);c.sociability=Math.min(c.sociability||0.7,0.82);}}
