@@ -2731,19 +2731,44 @@ function wildEscapeDirection(c,awayX,awayZ){
 }
 function spawnWild(fsp,fx,fz,isJuvenile,parent){
   var s=fx===undefined?landSpot(40):{x:fx,z:fz},sp=fsp===undefined?pickSpecies(s.x,s.z):fsp,m=makeCreature(sp);
-  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,hp:sp===4||sp===7?72:(sp===3?110:90),maxHp:sp===4||sp===7?72:(sp===3?110:90),hitTimer:0,flee:0,yaw:random()*6.283,walk:random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,ageSeconds:0,growthScale:isJuvenile?0.72:1,parent:parent||null,young:null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0,breedT:rand(100,220),secondParent:null,trust:0,hunger:rand(25,75)};
+  var c={sp:sp,m:m,x:s.x,z:s.z,y:heightAt(s.x,s.z),vx:0,vz:0,t:0,hp:sp===4||sp===7?72:(sp===3?110:90),maxHp:sp===4||sp===7?72:(sp===3?110:90),hitTimer:0,flee:0,yaw:random()*6.283,walk:random()*6,speed:0,aiT:rand(0.05,0.3),alertT:0,boldness:isJuvenile?rand(0.04,0.42):rand(0.08,0.92),curiosity:rand(0.12,0.98),sociability:isJuvenile?rand(0.72,1):rand(0.15,0.95),personalityPhase:rand(0,6.283),isJuvenile:!!isJuvenile,ageSeconds:0,growthScale:isJuvenile?0.72:1,parent:parent||null,young:null,herdT:rand(0,0.3),herdX:0,herdZ:0,herdSepX:0,herdSepZ:0,herdAlarm:0,threatT:rand(0.1,0.4),threatX:0,threatZ:0,terrainT:rand(0.1,0.6),terrainX:0,terrainZ:0,envT:rand(0.2,0.8),envX:0,envZ:0,breedT:rand(100,220),secondParent:null,trust:0,hunger:rand(25,75),downed:false,recoverT:0};
   if(c.isJuvenile)m.g.scale.setScalar(0.72);
   c.hp=c.maxHp*(c.isJuvenile?0.72:1);
   m.g.position.set(c.x,c.y,c.z);scene.add(m.g);wild.push(c);
   if(parent)parent.young=c;
   return c;
 }
+var WILD_KNOCKOUT_RECOVERY_SECONDS=18,WILD_KNOCKOUT_RECOVERY_HEALTH=0.45,WILD_KNOCKOUT_CAPTURE_BONUS=0.22;
+function beginWildKnockout(c){
+  if(!c||c.held||c.downed||!(Number(c.hp)<=0))return false;
+  c.hp=0;c.downed=true;c.recoverT=WILD_KNOCKOUT_RECOVERY_SECONDS;
+  c.flee=0;c.vx=0;c.vz=0;c.speed=0;c.state='downed';c.alertT=0;c.hitTimer=0;
+  return true;
+}
+function recoverWildCreature(c,healthFraction){
+  if(!c||!c.downed)return false;
+  var requested=healthFraction===undefined?WILD_KNOCKOUT_RECOVERY_HEALTH:Number(healthFraction);
+  var fraction=clamp(isFinite(requested)?requested:WILD_KNOCKOUT_RECOVERY_HEALTH,0.1,1);
+  var maxHp=Number(c.maxHp);if(!isFinite(maxHp)||maxHp<=0)maxHp=90;maxHp=Math.max(1,maxHp);
+  c.hp=clamp(maxHp*fraction,1,maxHp);c.downed=false;c.recoverT=0;
+  c.vx=0;c.vz=0;c.speed=0;c.flee=1.8;c.state='flee';c.alertT=0.8;c.hitTimer=0;
+  return true;
+}
+function tickWildKnockout(c,dt){
+  if(!c||!c.downed)return false;
+  var remaining=Number(c.recoverT);
+  if(!isFinite(remaining))remaining=WILD_KNOCKOUT_RECOVERY_SECONDS;
+  c.recoverT=Math.max(0,remaining-Math.max(0,Number(dt)||0));
+  if(c.recoverT<=0)recoverWildCreature(c,WILD_KNOCKOUT_RECOVERY_HEALTH);
+  return true;
+}
+function wildCaptureConditionBonus(c){return c&&c.downed?WILD_KNOCKOUT_CAPTURE_BONUS:0;}
 function tryBreed(c,dt){
-  if(c.isJuvenile||c.held||c.young||c.flee>0.1||c.alertT>0.1||wild.length>=48)return;
+  if(c.isJuvenile||c.held||c.downed||c.young||c.flee>0.1||c.alertT>0.1||wild.length>=48)return;
   c.breedT=Math.max(0,(c.breedT||0)-dt);if(c.breedT>0)return;
   var mate=null;
   for(var bi=0;bi<wild.length;bi++){
-    var o=wild[bi];if(o===c||o.sp!==c.sp||o.isJuvenile||o.held||o.young||o.flee>0.1||o.alertT>0.1||(o.breedT||0)>0)continue;
+    var o=wild[bi];if(o===c||o.sp!==c.sp||o.isJuvenile||o.held||o.downed||o.young||o.flee>0.1||o.alertT>0.1||(o.breedT||0)>0)continue;
     if(Math.hypot(o.x-c.x,o.z-c.z)<4.6){mate=o;break;}
   }
   if(!mate)return;
@@ -3253,7 +3278,7 @@ function inWeaponArc(o,range,threshold){
 function applyTouchAimAssist(targets,range,cone){
   if(!isMobile)return false;
   var target=nearestOf(targets,P.x,P.z,range,function(o){
-    if(o.held)return false;
+    if(o.held||o.downed)return false;
     var angle=Math.atan2(o.x-P.x,o.z-P.z);
     var delta=Math.atan2(Math.sin(angle-P.face),Math.cos(angle-P.face));
     return Math.abs(delta)<=cone;
@@ -3272,9 +3297,9 @@ function doGather(){
   var fx=Math.sin(P.face),fz=Math.cos(P.face);
   var w=nearestOf(wraiths,P.x,P.z,5,function(o){return inWeaponArc(o,5,0.25)});
   if(w){var weapon=activeElementalWeapon(),weaponLevel=weapon.damage;var dealt=Math.max(1,(weaponLevel+weapon.bonus)*(w.damageTaken||1));w.hp-=dealt;if(weapon.id==='frostblade'){w.frostTimer=Math.max(w.frostTimer||0,2.8);pop(w.x,w.y+2.5,w.z,'FROZEN','#a8edff');}else if(weapon.id==='emberblade'){w.burnTimer=Math.max(w.burnTimer||0,3.2);w.burnTick=0.15;pop(w.x,w.y+2.5,w.z,'BURNING','#ffb17c');}wearTool(weapon.id,1);w.hit=0.25;burst(w.x,w.y+1.2,w.z,weapon.color,weapon.id==='frostblade'||weapon.id==='emberblade'?12:6);pop(w.x,w.y+2.6,w.z,'-'+dealt.toFixed(1),weapon.textColor);return}
-  var prey=nearestOf(wild,P.x,P.z,3.4,function(o){return !o.held&&inWeaponArc(o,3.4,0.35)});
+  var prey=nearestOf(wild,P.x,P.z,3.4,function(o){return !o.held&&!o.downed&&inWeaponArc(o,3.4,0.35)});
   if(prey){var preyWeapon=activeElementalWeapon(),preyDamage=12+preyWeapon.damage*7+preyWeapon.bonus*4;prey.hp=Math.max(0,prey.hp-preyDamage);wearTool(preyWeapon.id,1);prey.hitTimer=0.22;prey.attackAnim=0.38;prey.flee=Math.max(prey.flee,2.6);prey.state='flee';prey.alertT=1.2;P.face=Math.atan2(prey.x-P.x,prey.z-P.z);burst(prey.x,prey.y+1.1,prey.z,SPECIES[prey.sp].c,5);pop(prey.x,prey.y+2.1,prey.z,'-'+preyDamage,'#ffd08a');
-    if(prey.hp<=0){var preyIndex=wild.indexOf(prey);if(prey.parent)prey.parent.young=null;if(prey.secondParent)prey.secondParent.young=null;if(prey.young){prey.young.parent=null;prey.young.secondParent=null;}scene.remove(prey.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[prey.sp].w,prey.sp===3?3:2,prey.x,prey.y+1.2,prey.z,'#d8c6a1');say(SPECIES[prey.sp].n+' has been defeated.');}
+    if(prey.hp<=0&&beginWildKnockout(prey)){pop(prey.x,prey.y+2.1,prey.z,'UNCONSCIOUS · CAPTURE READY','#b9e6a7');say(SPECIES[prey.sp].n+' is unconscious. Capture it now, or feed it to help it recover.',5);}
     return;
   }
   var r=nearestOf(res,P.x,P.z,4.6,function(o){
@@ -3357,7 +3382,7 @@ function captureOddsLabel(rate){
   if(chance>=0.34)return 'Fair odds';
   return 'Low odds';
 }
-function captureChance(c,id){return Math.min(0.98,rateNow(c.sp,id,c)+((P.stats&&P.stats.tamer)||0)*0.025);}
+function captureChance(c,id){return Math.min(0.98,rateNow(c.sp,id,c)+((P.stats&&P.stats.tamer)||0)*0.025+wildCaptureConditionBonus(c));}
 function doCatch(){
   var face=captureAimFace();
   var c=selectCaptureTarget(wild,P.x,P.z,face,12,0.92,2.4,true);
@@ -3419,8 +3444,10 @@ function feedCreature(c,item){
   if(!c||c.held)return false;
   var preferred=CREATURE_DIET[c.sp]||'berry';
   if(item!=='treat'&&item!==preferred){say(SPECIES[c.sp].n+' prefers '+ITEMS[preferred].n.toLowerCase()+'.');return true;}
-  if(c.hunger<8&&c.trust>0.9){say(SPECIES[c.sp].n+' is full and already trusts you.');return true;}
+  if(c.hunger<8&&c.trust>0.9&&!c.downed){say(SPECIES[c.sp].n+' is full and already trusts you.');return true;}
+  var wasDowned=!!c.downed;
   takeItem(item,1);c.hunger=Math.max(0,(c.hunger||0)-48);c.trust=clamp((c.trust||0)+(item==='treat'?0.28:0.2),0,1);c.flee=Math.max(0,(c.flee||0)-1.5);c.alertT=0;
+  if(wasDowned){c.recoverT=Math.max(0,(Number(c.recoverT)||0)-5);if(c.recoverT<=0){recoverWildCreature(c,0.55);say(SPECIES[c.sp].n+' woke after your care and is recovering.');}}
   playSfx('creature');pop(c.x,c.y+2,c.z,'Trust '+Math.round(c.trust*100)+'%','#b9e6a7');say(SPECIES[c.sp].n+' enjoyed the food. Trust is '+Math.round(c.trust*100)+'%.');renderInv(true);return true;
 }
 function craft(k,amount){
@@ -3755,6 +3782,7 @@ function update(dt){
   for(i=0;i<wild.length;i++){
     var c=wild[i],moving=false,nxw,nzw;
     if(c.held)continue;
+    if(c.downed){tickWildKnockout(c,dt);if(!c.downed){pop(c.x,c.y+2.1,c.z,'RECOVERED','#b9e6a7');say(SPECIES[c.sp].n+' recovered and is moving away to rest.',4);}c.speed=0;c.vx=0;c.vz=0;c.y+=(heightAt(c.x,c.z)-c.y)*Math.min(1,dt*8);animCreature(c,dt);continue;}
     if(c.hp<c.maxHp&&c.hitTimer<=0){var recovery=c.state==='rest'?2.4:(c.state==='graze'?1.2:0.45);c.hp=Math.min(c.maxHp,c.hp+recovery*dt);}
     c.hunger=clamp((c.hunger||0)+dt*0.16,0,100);
     if(c.isJuvenile){c.ageSeconds=(c.ageSeconds||0)+dt;c.growthScale=0.72+0.28*clamp(c.ageSeconds/720,0,1);if(c.growthScale>=1){if(c.parent&&c.parent.young===c)c.parent.young=null;if(c.secondParent&&c.secondParent.young===c)c.secondParent.young=null;c.isJuvenile=false;c.parent=null;c.secondParent=null;c.boldness=Math.max(c.boldness||0,0.28);c.sociability=Math.min(c.sociability||0.7,0.82);}}
@@ -4098,7 +4126,7 @@ function update(dt){
     if(sl>15&&!safe){
       var huntDistance=12;
       for(var hi=0;hi<wild.length;hi++){
-        var prey=wild[hi];if(prey.held||prey.isJuvenile)continue;
+        var prey=wild[hi];if(prey.held||prey.downed||prey.isJuvenile)continue;
         var preyDistance=Math.hypot(prey.x-s.x,prey.z-s.z);
         if(preyDistance<huntDistance){huntDistance=preyDistance;targetWild=prey;}
       }
@@ -4119,7 +4147,7 @@ function update(dt){
     if(s.guardHitCd<=0){
       var guardian=null,guardianDistance=3.6;
       for(var gi=0;gi<wild.length;gi++){
-        var protector=wild[gi];if(!protector.defending||protector.held)continue;
+        var protector=wild[gi];if(!protector.defending||protector.held||protector.downed)continue;
         var gd=Math.hypot(protector.x-s.x,protector.z-s.z);
         if(gd<guardianDistance){guardianDistance=gd;guardian=protector;}
       }
@@ -4133,10 +4161,10 @@ function update(dt){
       s.x+=s.attackX*2.8*dt;s.z+=s.attackZ*2.8*dt;
       if(s.windup===0){
         var struckWild=s.attackTarget,struckCompanion=s.attackCompanion;s.attackTarget=null;s.attackCompanion=null;
-        if(struckWild&&wild.indexOf(struckWild)>=0&&Math.hypot(struckWild.x-s.x,struckWild.z-s.z)<2.6){
+        if(struckWild&&wild.indexOf(struckWild)>=0&&!struckWild.downed&&Math.hypot(struckWild.x-s.x,struckWild.z-s.z)<2.6){
           struckWild.hp=Math.max(0,struckWild.hp-14);struckWild.hitTimer=0.22;struckWild.attackAnim=0.38;struckWild.flee=Math.max(struckWild.flee,3.2+random()*1.4);struckWild.state='flee';struckWild.alertT=1.4;struckWild.threatX=s.x;struckWild.threatZ=s.z;
           s.attackCd=2.1;pop(struckWild.x,struckWild.y+1.8,struckWild.z,'Wraith -14','#c9a8ff');
-          if(struckWild.hp<=0){var preyIndex=wild.indexOf(struckWild);if(struckWild.parent)struckWild.parent.young=null;if(struckWild.secondParent)struckWild.secondParent.young=null;if(struckWild.young){struckWild.young.parent=null;struckWild.young.secondParent=null;}scene.remove(struckWild.m.g);if(preyIndex>=0)wild.splice(preyIndex,1);gain(SPECIES[struckWild.sp].w,1,struckWild.x,struckWild.y+1,struckWild.z,'#b8a6d8');pop(struckWild.x,struckWild.y+2,struckWild.z,'Wildlife lost','#c9a8ff');}
+           if(struckWild.hp<=0&&beginWildKnockout(struckWild)){pop(struckWild.x,struckWild.y+2,struckWild.z,'WILDLIFE DOWNED','#b9e6a7');say(SPECIES[struckWild.sp].n+' was knocked unconscious by a Wraith. It can recover or be captured.',5);}
         }else if(struckCompanion&&team.indexOf(struckCompanion)>=0&&companionHealth(struckCompanion)>0&&Math.hypot(struckCompanion.x-s.x,struckCompanion.z-s.z)<2.6){
           var companionHit=Math.min(18,(9+nights*0.65)*(s.damageScale||1));
           damageCompanion(struckCompanion,companionHit);s.attackCd=1.15;
@@ -4216,7 +4244,7 @@ function update(dt){
           var rar=RAR[SPECIES[sc.sp].r];
           if(sh.ok){
             wild.splice(wild.indexOf(sc),1);
-            sc.work=rand(4,9);sc.hp=normalizeCompanionHp(sc.maxHp>0?sc.hp/sc.maxHp*100:100);sc.maxHp=100;sc.downed=false;
+            sc.work=rand(4,9);sc.hp=Math.max(35,normalizeCompanionHp(sc.maxHp>0?sc.hp/sc.maxHp*100:100));sc.maxHp=100;sc.downed=false;sc.recoverT=0;
             var destination='active';
             sc.bondXp=Math.round(clamp(sc.trust||0,0,1)*20);sc.workJob=normalizeCompanionWorkJob(sc.workJob);
             if(team.length<ACTIVE_PARTY_LIMIT)team.push(sc);
@@ -4226,9 +4254,9 @@ function update(dt){
             pop(sc.x,sc.y+2.6,sc.z,'Gotcha! '+SPECIES[sc.sp].n+' joined',rar.c);playSfx('creature');say(destination==='active'?SPECIES[sc.sp].n+' joined your active party!':SPECIES[sc.sp].n+' joined reserve storage. Swap or deploy them from the Party panel.',4);
             renderInv(true);save();
           }else{
-            sc.flee=4;sc.alertT=1.5;sc.state='flee';sc.threatX=P.x;sc.threatZ=P.z;
-            burst(sc.x,sc.y+0.8,sc.z,0xff9d9d,12);
-            pop(sc.x,sc.y+2.6,sc.z,'It broke free!','#ff9d9d');playSfx('warning');say(SPECIES[sc.sp].n+' broke free. Build trust or try a Great Ball.',4);
+            if(sc.downed){recoverWildCreature(sc,0.35);sc.threatX=P.x;sc.threatZ=P.z;pop(sc.x,sc.y+2.6,sc.z,'STIRRED AWAKE','#ffcf9d');say(SPECIES[sc.sp].n+' broke free and woke with low health. It is fleeing to recover.',4);}
+            else{sc.flee=4;sc.alertT=1.5;sc.state='flee';sc.threatX=P.x;sc.threatZ=P.z;pop(sc.x,sc.y+2.6,sc.z,'It broke free!','#ff9d9d');say(SPECIES[sc.sp].n+' broke free. Build trust or try a Great Ball.',4);}
+            burst(sc.x,sc.y+0.8,sc.z,0xff9d9d,12);playSfx('warning');
           }
         }
       }
@@ -4303,14 +4331,14 @@ function animCreature(c,dt){
   var rainPose=clamp(rainLevel*rainAffinity,0,1);
   var creatureScale=c.isJuvenile?(c.growthScale||0.72):1;
   var damagePulse=c.hitTimer>0?1+Math.sin((c.hitTimer/0.22)*Math.PI)*0.13:1;
-  m.g.scale.setScalar(creatureScale*damagePulse);
-  m.g.position.set(c.x,c.y,c.z);m.g.rotation.y=c.yaw;
-  for(var i=0;i<4;i++)m.legs[i].rotation.x=gait.legs[i]+(attack>0.4&&i%2===0?-attack*0.32:0);
+  m.g.scale.setScalar(creatureScale*damagePulse*(c.downed?0.84:1));
+  m.g.position.set(c.x,c.y-(c.downed?0.2:0),c.z);m.g.rotation.y=c.yaw;
+  for(var i=0;i<4;i++)m.legs[i].rotation.x=c.downed?0.78:gait.legs[i]+(attack>0.4&&i%2===0?-attack*0.32:0);
   var breath=Math.sin(clock*(c.state==='rest'?1.15:2.05)+(c.personalityPhase||0));
   m.torso.scale.y=1+breath*(c.state==='rest'?0.022:0.012);
   m.g.position.y+=gait.bob+attack*0.08-rainPose*0.035+(c.state==='rest'?Math.sin(clock*1.15)*0.018:0);
-  m.g.rotation.x=(c.defending?0.035:0)+attack*0.08+rainPose*0.025;
-  m.g.rotation.z=gait.bodySway;
+  m.g.rotation.x=c.downed?0.28:(c.defending?0.035:0)+attack*0.08+rainPose*0.025;
+  m.g.rotation.z=c.downed?0.62:gait.bodySway;
   var tailMood=c.state==='alert'?0.22:(c.state==='rest'?-0.12:0);
   m.tail.rotation.y=gait.tailYaw*(1-rainPose*0.22)+tailMood+attack*0.45;
   m.tail.rotation.x=gait.tailPitch+(c.state==='rest'?0.08:0);
@@ -4318,7 +4346,7 @@ function animCreature(c,dt){
   var blink=Math.pow(Math.max(0,Math.sin(clock*0.73+(c.personalityPhase||0)*2.1)),28);
   for(var eye=0;eye<m.eyes.length;eye++)m.eyes[eye].scale.y=1-blink*0.92;
   // A lowered head sells grazing; resting creatures make slower, softer idle motions.
-  var headLook=(c.state==='graze'?0.48:(c.state==='rest'?0.12:0))+rainPose*0.055;
+  var headLook=c.downed?0.58:(c.state==='graze'?0.48:(c.state==='rest'?0.12:0))+rainPose*0.055;
   var lookSpeed=c.state==='rest'?0.65:1.7;
   m.head.rotation.x=Math.sin(clock*lookSpeed+c.x)*0.06+headLook+(c.state==='alert'?-0.18:0)+attack*0.22;
   // Curious individuals make small, irregular head turns while calm; shy animals keep a tighter gaze.
@@ -4656,7 +4684,7 @@ function updateHud(){
     var TS=SPECIES[tc.sp],TR=RAR[TS.r],bid=ballForCatch(),distance=Math.hypot(tc.x-P.x,tc.z-P.z);
     var aimed=isCaptureTargetAimed(tc,P.x,P.z,aimFace,0.92,2.4),healthPct=Math.ceil(clamp(tc.hp/tc.maxHp,0,1)*100),trustPct=Math.round(clamp(tc.trust||0,0,1)*100);
     te.hidden=false;te.style.color=TR.c;te.classList.toggle('ready',aimed&&!!bid);
-    te.textContent=TS.n+' · '+TR.n+' · '+Math.round(distance)+' m · '+(aimed?'AIMED':'TURN TO AIM')+' · '+(bid?captureOddsLabel(captureChance(tc,bid)):'NO CAPTURE BALL')+' · Health '+healthPct+'% · Trust '+trustPct+'%';
+    te.textContent=TS.n+' · '+TR.n+' · '+Math.round(distance)+' m · '+(aimed?'AIMED':'TURN TO AIM')+' · '+(bid?captureOddsLabel(captureChance(tc,bid)):'NO CAPTURE BALL')+(tc.downed?' · UNCONSCIOUS · '+Math.ceil(Math.max(0,tc.recoverT||0))+'s to recover':'')+' · Health '+healthPct+'% · Trust '+trustPct+'%';
   }else{te.hidden=true;te.classList.remove('ready');}
 }
 

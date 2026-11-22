@@ -259,6 +259,75 @@ test('creatures have food preferences, hunger needs, and trust-based catch bonus
 });
 
 
+
+test('wildlife knockouts are recoverable, stop movement, and restore bounded health', () => {
+  const source=[
+    'var WILD_KNOCKOUT_RECOVERY_SECONDS=18,WILD_KNOCKOUT_RECOVERY_HEALTH=0.45,WILD_KNOCKOUT_CAPTURE_BONUS=0.22;',
+    ...['beginWildKnockout','recoverWildCreature','tickWildKnockout','wildCaptureConditionBonus'].map(extractGameFunction)
+  ].join('\n');
+  const helpers=new Function('clamp',source+';return {beginWildKnockout,recoverWildCreature,tickWildKnockout,wildCaptureConditionBonus};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  const creature={hp:0,maxHp:100,downed:false,recoverT:0,flee:2,vx:3,vz:4,speed:2,state:'flee',alertT:1,hitTimer:0.2};
+  assert.equal(helpers.beginWildKnockout(creature),true);
+  assert.equal(creature.hp,0);
+  assert.equal(creature.downed,true);
+  assert.equal(creature.recoverT,18);
+  assert.equal(creature.flee,0);
+  assert.equal(creature.vx,0);
+  assert.equal(creature.vz,0);
+  assert.equal(creature.speed,0);
+  assert.equal(creature.state,'downed');
+  assert.equal(helpers.beginWildKnockout(creature),false);
+  assert.equal(helpers.tickWildKnockout(creature,17),true);
+  assert.equal(creature.downed,true);
+  assert.equal(creature.recoverT,1);
+  assert.equal(helpers.tickWildKnockout(creature,1),true);
+  assert.equal(creature.downed,false);
+  assert.equal(creature.hp,45);
+  assert.equal(creature.flee,1.8);
+  assert.equal(helpers.tickWildKnockout(creature,1),false);
+  assert.equal(helpers.recoverWildCreature(creature,0.35),false);
+  assert.equal(helpers.beginWildKnockout({hp:0,maxHp:80,held:true}),false);
+  assert.equal(helpers.wildCaptureConditionBonus({downed:true}),0.22);
+  assert.equal(helpers.wildCaptureConditionBonus({downed:false}),0);
+  assert.equal(helpers.wildCaptureConditionBonus(null),0);
+  const bounded={hp:0,maxHp:100,downed:true};
+  assert.equal(helpers.recoverWildCreature(bounded,2),true);
+  assert.equal(bounded.hp,100);
+  const invalid={hp:0,maxHp:NaN,downed:true};
+  assert.equal(helpers.recoverWildCreature(invalid,NaN),true);
+  assert.equal(invalid.hp,40.5);
+});
+
+test('player and Wraith attacks knock out wildlife without deleting population entries', () => {
+  for (const marker of [
+    'if(prey.hp<=0&&beginWildKnockout(prey))',
+    'if(struckWild.hp<=0&&beginWildKnockout(struckWild))',
+    'if(struckWild&&wild.indexOf(struckWild)>=0&&!struckWild.downed',
+    'var prey=wild[hi];if(prey.held||prey.downed||prey.isJuvenile)continue;',
+    'var protector=wild[gi];if(!protector.defending||protector.held||protector.downed)continue;',
+    'return !o.held&&!o.downed&&inWeaponArc(o,3.4,0.35)'
+  ]) assert.ok(gameScript.includes(marker), 'missing humane wildlife combat marker: '+marker);
+  assert.ok(gameScript.includes('wild.length>=48'), 'downed wildlife must still count toward the existing population cap');
+});
+
+test('downed creatures are visible, recover on schedule, and remain capturable with improved odds', () => {
+  assert.ok(gameScript.includes('tickWildKnockout(c,dt)'));
+  assert.ok(gameScript.includes('m.g.rotation.z=c.downed?0.62:gait.bodySway'));
+  assert.ok(gameScript.includes("tc.downed?' · UNCONSCIOUS · '"));
+  assert.ok(gameScript.includes('wildCaptureConditionBonus(c)'));
+  assert.ok(gameScript.includes('Math.max(35,normalizeCompanionHp(sc.maxHp>0?sc.hp/sc.maxHp*100:100))'));
+  assert.ok(gameScript.includes('recoverWildCreature(sc,0.35)'));
+  const calculate=new Function('rateNow','P','wildCaptureConditionBonus',extractGameFunction('captureChance')+';return captureChance;')((sp,id,c)=>0.5,{stats:{tamer:2}},c=>c&&c.downed?0.22:0);
+  assert.equal(calculate({sp:0,downed:true},'ball'),0.77);
+  assert.equal(calculate({sp:0,downed:false},'ball'),0.55);
+});
+
+test('preferred feeding shortens wild recovery and downed wildlife cannot breed', () => {
+  assert.ok(gameScript.includes('c.recoverT=Math.max(0,(Number(c.recoverT)||0)-5)'));
+  assert.ok(gameScript.includes('if(c.isJuvenile||c.held||c.downed||c.young'));
+  assert.ok(gameScript.includes('o.isJuvenile||o.held||o.downed||o.young'));
+});
+
 test('melee attacks require a valid forward-facing hit arc and show hit confirmation', () => {
   for (const marker of ['function inWeaponArc(o,range,threshold)', 'inWeaponArc(o,5,0.25)', 'inWeaponArc(o,3.4,0.35)', 'burst(w.x,w.y+1.2,w.z,weapon.color,weapon.id===\'frostblade\'||weapon.id===\'emberblade\'?12:6)', 'dealt.toFixed(1)']) {
     assert.ok(gameScript.includes(marker), 'missing melee validation marker: ' + marker);
