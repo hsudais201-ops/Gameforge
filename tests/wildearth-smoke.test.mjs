@@ -312,7 +312,7 @@ test('player and Wraith attacks knock out wildlife without deleting population e
 
 test('downed creatures are visible, recover on schedule, and remain capturable with improved odds', () => {
   assert.ok(gameScript.includes('tickWildKnockout(c,dt)'));
-  assert.ok(gameScript.includes('m.g.rotation.z=c.downed?0.62:gait.bodySway'));
+  assert.ok(gameScript.includes('if(c.downed)m.g.rotation.z=0.62;'));
   assert.ok(gameScript.includes("tc.downed?' · UNCONSCIOUS · '"));
   assert.ok(gameScript.includes('wildCaptureConditionBonus(c)'));
   assert.ok(gameScript.includes('Math.max(35,normalizeCompanionHp(sc.maxHp>0?sc.hp/sc.maxHp*100:100))'));

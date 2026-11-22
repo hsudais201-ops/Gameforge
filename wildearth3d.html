@@ -4338,7 +4338,7 @@ function animCreature(c,dt){
   m.torso.scale.y=1+breath*(c.state==='rest'?0.022:0.012);
   m.g.position.y+=gait.bob+attack*0.08-rainPose*0.035+(c.state==='rest'?Math.sin(clock*1.15)*0.018:0);
   m.g.rotation.x=c.downed?0.28:(c.defending?0.035:0)+attack*0.08+rainPose*0.025;
-  m.g.rotation.z=c.downed?0.62:gait.bodySway;
+  m.g.rotation.z=gait.bodySway;if(c.downed)m.g.rotation.z=0.62;
   var tailMood=c.state==='alert'?0.22:(c.state==='rest'?-0.12:0);
   m.tail.rotation.y=gait.tailYaw*(1-rainPose*0.22)+tailMood+attack*0.45;
   m.tail.rotation.x=gait.tailPitch+(c.state==='rest'?0.08:0);
