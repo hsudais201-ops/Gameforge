@@ -1528,6 +1528,73 @@ test('eight original species use distinct, bounded locomotion and secondary-moti
 });
 
 
+
+test('eight original species have a complete, distinct field-guide roster', () => {
+  const start = gameScript.indexOf('var SPECIES=[');
+  const end = gameScript.indexOf('var COMPANION_BOND_XP_CAP=', start);
+  assert.ok(start >= 0 && end > start, 'species roster metadata must exist');
+  const species = new Function(gameScript.slice(start, end) + ';return SPECIES;')();
+  assert.equal(species.length, 8);
+  assert.equal(new Set(species.map(s => s.n)).size, 8);
+  for (const s of species) {
+    for (const key of ['n','r','role','ability','workLabel','temperament','movement','bondFocus']) {
+      assert.equal(typeof s[key], 'string', s.n + ' must define ' + key);
+      assert.ok(s[key].length > 2, s.n + ' must provide readable ' + key);
+    }
+    assert.ok(Array.isArray(s.habitats) && s.habitats.length >= 1, s.n + ' needs a habitat');
+  }
+  assert.ok(gameScript.includes("temperament:known?(S.temperament||'Unknown'):'Unknown'"));
+  assert.ok(gameScript.includes("movement:known?(S.movement||'Unknown'):'Unknown'"));
+  assert.ok(gameScript.includes("bondFocus:known?(S.bondFocus||'Unknown'):'Unknown'"));
+  assert.ok(gameScript.includes(" · Temperament: '+entry.temperament+' · Movement: '+entry.movement"));
+  assert.ok(gameScript.includes("Bond focus: '+entry.bondFocus+'.'"));
+});
+
+test('species behavior profiles drive bounded awareness, movement, and personality animation without per-frame allocation', () => {
+  const start = gameScript.indexOf('var CREATURE_BEHAVIORS=[');
+  const end = gameScript.indexOf('var CREATURE_ART_CACHE=', start);
+  assert.ok(start >= 0 && end > start, 'species behavior helpers must exist');
+  const source = gameScript.slice(start, end);
+  const system = new Function('clamp', source + ';return {profiles:CREATURE_BEHAVIORS,awareness:creatureAwareness,roam:creatureRoamSpeed,flee:creatureFleeSpeed,accel:creatureAcceleration,turn:creatureTurnRate,mood:creatureMoodPose};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  assert.equal(system.profiles.length, 8);
+  const signatures = system.profiles.map(p => [p.alertRadius,p.panicRadius,p.roamSpeed,p.fleeSpeed,p.turnWander,p.turnFlee,p.idleRate,p.idleBob,p.idleSway,p.idleTilt].join('|'));
+  assert.equal(new Set(signatures).size, 8, 'species need distinct behavior and idle signatures');
+  for (let sp=0;sp<8;sp++) {
+    const awareness=system.awareness(sp,0.5);
+    for (const key of ['alert','panic','predatorAlert','predatorPanic']) assert.ok(Number.isFinite(awareness[key])&&awareness[key]>0);
+    assert.ok(awareness.alert>=4&&awareness.alert<=24);
+    assert.ok(awareness.panic>=3&&awareness.panic<=12);
+    assert.ok(system.roam(sp,0.5)>=0.65&&system.roam(sp,0.5)<=3.6);
+    assert.ok(system.flee(sp)>=3.5&&system.flee(sp)<=9);
+    assert.ok(system.accel(sp,false)>=1.2&&system.accel(sp,false)<=7);
+    assert.ok(system.accel(sp,true)>=1.2&&system.accel(sp,true)<=7);
+    assert.ok(system.turn(sp,false)>=3&&system.turn(sp,false)<=13);
+    assert.ok(system.turn(sp,true)>=3&&system.turn(sp,true)<=13);
+    const idle=system.mood(sp,2.4,0.8,0.25,0,false,false,false);
+    const alert=system.mood(sp,2.4,0.8,0.25,1,false,false,false);
+    assert.ok(Number.isFinite(idle.bob)&&Math.abs(idle.bob)<=0.05);
+    assert.ok(Number.isFinite(idle.sway)&&Math.abs(idle.sway)<=0.045);
+    assert.ok(Number.isFinite(idle.headTilt)&&Math.abs(idle.headTilt)<=0.05);
+    assert.ok(alert.alertLean>=0&&alert.alertLean<=0.12);
+    assert.ok(alert.tailAlert>=0&&alert.tailAlert<=0.4);
+    assert.ok(alert.earAlert>=0&&alert.earAlert<=0.16);
+    const downed=system.mood(sp,2.4,0.8,0.25,0,false,false,true);
+    assert.equal(downed.bob,0);
+    assert.equal(downed.sway,0);
+    assert.equal(downed.headTilt,0);
+  }
+  const shared=system.awareness(0,0.5);
+  assert.strictEqual(system.awareness(1,0.5),shared,'awareness must reuse a scratch result');
+  const mood=system.mood(0,1,0.5,0.5,0,false,false,false);
+  assert.strictEqual(system.mood(1,1,0.5,0.5,0,false,false,false),mood,'idle animation must reuse a scratch result');
+  assert.ok(gameScript.includes('awareness=creatureAwareness(c.sp,c.boldness)'));
+  assert.ok(gameScript.includes('creatureFleeSpeed(c.sp)'));
+  assert.ok(gameScript.includes('creatureRoamSpeed(c.sp,c.curiosity)'));
+  assert.ok(gameScript.includes('creatureAcceleration(c.sp,c.flee>0)'));
+  assert.ok(gameScript.includes("creatureTurnRate(c.sp,c.state==='flee')"));
+  assert.ok(gameScript.includes('creatureMoodPose(c.sp,clock+(c.personalityPhase||0)'));
+});
+
 test('capture targeting follows the camera aim cone and allows a close-range throw', () => {
   const start = gameScript.indexOf('function isCaptureTargetAimed(');
   const end = gameScript.indexOf('function doCatch(){', start);
@@ -1686,7 +1753,7 @@ test('field guide entries reveal care and signature ability only after a sightin
   assert.ok(start >= 0 && end > start);
   const source = gameScript.slice(start, end);
   const entryFor = new Function(
-    'var SPECIES=[{n:"Fluffo",r:"common",c:0x8fd16a,role:"Support",ability:"Pollen Mend",habitats:["meadow","forest"]}];' +
+    'var SPECIES=[{n:"Fluffo",r:"common",c:0x8fd16a,role:"Support",ability:"Pollen Mend",habitats:["meadow","forest"],temperament:"Playful and sociable",movement:"Soft bounding hops",bondFocus:"Healing and care"}];' +
     'var BIOMES=[{id:"meadow",name:"Sunlit Meadow"},{id:"forest",name:"Mosswood Forest"}];' +
     'var CREATURE_DIET=["berry"];var ITEMS={berry:{n:"Berry"}};' +
     'var RAR={common:{n:"Common"}};' + source + ';return creatureFieldGuideEntry;'
@@ -1695,12 +1762,18 @@ test('field guide entries reveal care and signature ability only after a sightin
   assert.equal(hidden.name, 'Unknown species 1');
   assert.equal(hidden.ability, 'Unknown');
   assert.equal(hidden.food, 'Unknown');
+  assert.equal(hidden.temperament, 'Unknown');
+  assert.equal(hidden.movement, 'Unknown');
+  assert.equal(hidden.bondFocus, 'Unknown');
   assert.deepEqual(hidden.habitats, ['Sunlit Meadow', 'Mosswood Forest']);
   const seen = entryFor(0, true, 2);
   assert.equal(seen.name, 'Fluffo');
   assert.equal(seen.rarity, 'Common');
   assert.equal(seen.ability, 'Pollen Mend');
   assert.equal(seen.food, 'Berry');
+  assert.equal(seen.temperament, 'Playful and sociable');
+  assert.equal(seen.movement, 'Soft bounding hops');
+  assert.equal(seen.bondFocus, 'Healing and care');
   assert.equal(seen.caught, 2);
 });
 

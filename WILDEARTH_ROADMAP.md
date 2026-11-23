@@ -85,8 +85,8 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Multiple original creature species with species-specific silhouettes and expressive face details.
 - [x] Wildlife behaviors, habitat preferences, feeding, trust, capture, breeding, and companion following.
 - [x] Companion Follow, Hold, Defend, and Attack commands.
-- [ ] Create a complete creature roster plan with clear roles, rarity, habitats, diet, temperament, and progression.
-- [ ] Give every species a distinct movement style, locomotion animation, idle behavior, and recognizable personality.
+- [x] Complete the eight-species roster with distinct roles, rarity, habitats, diet, temperament, movement identity, bond focus, and signature progression.
+- [x] Give every species a distinct movement style, locomotion animation, idle behavior, and recognizable personality, with bounded species-specific awareness, turning, roaming, and alert reactions.
 - [x] Add eight species-specific signature abilities: Pollen Mend, Cinder Burst, Tidal Snare, Stone Ward, Arc Spark, Briar Snare, Gale Break, and Prism Lance, with distinct support, damage, control, chain, and disruption effects.
 - [x] Improve capture feedback: camera-aligned aiming, eased distance-scaled throw arcs, impact and capture pulses, clear success/escape feedback, and qualitative odds without exposing hidden formulas.
 - [x] Add a collection journal with first-sighting discovery, biome hints, preferred-food care tips, signature abilities, caught counts, and missing-species filters.

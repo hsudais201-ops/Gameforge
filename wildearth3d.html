@@ -1601,14 +1601,14 @@ function applyCharacterStyle(index){selectedCharacter=clamp(index|0,0,3);var mat
 applyCharacterStyle(selectedCharacter);
 
 var SPECIES=[
-  {n:'Fluffo',c:0x8fd16a,w:'wood',rough:1,r:'common',role:'Support',ability:'Pollen Mend',habitats:['meadow','forest'],workLabel:'Woodland gatherer'},
-  {n:'Embit',c:0xf08a3c,w:'stone',rough:0.8,r:'uncommon',role:'Striker',ability:'Cinder Burst',habitats:['forest','meadow'],workLabel:'Cinder stonecutter'},
-  {n:'Aquo',c:0x5aa9e6,w:'fiber',rough:0.25,r:'common',role:'Controller',ability:'Tidal Snare',habitats:['highland','frost'],workLabel:'Reed weaver'},
-  {n:'Rocko',c:0x9aa0a6,w:'stone',rough:1,flat:true,r:'uncommon',role:'Guardian',ability:'Stone Ward',habitats:['marsh','forest'],workLabel:'Quarry keeper'},
-  {n:'Zappy',c:0xf2d03b,w:'wood',rough:0.6,r:'rare',role:'Chain striker',ability:'Arc Spark',habitats:['frost','highland'],workLabel:'Timber runner'},
-  {n:'Thornback',c:0x8a5a3a,w:'wood',rough:0.9,r:'uncommon',role:'Controller',ability:'Briar Snare',habitats:['meadow','marsh'],workLabel:'Briar lumberer'},
-  {n:'Mistral',c:0xdfe8f2,w:'berry',rough:0.7,r:'rare',role:'Disruptor',ability:'Gale Break',habitats:['highland','forest'],workLabel:'Trail forager'},
-  {n:'Glimmer',c:0x9b6bd6,w:'stone',rough:0.35,r:'rare',role:'Finisher',ability:'Prism Lance',habitats:['frost','highland'],workLabel:'Prism stone surveyor'}
+  {n:'Fluffo',c:0x8fd16a,w:'wood',rough:1,r:'common',role:'Support',ability:'Pollen Mend',habitats:['meadow','forest'],workLabel:'Woodland gatherer',temperament:'Playful and sociable',movement:'Soft bounding hops',bondFocus:'Healing and care'},
+  {n:'Embit',c:0xf08a3c,w:'stone',rough:0.8,r:'uncommon',role:'Striker',ability:'Cinder Burst',habitats:['forest','meadow'],workLabel:'Cinder stonecutter',temperament:'Bold and restless',movement:'Quick diagonal trot',bondFocus:'Combat and Cinder Burst'},
+  {n:'Aquo',c:0x5aa9e6,w:'fiber',rough:0.25,r:'common',role:'Controller',ability:'Tidal Snare',habitats:['highland','frost'],workLabel:'Reed weaver',temperament:'Cautious and curious',movement:'Low fluid pacing',bondFocus:'Control and Tidal Snare'},
+  {n:'Rocko',c:0x9aa0a6,w:'stone',rough:1,flat:true,r:'uncommon',role:'Guardian',ability:'Stone Ward',habitats:['marsh','forest'],workLabel:'Quarry keeper',temperament:'Steadfast and reserved',movement:'Heavy deliberate steps',bondFocus:'Guarding and Stone Ward'},
+  {n:'Zappy',c:0xf2d03b,w:'wood',rough:0.6,r:'rare',role:'Chain striker',ability:'Arc Spark',habitats:['frost','highland'],workLabel:'Timber runner',temperament:'Vigilant and energetic',movement:'Rapid darting trot',bondFocus:'Combat and Arc Spark'},
+  {n:'Thornback',c:0x8a5a3a,w:'wood',rough:0.9,r:'uncommon',role:'Controller',ability:'Briar Snare',habitats:['meadow','marsh'],workLabel:'Briar lumberer',temperament:'Protective and territorial',movement:'Low braced stalk',bondFocus:'Protection and Briar Snare'},
+  {n:'Mistral',c:0xdfe8f2,w:'berry',rough:0.7,r:'rare',role:'Disruptor',ability:'Gale Break',habitats:['highland','forest'],workLabel:'Trail forager',temperament:'Curious and social',movement:'Light bounding stride',bondFocus:'Exploration and Gale Break'},
+  {n:'Glimmer',c:0x9b6bd6,w:'stone',rough:0.35,r:'rare',role:'Finisher',ability:'Prism Lance',habitats:['frost','highland'],workLabel:'Prism stone surveyor',temperament:'Elusive and nocturnal',movement:'Quiet gliding steps',bondFocus:'Precision and Prism Lance'}
 ];
 var COMPANION_BOND_XP_CAP=420;
 function normalizeCompanionBondXp(value){return typeof value==='number'&&isFinite(value)?clamp(Math.floor(value),0,COMPANION_BOND_XP_CAP):0;}
@@ -1781,7 +1781,7 @@ function creatureFieldGuideEntry(sp,discovered,caughtCount){
     return id;
   });
   var food=CREATURE_DIET[sp],foodName=ITEMS[food]?ITEMS[food].n:food;
-  return {discovered:known,name:known?S.n:'Unknown species '+(sp+1),rarity:known?RAR[S.r].n:'Undiscovered',color:known?'#'+S.c.toString(16).padStart(6,'0'):'#758277',role:known?S.role:'Unknown',ability:known?S.ability:'Unknown',food:known?foodName:'Unknown',habitats:habitats,caught:count};
+  return {discovered:known,name:known?S.n:'Unknown species '+(sp+1),rarity:known?RAR[S.r].n:'Undiscovered',color:known?'#'+S.c.toString(16).padStart(6,'0'):'#758277',role:known?S.role:'Unknown',ability:known?S.ability:'Unknown',food:known?foodName:'Unknown',temperament:known?(S.temperament||'Unknown'):'Unknown',movement:known?(S.movement||'Unknown'):'Unknown',bondFocus:known?(S.bondFocus||'Unknown'):'Unknown',habitats:habitats,caught:count};
 }
 function discoverSpecies(sp,notify){
   if(!Number.isInteger(sp)||sp<0||sp>=SPECIES.length||discoveredSpecies[sp])return false;
@@ -1828,6 +1828,59 @@ var CREATURE_GAITS=[
   // Glimmer's four-beat gait and gentle bob make it feel almost weightless.
   {rate:1.36,stride:0.74,leg:0.34,bob:0.085,tailRate:2.65,tailSwing:0.42,tailLift:0.105,bodySway:0.016,bodyPhase:1.4,headSway:0.04,headPhase:0.8,tailPhase:2,offsets:[0,Math.PI/2,Math.PI,Math.PI*1.5]}
 ];
+var CREATURE_BEHAVIORS=[
+  // Species-tuned alert, locomotion, turning, breathing, and idle-reaction profiles.
+  {alertRadius:11,panicRadius:7,predatorAlert:9,predatorPanic:6.5,roamSpeed:1.8,fleeSpeed:6.8,wanderAccel:2.6,fleeAccel:5.5,turnWander:6,turnFlee:10,idleRate:1.05,idlePhase:0.2,idleBob:0.022,idleSway:0.015,idleTilt:0.014,breathRate:1.25,alertLean:0.035,alertTail:0.18,alertEar:0.07},
+  {alertRadius:11.5,panicRadius:7.2,predatorAlert:9.4,predatorPanic:6.7,roamSpeed:2.1,fleeSpeed:7.2,wanderAccel:2.9,fleeAccel:5.8,turnWander:7,turnFlee:11,idleRate:1.8,idlePhase:0.8,idleBob:0.012,idleSway:0.026,idleTilt:0.02,breathRate:1.55,alertLean:0.045,alertTail:0.26,alertEar:0.09},
+  {alertRadius:11,panicRadius:7,predatorAlert:9,predatorPanic:6.5,roamSpeed:1.35,fleeSpeed:6.2,wanderAccel:2.2,fleeAccel:5.1,turnWander:5.2,turnFlee:8.8,idleRate:0.78,idlePhase:1.1,idleBob:0.009,idleSway:0.012,idleTilt:0.028,breathRate:0.92,alertLean:0.018,alertTail:0.3,alertEar:0.04},
+  {alertRadius:8,panicRadius:6.8,predatorAlert:7.8,predatorPanic:5.9,roamSpeed:1,fleeSpeed:4.8,wanderAccel:1.9,fleeAccel:4.6,turnWander:4.2,turnFlee:7.6,idleRate:0.58,idlePhase:0.5,idleBob:0.006,idleSway:0.006,idleTilt:0.008,breathRate:0.72,alertLean:0.06,alertTail:0.08,alertEar:0.025},
+  {alertRadius:16,panicRadius:7.6,predatorAlert:10.4,predatorPanic:7.2,roamSpeed:2.4,fleeSpeed:8.4,wanderAccel:3.5,fleeAccel:6.2,turnWander:8.8,turnFlee:12,idleRate:2.15,idlePhase:0.5,idleBob:0.014,idleSway:0.03,idleTilt:0.025,breathRate:1.8,alertLean:0.05,alertTail:0.32,alertEar:0.12},
+  {alertRadius:11,panicRadius:5.5,predatorAlert:9.2,predatorPanic:6.4,roamSpeed:1.8,fleeSpeed:6.8,wanderAccel:2.4,fleeAccel:5.4,turnWander:4.8,turnFlee:8.6,idleRate:0.92,idlePhase:0.4,idleBob:0.008,idleSway:0.01,idleTilt:0.01,breathRate:0.98,alertLean:0.08,alertTail:0.05,alertEar:0.03},
+  {alertRadius:13,panicRadius:7.2,predatorAlert:9.7,predatorPanic:6.9,roamSpeed:2.1,fleeSpeed:7.8,wanderAccel:2.8,fleeAccel:5.9,turnWander:7.4,turnFlee:10.8,idleRate:1.45,idlePhase:1.3,idleBob:0.026,idleSway:0.022,idleTilt:0.035,breathRate:1.38,alertLean:0.025,alertTail:0.24,alertEar:0.08},
+  {alertRadius:11,panicRadius:7,predatorAlert:9.2,predatorPanic:6.6,roamSpeed:1.7,fleeSpeed:6.6,wanderAccel:2.3,fleeAccel:5.4,turnWander:6.2,turnFlee:9.4,idleRate:1.12,idlePhase:2,idleBob:0.032,idleSway:0.018,idleTilt:0.04,breathRate:1.12,alertLean:0.04,alertTail:0.28,alertEar:0.06}
+];
+var CREATURE_AWARENESS_SCRATCH={alert:0,panic:0,predatorAlert:0,predatorPanic:0};
+function creatureAwareness(sp,boldness){
+  var p=CREATURE_BEHAVIORS[sp]||CREATURE_BEHAVIORS[0],b=Number(boldness);
+  if(!isFinite(b))b=0.5;b=clamp(b,0,1);
+  var result=CREATURE_AWARENESS_SCRATCH;
+  result.alert=clamp(p.alertRadius*(1.28-b*0.48),4,24);
+  result.panic=clamp(p.panicRadius*(1.35-b*0.55),3,12);
+  result.predatorAlert=clamp(p.predatorAlert*(1.18-b*0.28),4,16);
+  result.predatorPanic=clamp(p.predatorPanic*(1.22-b*0.38),3,10);
+  return result;
+}
+function creatureRoamSpeed(sp,curiosity){
+  var p=CREATURE_BEHAVIORS[sp]||CREATURE_BEHAVIORS[0],c=Number(curiosity);
+  if(!isFinite(c))c=0.5;c=clamp(c,0,1);
+  return clamp(p.roamSpeed*(0.82+c*0.36),0.65,3.6);
+}
+function creatureFleeSpeed(sp){var p=CREATURE_BEHAVIORS[sp]||CREATURE_BEHAVIORS[0];return clamp(p.fleeSpeed,3.5,9);}
+function creatureAcceleration(sp,fleeing){
+  var p=CREATURE_BEHAVIORS[sp]||CREATURE_BEHAVIORS[0];
+  return clamp(fleeing?p.fleeAccel:p.wanderAccel,1.2,7);
+}
+function creatureTurnRate(sp,fleeing){
+  var p=CREATURE_BEHAVIORS[sp]||CREATURE_BEHAVIORS[0];
+  return clamp(fleeing?p.turnFlee:p.turnWander,3,13);
+}
+var CREATURE_MOOD_SCRATCH={bob:0,sway:0,headTilt:0,alertLean:0,tailAlert:0,earAlert:0,breath:0};
+function creatureMoodPose(sp,phase,curiosity,boldness,alert,moving,resting,downed){
+  var p=CREATURE_BEHAVIORS[sp]||CREATURE_BEHAVIORS[0],time=Number(phase),interest=Number(curiosity),bold=Number(boldness);
+  if(!isFinite(time))time=0;if(!isFinite(interest))interest=0.5;if(!isFinite(bold))bold=0.5;
+  interest=clamp(interest,0,1);bold=clamp(bold,0,1);
+  var alerting=clamp(Number(alert)||0,0,1),idle=downed?0:(moving?0.28:1)*(resting?0.7:1);
+  var wave=Math.sin(time*p.idleRate),drift=Math.sin(time*(p.idleRate*0.63)+p.idlePhase),interestScale=0.65+interest*0.7,shyScale=1.15-bold*0.3;
+  var result=CREATURE_MOOD_SCRATCH;
+  result.bob=clamp(wave*p.idleBob*idle,-0.05,0.05);
+  result.sway=clamp(drift*p.idleSway*idle*interestScale,-0.045,0.045);
+  result.headTilt=clamp(wave*p.idleTilt*idle*interestScale,-0.05,0.05);
+  result.alertLean=clamp(alerting*p.alertLean*shyScale,0,0.12);
+  result.tailAlert=clamp(alerting*p.alertTail*(0.8+bold*0.3),0,0.4);
+  result.earAlert=clamp(alerting*p.alertEar*(1.1-bold*0.25),0,0.16);
+  result.breath=downed?0:Math.sin(time*p.breathRate*(resting?0.56:1));
+  return result;
+}
 // One reusable result keeps per-frame animation free of transient arrays/objects.
 var CREATURE_GAIT_SCRATCH={legs:[0,0,0,0],bob:0,bodySway:0,tailYaw:0,tailPitch:0,headSway:0};
 function creatureGait(sp,walk,speed,moving){
@@ -3792,7 +3845,7 @@ function update(dt){
     if(c.isJuvenile){c.ageSeconds=(c.ageSeconds||0)+dt;c.growthScale=0.72+0.28*clamp(c.ageSeconds/720,0,1);if(c.growthScale>=1){if(c.parent&&c.parent.young===c)c.parent.young=null;if(c.secondParent&&c.secondParent.young===c)c.secondParent.young=null;c.isJuvenile=false;c.parent=null;c.secondParent=null;c.boldness=Math.max(c.boldness||0,0.28);c.sociability=Math.min(c.sociability||0.7,0.82);}}
     if(c.young&&wild.indexOf(c.young)<0)c.young=null;
     tryBreed(c,dt);
-    var pdx=c.x-P.x,pdz=c.z-P.z,pdist=Math.hypot(pdx,pdz)||0.001;
+    var pdx=c.x-P.x,pdz=c.z-P.z,pdist=Math.hypot(pdx,pdz)||0.001,awareness=creatureAwareness(c.sp,c.boldness);
     if(pdist<=18)discoverSpecies(c.sp,true);
     // Wraiths act as nocturnal predators: wildlife detects nearby threats on a staggered timer.
     c.threatT=Math.max(0,(c.threatT||0)-dt);
@@ -3804,7 +3857,7 @@ function update(dt){
       }
       if(nearestThreat&&nearestThreatD<13){
         c.threatX=nearestThreat.x;c.threatZ=nearestThreat.z;
-        var predatorAlert=9*(1.18-c.boldness*0.28),predatorPanic=6.5*(1.22-c.boldness*0.38);
+        var predatorAlert=awareness.predatorAlert,predatorPanic=awareness.predatorPanic;
         if(nearestThreatD<predatorAlert){
           c.state='alert';
           if(nearestThreatD<predatorPanic)c.flee=Math.max(c.flee,2.4+random()*1.2);
@@ -3813,8 +3866,7 @@ function update(dt){
       }else{c.threatX=0;c.threatZ=0;}
       c.threatT=rand(0.38,0.62);
     }
-    var alertRadius=(c.sp===4?16:(c.sp===6?13:(c.sp===3?8:11)))*(1.28-c.boldness*0.48);
-    var panicRadius=(c.sp===5?5.5:7)*(1.35-c.boldness*0.55);
+    var alertRadius=awareness.alert,panicRadius=awareness.panic;
     if(pdist<alertRadius&&c.flee<=0){
       if(c.state!=='alert'){c.state='alert';c.alertT=0.75+random()*0.55}
       if(pdist<panicRadius||P.speed>1.35){
@@ -3852,7 +3904,7 @@ function update(dt){
         c.escape=wildEscapeDirection(c,ax/al,az/al);
         c.aiT=rand(0.28,0.48);
       }
-      var fleeSpeed=[6.8,7.2,6.2,4.8,8.4,6.8,7.8,6.6][c.sp]||6.8;
+      var fleeSpeed=creatureFleeSpeed(c.sp);
       targetX=c.escape?c.escape.x*fleeSpeed:ax/al*fleeSpeed;
       targetZ=c.escape?c.escape.z*fleeSpeed:az/al*fleeSpeed;
     }else{
@@ -3875,7 +3927,7 @@ function update(dt){
           else if(ecologyRoll<grazeChance+restChance){c.state='rest';c.t=rand(2.4,5.8)}
           else{c.state='idle';c.t=rand(1.5,3.6)}
         }else{
-          var a=random()*6.283,roamSpeed=([1.8,2.1,1.35,1.0,2.4,1.8,2.1,1.7][c.sp]||1.8)*(0.82+c.curiosity*0.36);
+          var a=random()*6.283,roamSpeed=creatureRoamSpeed(c.sp,c.curiosity);
           c.vx=Math.cos(a)*roamSpeed;c.vz=Math.sin(a)*roamSpeed;c.state='wander';
           c.t=rand(2.2,5.5);
         }
@@ -3987,7 +4039,7 @@ function update(dt){
       c.terrainT=rand(0.75,1.15);
     }
     targetX+=c.terrainX||0;targetZ+=c.terrainZ||0;
-    var accel=c.flee>0?Math.min(1,dt*5.5):Math.min(1,dt*2.6);
+    var accel=Math.min(1,dt*creatureAcceleration(c.sp,c.flee>0));
     c.vx+=(targetX-c.vx)*accel;c.vz+=(targetZ-c.vz)*accel;
     c.aiT=Math.max(0,(c.aiT||0)-dt);
     nxw=c.x+c.vx*dt;nzw=c.z+c.vz*dt;
@@ -4002,7 +4054,7 @@ function update(dt){
     }
     moving=Math.hypot(c.vx,c.vz)>0.1;
     c.speed=moving?Math.hypot(c.vx,c.vz)/7+0.25:0;
-    if(moving){var ty=Math.atan2(c.vx,c.vz),dy=ty-c.yaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));c.yaw+=dy*Math.min(1,dt*(c.state==='flee'?10:6))}
+    if(moving){var ty=Math.atan2(c.vx,c.vz),dy=ty-c.yaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));c.yaw+=dy*Math.min(1,dt*creatureTurnRate(c.sp,c.state==='flee'))}
     c.y+=(heightAt(c.x,c.z)-c.y)*Math.min(1,dt*10);
     animCreature(c,dt);
   }
@@ -4330,7 +4382,9 @@ function animCreature(c,dt){
   c.attackAnim=Math.max(0,(c.attackAnim||0)-dt);
   c.hitTimer=Math.max(0,(c.hitTimer||0)-dt);
   var m=c.m,attack=c.attackAnim>0?Math.sin((1-c.attackAnim/0.38)*Math.PI):0;
-  var moving=c.speed>0.08&&c.state!=='rest',gait=creatureGait(c.sp,c.walk,c.speed,moving);
+  var moving=c.speed>0.08&&c.state!=='rest',alerting=(c.state==='alert'||c.state==='protect'||c.defending)?1:0;
+  var gait=creatureGait(c.sp,c.walk,c.speed,moving);
+  var mood=creatureMoodPose(c.sp,clock+(c.personalityPhase||0),c.curiosity,c.boldness,alerting,moving,c.state==='rest'||c.state==='graze',c.downed);
   var rainAffinity=[0.8,0.15,0.25,0.9,0.1,0.85,0.2,0.75][c.sp]||0.2;
   var rainPose=clamp(rainLevel*rainAffinity,0,1);
   var creatureScale=c.isJuvenile?(c.growthScale||0.72):1;
@@ -4338,25 +4392,26 @@ function animCreature(c,dt){
   m.g.scale.setScalar(creatureScale*damagePulse*(c.downed?0.84:1));
   m.g.position.set(c.x,c.y-(c.downed?0.2:0),c.z);m.g.rotation.y=c.yaw;
   for(var i=0;i<4;i++)m.legs[i].rotation.x=c.downed?0.78:gait.legs[i]+(attack>0.4&&i%2===0?-attack*0.32:0);
-  var breath=Math.sin(clock*(c.state==='rest'?1.15:2.05)+(c.personalityPhase||0));
-  m.torso.scale.y=1+breath*(c.state==='rest'?0.022:0.012);
-  m.g.position.y+=gait.bob+attack*0.08-rainPose*0.035+(c.state==='rest'?Math.sin(clock*1.15)*0.018:0);
-  m.g.rotation.x=c.downed?0.28:(c.defending?0.035:0)+attack*0.08+rainPose*0.025;
-  m.g.rotation.z=gait.bodySway;if(c.downed)m.g.rotation.z=0.62;
-  var tailMood=c.state==='alert'?0.22:(c.state==='rest'?-0.12:0);
+  m.torso.scale.y=1+mood.breath*(c.state==='rest'?0.022:0.012);
+  m.g.position.y+=gait.bob+mood.bob+attack*0.08-rainPose*0.035+(c.state==='rest'?Math.sin(clock*1.15)*0.018:0);
+  m.g.rotation.x=c.downed?0.28:(c.defending?0.035:0)+attack*0.08+rainPose*0.025+mood.alertLean;
+  m.g.rotation.z=gait.bodySway+mood.sway;if(c.downed)m.g.rotation.z=0.62;
+  var tailMood=alerting?mood.tailAlert:(c.state==='rest'?-0.12:0);
   m.tail.rotation.y=gait.tailYaw*(1-rainPose*0.22)+tailMood+attack*0.45;
   m.tail.rotation.x=gait.tailPitch+(c.state==='rest'?0.08:0);
-  for(var ei=0;ei<m.ears.length;ei++){var earSide=ei===0?-1:1;m.ears[ei].rotation.z+=(Math.sin(clock*1.8+(c.personalityPhase||0)+ei*1.7)*0.018+(c.state==='alert'?-earSide*0.08:0)-m.ears[ei].rotation.z)*Math.min(1,dt*5);}
+  for(var ei=0;ei<m.ears.length;ei++){
+    var earSide=ei===0?-1:1,earAlert=alerting?mood.earAlert:0;
+    var earTarget=Math.sin(clock*1.8+(c.personalityPhase||0)+ei*1.7)*0.018-earSide*earAlert+(c.state==='alert'?-earSide*0.08:0);
+    m.ears[ei].rotation.z+=(earTarget-m.ears[ei].rotation.z)*Math.min(1,dt*5);
+  }
   var blink=Math.pow(Math.max(0,Math.sin(clock*0.73+(c.personalityPhase||0)*2.1)),28);
   for(var eye=0;eye<m.eyes.length;eye++)m.eyes[eye].scale.y=1-blink*0.92;
-  // A lowered head sells grazing; resting creatures make slower, softer idle motions.
   var headLook=c.downed?0.58:(c.state==='graze'?0.48:(c.state==='rest'?0.12:0))+rainPose*0.055;
   var lookSpeed=c.state==='rest'?0.65:1.7;
   m.head.rotation.x=Math.sin(clock*lookSpeed+c.x)*0.06+headLook+(c.state==='alert'?-0.18:0)+attack*0.22;
-  // Curious individuals make small, irregular head turns while calm; shy animals keep a tighter gaze.
   var curiosity=(c.curiosity||0.5),lookWave=Math.sin(clock*(0.72+curiosity*0.65)+(c.personalityPhase||0));
   m.head.rotation.y=lookWave*(0.025+curiosity*0.075)*(c.state==='alert'?0.25:1);
-  m.head.rotation.z=Math.sin(clock*0.52+(c.personalityPhase||0))*0.018+(c.state==='alert'?0.025:0)+gait.headSway;
+  m.head.rotation.z=Math.sin(clock*0.52+(c.personalityPhase||0))*0.018+(c.state==='alert'?0.025:0)+gait.headSway+mood.headTilt;
 }
 function animPlayer(dt){
   player.g.position.set(P.x,P.y,P.z);
@@ -4556,10 +4611,10 @@ function renderCreatureIndex(){
     var entry=creatureFieldGuideEntry(ci,discovered,count),status=count>0?'CAUGHT ×'+count:(discovered?'SIGHTED':'UNDISCOVERED');
     var habitatText=entry.habitats.join(' · ');
     var meta=discovered
-      ?'Preferred habitat: '+habitatText+' · Role: '+entry.role+' · Signature: '+entry.ability
+      ?'Preferred habitat: '+habitatText+' · Role: '+entry.role+' · Signature: '+entry.ability+' · Temperament: '+entry.temperament+' · Movement: '+entry.movement
       :'Habitat clue: '+habitatText+'. Approach within 18 m to record a sighting.';
     var care=discovered
-      ?'Care: Offer '+entry.food+' to reduce hunger and build trust. Matching food is preferred; Creature Treats also work.'
+      ?'Care: Offer '+entry.food+' to reduce hunger and build trust. Matching food is preferred; Creature Treats also work. Bond focus: '+entry.bondFocus+'.'
       :'Care tips and signature ability unlock after your first sighting.';
     html+='<article class="fieldGuideCard'+(discovered?' discovered':' locked')+'"><div class="fieldGuideCardTop"><span class="fieldGuideOrb" style="background:'+entry.color+'"></span><span class="fieldGuideIdentity"><b>'+entry.name+'</b><small>'+entry.rarity+'</small></span><strong class="fieldGuideStatus">'+status+'</strong></div><p class="fieldGuideMeta">'+meta+'</p><p class="fieldGuideCare">'+care+'</p></article>';
   }
