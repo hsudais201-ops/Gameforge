@@ -1379,7 +1379,8 @@ test('creature models expose animated ears, eyes and torso for low-cost expressi
 
 test('creature animation includes breathing, blinking, ear reactions and relaxed resting gait', () => {
   assert.ok(gameScript.includes('var blink=Math.pow'));
-  assert.ok(gameScript.includes("c.state==='rest'?1.15:2.05"));
+  assert.ok(gameScript.includes('result.breath=downed?0:Math.sin(time*p.breathRate*(resting?0.56:1))'));
+  assert.ok(gameScript.includes('m.torso.scale.y=1+mood.breath'));
   assert.ok(gameScript.includes('m.ears[ei].rotation.z'));
   assert.ok(gameScript.includes("c.state!=='rest'"));
 });

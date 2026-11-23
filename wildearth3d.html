@@ -1872,9 +1872,9 @@ function creatureMoodPose(sp,phase,curiosity,boldness,alert,moving,resting,downe
   var alerting=clamp(Number(alert)||0,0,1),idle=downed?0:(moving?0.28:1)*(resting?0.7:1);
   var wave=Math.sin(time*p.idleRate),drift=Math.sin(time*(p.idleRate*0.63)+p.idlePhase),interestScale=0.65+interest*0.7,shyScale=1.15-bold*0.3;
   var result=CREATURE_MOOD_SCRATCH;
-  result.bob=clamp(wave*p.idleBob*idle,-0.05,0.05);
-  result.sway=clamp(drift*p.idleSway*idle*interestScale,-0.045,0.045);
-  result.headTilt=clamp(wave*p.idleTilt*idle*interestScale,-0.05,0.05);
+  result.bob=downed?0:clamp(wave*p.idleBob*idle,-0.05,0.05);
+  result.sway=downed?0:clamp(drift*p.idleSway*idle*interestScale,-0.045,0.045);
+  result.headTilt=downed?0:clamp(wave*p.idleTilt*idle*interestScale,-0.05,0.05);
   result.alertLean=clamp(alerting*p.alertLean*shyScale,0,0.12);
   result.tailAlert=clamp(alerting*p.alertTail*(0.8+bold*0.3),0,0.4);
   result.earAlert=clamp(alerting*p.alertEar*(1.1-bold*0.25),0,0.16);
