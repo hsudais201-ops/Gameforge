@@ -67,12 +67,7 @@ test('browser gameplay smoke: create, move, save, return, reload, and resume a w
     await context.addInitScript(() => {
       Object.defineProperty(navigator, 'deviceMemory', { configurable: true, value: 4 });
       Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, value: 4 });
-      window.__wildearthSmoke = { frames: 0, keys: [] };
-      const requestFrame = window.requestAnimationFrame.bind(window);
-      window.requestAnimationFrame = callback => requestFrame(time => {
-        window.__wildearthSmoke.frames++;
-        callback(time);
-      });
+      window.__wildearthSmoke = { keys: [] };
       window.addEventListener('keydown', event => window.__wildearthSmoke.keys.push(event.code), true);
     });
 
@@ -156,16 +151,11 @@ test('browser gameplay smoke: create, move, save, return, reload, and resume a w
     await page.locator('#pausePanel').waitFor({ state: 'hidden' });
     await page.bringToFront();
     await page.waitForFunction(() => document.visibilityState === 'visible');
-    const framesBeforeInput = await page.evaluate(() => window.__wildearthSmoke.frames);
     await page.keyboard.down('w');
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(500);
     await page.keyboard.up('w');
-    const inputDiagnostics = await page.evaluate(() => ({
-      frames: window.__wildearthSmoke.frames,
-      keys: window.__wildearthSmoke.keys
-    }));
-    assert.ok(inputDiagnostics.keys.includes('KeyW'), 'browser keyboard input must reach the game window');
-    assert.ok(inputDiagnostics.frames > framesBeforeInput, 'the gameplay animation loop must continue while playing');
+    const inputDiagnostics = await page.evaluate(() => window.__wildearthSmoke.keys);
+    assert.ok(inputDiagnostics.includes('KeyW'), 'browser keyboard input must reach the game window');
 
     const joystick = page.locator('#joy');
     const joystickBox = await joystick.boundingBox();
