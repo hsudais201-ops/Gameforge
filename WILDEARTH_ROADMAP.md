@@ -53,8 +53,8 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Add save backups, legacy migration, input guards, and runtime diagnostics.
 - [x] Add Low, Balanced, and High graphics profiles with capped pixel ratio.
 - [x] Add deterministic world seeds and reproducible test sessions.
-- [ ] Establish a repeatable browser gameplay smoke-test route: menu → create/load world → play → save → return → reload.
-- [ ] Add a single documented development command/checklist for syntax, smoke tests, and release checks.
+- [x] Establish a repeatable headless Chromium gameplay smoke-test route: menu → create seeded world → play and move → save → return → reload → resume.
+- [x] Add a single documented development command/checklist for syntax, source regressions, and browser gameplay checks.
 - [ ] Ensure every major runtime failure produces a useful, non-crashing diagnostic message.
 - [ ] Audit all persistent data for versioning, bounds, invalid values, and safe defaults.
 - [ ] Add regression tests for every bug fixed in future development.

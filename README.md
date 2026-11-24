@@ -35,6 +35,20 @@ Open `index.html` in a modern browser, or serve this directory with a static web
 3. For this static starter, use the repository root as the build output directory and no build command.
 4. Deploy. The `wrangler.toml` file records the project name and output directory.
 
+## WILDEARTH development checks
+
+Requires Node.js 20 or newer.
+
+```bash
+npm install
+npx playwright install chromium
+npm run check
+```
+
+`npm run check` runs JavaScript syntax checks, the Node.js gameplay/save regression suite, and a headless Chromium gameplay route. The browser route creates a seeded world, verifies WebGL startup, moves the player, saves, returns to the menu, reloads, and resumes the same world. It uses a local copy of the same Three.js r128 runtime so the smoke test does not depend on the CDN being reachable. CI installs Chromium's Linux system dependencies automatically.
+
+The browser test emulates a 4 GB device-memory profile, but it is not a substitute for physical Chromebook performance and compatibility testing.
+
 ## GameForge Studio status
 
 The repository also contains an early browser-based 2D editor prototype. Its current event system supports player-touch triggers and a small set of actions; advanced physics, sprite animation, audio, multiplayer, email ownership verification, password reset, R2 asset uploads, and compiled desktop/mobile exports are not implemented yet. Signed-in projects sync to D1; a local copy remains on the device as a fallback.
