@@ -45,7 +45,7 @@ npx playwright install chromium
 npm run check
 ```
 
-`npm run check` runs JavaScript syntax checks, the Node.js gameplay/save regression suite, and a headless Chromium gameplay route. The browser route creates a seeded world, verifies WebGL startup, moves the player, saves, returns to the menu, reloads, and resumes the same world. It uses a local copy of the same Three.js r128 runtime so the smoke test does not depend on the CDN being reachable. CI installs Chromium's Linux system dependencies automatically.
+`npm run check` runs JavaScript syntax checks, the Node.js gameplay/save regression suite, and a headless Chromium gameplay route. The browser route creates a seeded world, verifies WebGL startup, moves the player, saves, returns to the menu, reloads, and resumes the same world. It uses a local copy of the same Three.js r128 runtime so the smoke test does not depend on the CDN being reachable. CI uses the Ubuntu 24.04 runner image for Chromium's shared-library dependencies and installs the pinned Chromium browser.
 
 The browser test emulates a 4 GB device-memory profile, but it is not a substitute for physical Chromebook performance and compatibility testing.
 
