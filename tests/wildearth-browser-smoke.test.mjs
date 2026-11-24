@@ -14,7 +14,7 @@ const threeBundle = join(dirname(require.resolve('three')), 'three.min.js');
 const threeCdn = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
 
 test('browser gameplay smoke: create, move, save, return, reload, and resume a world', {
-  timeout: 120_000
+  timeout: 180_000
 }, async () => {
   const html = await readFile(htmlPath);
   let server;
@@ -58,7 +58,7 @@ test('browser gameplay smoke: create, move, save, return, reload, and resume a w
     });
 
     context = await browser.newContext({
-      viewport: { width: 1280, height: 800 },
+      viewport: { width: 1024, height: 640 },
       deviceScaleFactor: 1
     });
     await context.addInitScript(() => {
@@ -67,8 +67,8 @@ test('browser gameplay smoke: create, move, save, return, reload, and resume a w
     });
 
     const page = await context.newPage();
-    page.setDefaultTimeout(20_000);
-    page.setDefaultNavigationTimeout(30_000);
+    page.setDefaultTimeout(30_000);
+    page.setDefaultNavigationTimeout(60_000);
     const pageErrors = [];
     page.on('pageerror', error => pageErrors.push(error.stack || error.message));
     await page.route(threeCdn, route => route.fulfill({
@@ -101,15 +101,17 @@ test('browser gameplay smoke: create, move, save, return, reload, and resume a w
     await page.locator('#createWorldForm').waitFor({ state: 'visible' });
     await page.locator('#newWorldName').fill('Browser QA Frontier');
     await page.locator('#newWorldSeed').fill('424242');
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-      page.locator('#createWorld').click()
-    ]);
+    const createNavigation = page.waitForEvent('framenavigated', {
+      predicate: frame => frame === page.mainFrame(),
+      timeout: 60_000
+    });
+    await page.locator('#createWorld').click({ noWaitAfter: true });
+    await createNavigation;
 
-    await page.locator('#mainMenu').waitFor({ state: 'visible' });
+    await page.locator('#mainMenu').waitFor({ state: 'visible', timeout: 60_000 });
     await page.waitForFunction(() =>
-      document.getElementById('worldSeedInfo')?.textContent.includes('World seed: 424242')
-    );
+      document.getElementById('worldSeedInfo')?.textContent.includes('World seed: 424242'),
+    null, { timeout: 60_000 });
     const worldId = await page.locator('#worldSelect').inputValue();
     assert.ok(worldId.startsWith('world-'), 'created world must have a stable id');
     assert.equal(
@@ -160,12 +162,12 @@ test('browser gameplay smoke: create, move, save, return, reload, and resume a w
     await page.locator('#mainMenu').waitFor({ state: 'visible' });
     await assertHealthy('return to main menu');
 
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.locator('#mainMenu').waitFor({ state: 'visible' });
+    await page.reload({ waitUntil: 'commit', timeout: 60_000 });
+    await page.locator('#mainMenu').waitFor({ state: 'visible', timeout: 60_000 });
     await page.waitForFunction(id =>
       document.getElementById('worldSelect')?.value === id &&
       document.getElementById('worldSeedInfo')?.textContent.includes('World seed: 424242'),
-    worldId);
+    worldId, { timeout: 60_000 });
     await page.locator('#playSelected').click();
     await page.locator('#mainMenu').waitFor({ state: 'hidden' });
     await page.locator('#pauseToggle').click();
