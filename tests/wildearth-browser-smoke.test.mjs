@@ -64,6 +64,13 @@ test('browser gameplay smoke: create, move, save, return, reload, and resume a w
     await context.addInitScript(() => {
       Object.defineProperty(navigator, 'deviceMemory', { configurable: true, value: 4 });
       Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, value: 4 });
+      window.__wildearthSmoke = { frames: 0, keys: [] };
+      const requestFrame = window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = callback => requestFrame(time => {
+        window.__wildearthSmoke.frames++;
+        callback(time);
+      });
+      window.addEventListener('keydown', event => window.__wildearthSmoke.keys.push(event.code), true);
     });
 
     const page = await context.newPage();
@@ -144,9 +151,42 @@ test('browser gameplay smoke: create, move, save, return, reload, and resume a w
 
     await page.locator('#pauseResume').click();
     await page.locator('#pausePanel').waitFor({ state: 'hidden' });
+    await page.bringToFront();
+    await page.waitForFunction(() => document.visibilityState === 'visible');
+    const framesBeforeInput = await page.evaluate(() => window.__wildearthSmoke.frames);
     await page.keyboard.down('w');
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(250);
     await page.keyboard.up('w');
+    const inputDiagnostics = await page.evaluate(() => ({
+      frames: window.__wildearthSmoke.frames,
+      keys: window.__wildearthSmoke.keys
+    }));
+    assert.ok(inputDiagnostics.keys.includes('KeyW'), 'browser keyboard input must reach the game window');
+    assert.ok(inputDiagnostics.frames > framesBeforeInput + 10, 'the gameplay animation loop must continue while playing');
+
+    const joystick = page.locator('#joy');
+    const joystickBox = await joystick.boundingBox();
+    assert.ok(joystickBox && joystickBox.width > 0, 'movement joystick must be present in gameplay');
+    const joystickCenter = {
+      x: joystickBox.x + joystickBox.width / 2,
+      y: joystickBox.y + joystickBox.height / 2
+    };
+    const dragJoystick = async (dx, dy) => {
+      await page.mouse.move(joystickCenter.x, joystickCenter.y);
+      await page.mouse.down();
+      await page.mouse.move(
+        joystickCenter.x + dx * joystickBox.width * 0.4,
+        joystickCenter.y + dy * joystickBox.height * 0.4,
+        { steps: 8 }
+      );
+      const transform = await page.locator('#stick').evaluate(element => element.style.transform);
+      await page.waitForTimeout(700);
+      await page.mouse.up();
+      return transform;
+    };
+    const forwardStick = await dragJoystick(0, -1);
+    await dragJoystick(1, 0);
+    assert.ok(forwardStick.includes('-'), 'joystick drag must update its visible movement stick');
 
     await page.locator('#pauseToggle').click();
     await page.locator('#pausePanel').waitFor({ state: 'visible' });
