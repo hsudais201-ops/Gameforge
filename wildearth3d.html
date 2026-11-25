@@ -724,8 +724,7 @@ var worldSeed=seedOverride!==null&&seedOverride!==0?seedOverride:(selectedWorld.
 var earlySeedLabel=$('worldSeedInfo');if(earlySeedLabel)earlySeedLabel.textContent='World seed: '+worldSeed+(seedOverride!==null?' · temporary URL override':'');
 if(worldCatalogRecovered)console.warn('WILDEARTH recovered the world catalog from its backup.');
 if(worldCatalogReadOnly)console.warn('WILDEARTH world catalog exceeds the safe record limit and is kept read-only.');
-function persistWorldList(){
-  try{
+function persistWorldList(){try{
     if(worldCatalogReadOnly){localStorage.setItem(SELECTED_WORLD_KEY,selectedWorldId);return true;}
     var previous=localStorage.getItem(WORLD_LIST_KEY);
     if(previous){var previousState=normalizeWorldCatalog(previous);if(previousState.valid&&!previousState.overflow)localStorage.setItem(WORLD_LIST_KEY+'_backup',previous);}
@@ -734,7 +733,7 @@ function persistWorldList(){
 }
 persistWorldList();
 var SAVE_KEY='mfwilds3d_world_'+selectedWorldId;
-var vw=window.innerWidth,vh=window.innerHeight;var vw=window.innerWidth,vh=window.innerHeight;
+var vw=window.innerWidth,vh=window.innerHeight;
 
 function clamp(v,a,b){return v<a?a:v>b?b:v}
 function rand(a,b){return a+random()*(b-a)}
@@ -2985,7 +2984,7 @@ function inspectSave(raw){
 }
 var saveBlocked=false;
 function validSave(raw){var result=inspectSave(raw);if(result.unsupported)saveBlocked=true;return result.data;}
-function awardXP(amount,reason){amount=Math.max(0,Math.floor(Number(amount)||0));if(!amount)return;P.xp=(P.xp||0)+amount;var need=100+(Math.max(1,P.level||1)-1)*60;while(P.xp>=need){P.xp-=need;P.level=(P.level||1)+1;P.statPoints=(P.statPoints||0)+1;need=100+(P.level-1)*60;say('LEVEL UP! Level '+P.level+' · 1 stat point earned',5);playSfx('achievement');}if(reason&&$('levelStatus'))$('levelStatus').textContent='LVL '+P.level+' · '+P.xp+'/'+need+' XP';}
+function awardXP(amount,reason){amount=Math.max(0,Math.floor(Number(amount)||0));if(!amount)return;P.level=clamp(Math.floor(P.level)||1,1,100);P.xp=Math.min(1000000,Math.max(0,Math.floor(P.xp)||0)+amount);var need=100+(P.level-1)*60;while(P.xp>=need&&P.level<100){P.xp-=need;P.level++;P.statPoints=(P.statPoints||0)+1;need=100+(P.level-1)*60;say('LEVEL UP! Level '+P.level+' · 1 stat point earned',5);playSfx('achievement');}if(P.level>=100)P.xp=0;if(reason&&$('levelStatus'))$('levelStatus').textContent='LVL '+P.level+' · '+P.xp+'/'+need+' XP';}
 function upgradePlayerStat(stat){if(P.statPoints<1||!P.stats||['vitality','power','tamer'].indexOf(stat)<0||(P.stats[stat]||0)>=10)return;P.statPoints--;P.stats[stat]=(P.stats[stat]||0)+1;if(stat==='vitality'){P.maxHp=100+P.stats.vitality*10;P.hp=Math.min(P.maxHp,P.hp+10);}say(stat.toUpperCase()+' upgraded · '+P.statPoints+' points left',3.5);save();renderQuestJournal();updateHud();}
 function save(){
   if(dead)return true;

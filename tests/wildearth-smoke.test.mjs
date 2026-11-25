@@ -704,7 +704,7 @@ test('loaded and backed-up saves enforce the global 120-piece structure limit', 
   assert.equal(validator({walls:Array(121).fill({x:0,z:0,t:'wall'})}), false);
   assert.equal(validator({walls:'corrupt'}), false);
   assert.ok(gameScript.includes('validStructureCounts(parsed)'));
-  assert.match(gameScript, /validStructureCounts\(check\)/);
+  assert.match(gameScript, /validSave\(previous\)/);\n  assert.ok(gameScript.includes('function inspectSave(raw)'));
 });
 
 
@@ -1043,7 +1043,7 @@ test('world catalog normalization filters malformed and duplicate records and ca
   const start=gameScript.indexOf('function seedFromString(');
   const end=gameScript.indexOf('var rawWorldCatalog=',start);
   assert.ok(start>=0&&end>start,'bounded world catalog helpers must exist');
-  const normalize=new Function(gameScript.slice(start,end)+';return normalizeWorldCatalog;')();
+  const normalize=new Function('MAX_WORLD_CATALOG_CHARS','MAX_WORLD_RECORDS',gameScript.slice(start,end)+';return normalizeWorldCatalog;')(65536,64);
   const raw=JSON.stringify([
     {id:'world-1',name:'  First World  ',created:10,seed:'424242'},
     {id:'world-1',name:'Duplicate',created:11,seed:2},
@@ -1094,6 +1094,964 @@ test('save integrity validation rejects unsafe values and preserves supported le
   assert.equal(helpers.inspectSave('x'.repeat(1048577)).oversized,true);
   assert.equal(helpers.inspectSave(JSON.stringify({version:7,P:{x:0,z:0}})).unsupported,true);
   assert.equal(helpers.validSave(JSON.stringify({version:7,P:{x:0,z:0}})),null);
+});
+
+test('player progression stops at the validated level cap and cannot create unloadable XP records', () => {
+  const start=gameScript.indexOf('function awardXP(');
+  const end=gameScript.indexOf('function upgradePlayerStat',start);
+  assert.ok(start>=0&&end>start,'bounded player progression must exist');
+  const player={level:99,xp:0,statPoints:0};
+  const run=new Function('P','clamp','
+  const start=gameScript.indexOf('function validStructureCounts(parsed)');
+  const end=gameScript.indexOf('function awardXP',start);
+  assert.ok(start>=0&&end>start,'save validator must be present');
+  const validate=new Function('SPECIES','HALF','NSLOTS','RESERVE_PARTY_LIMIT','TOTAL_PARTY_LIMIT',gameScript.slice(start,end)+';return validStructureCounts;')([{id:0},{id:1}],300,36,20,32);
+  assert.equal(validate({P:{x:0,z:0},team:[{sp:0}],walls:[{x:10,z:10,t:'wall'}]}),true);
+  assert.equal(validate({team:[{sp:99}]}),false,'unknown creature species must be rejected');
+  assert.equal(validate({team:Array.from({length:33},()=>({sp:0}))}),false,'oversized companion lists must be rejected');
+  assert.equal(validate({team:Array.from({length:12},()=>({sp:0,hp:100})),reserve:Array.from({length:20},()=>({sp:1,hp:60}))}),true,'active and reserve storage should support the bounded 32-creature collection');
+  assert.equal(validate({team:[{sp:0,hp:101}]}),false,'companion health outside 0-100 must be rejected');
+  assert.equal(validate({team:[{sp:0,bondXp:421}]}),false,'bond XP above the level cap must be rejected');
+  assert.equal(validate({team:[{sp:0,bondXp:-1}]}),false,'negative bond XP must be rejected');
+  assert.equal(validate({reserve:[{sp:0,bondXp:'420'}]}),false,'bond XP must be stored as a finite number');
+  assert.equal(validate({reserve:Array.from({length:21},()=>({sp:0}))}),false,'reserve storage must remain bounded');
+  assert.equal(validate({team:Array.from({length:13},()=>({sp:0})),reserve:Array.from({length:20},()=>({sp:1}))}),false,'the total collection must remain bounded');
+  assert.equal(validate({walls:[{x:301,z:0,t:'wall'}]}),false,'out-of-bounds structures must be rejected');
+  assert.equal(validate({walls:[{x:0,z:0,t:'unknown'}]}),false,'unknown structure types must be rejected');
+  assert.equal(validate({chests:[{x:0,z:0,slots:Array(19).fill(null)}]}),false,'oversized chest inventories must be rejected');
+  assert.equal(validate({fires:[{x:0,z:0,t:'lava'}]}),false,'unknown fire types must be rejected');
+  assert.equal(validate({P:{x:301,z:0}}),false,'player positions outside the world must be rejected');
+  assert.equal(validate({P:{x:0,z:-301}}),false,'player positions outside the world must be rejected');
+  assert.equal(validate({slots:Array(37).fill(null)}),false,'oversized player inventories must be rejected');
+  assert.equal(validate({slots:Array(36).fill(null)}),true,'the supported inventory size must remain loadable');
+});
+
+test('inventory uses the complete responsive WILDEARTH character and backpack layout', () => {
+  assert.ok(html.includes('wildInventory'));
+  assert.ok(html.includes('class="wildCharacterPanel"'));
+  assert.ok(html.includes('class="wildBackpackPanel"'));
+  assert.ok(html.includes('class="wildPartyPanel"'));
+  assert.ok(html.includes('id="itemPreviewIcon"'));
+  assert.ok(html.includes('id="itemPreviewName"'));
+  assert.ok(html.includes('id="bagGrid"'));
+  assert.ok(html.includes('id="bagHotbar"'));
+  assert.ok(html.includes('grid-template-columns:minmax(205px,.83fr) minmax(360px,1.45fr) minmax(220px,.9fr)'));
+  assert.ok(html.includes('@media(max-width:600px)'));
+  assert.ok(gameScript.includes("$('itemPreviewName').textContent=preview?ITEMS[preview.id].n:'Select an item';"));
+});
+
+test('Palworld-inspired inventory includes working category filters and a companion party list', () => {
+  assert.ok(html.includes('data-inv-filter="all"'));
+  assert.ok(html.includes('data-inv-filter="gear"'));
+  assert.ok(html.includes('data-inv-filter="materials"'));
+  assert.ok(html.includes('data-inv-filter="food"'));
+  assert.ok(html.includes('data-inv-filter="capture"'));
+  assert.ok(html.includes('data-inv-filter="building"'));
+  assert.ok(html.includes('id="itemPreviewMeta"'));
+  assert.ok(gameScript.includes('function inventoryCategory(id)'));
+  assert.ok(gameScript.includes('function setInventoryFilter(filter)'));
+  assert.ok(gameScript.includes("var filterButtons=$('bag').querySelectorAll('[data-inv-filter]')"));
+  assert.ok(gameScript.includes('var counts={},total=totalCompanionCount(),html=\'<div class="partyHead"><strong>ACTIVE PARTY</strong>'));
+  assert.ok(gameScript.includes('team.forEach(function(t,index){counts[t.sp]'));
+  assert.ok(html.includes('.partyCard'));
+});
+
+test('inventory is rebuilt as a full-screen character, backpack, party and crafting experience', () => {
+  assert.ok(html.includes('wildInventory'));
+  assert.ok(html.includes('class="wildCharacterPanel"'));
+  assert.ok(html.includes('class="wildBackpackPanel"'));
+  assert.ok(html.includes('class="wildPartyPanel"'));
+  assert.ok(html.includes('id="inventoryScreen"'));
+  assert.ok(html.includes('id="craftingScreen"'));
+  assert.ok(html.includes('data-bag-tab="inventory"'));
+  assert.ok(html.includes('data-bag-tab="crafting"'));
+  assert.ok(html.includes('id="armorHead"'));
+  assert.ok(html.includes('id="armorChest"'));
+  assert.ok(html.includes('id="armorLegs"'));
+  assert.ok(html.includes('id="armorFeet"'));
+  assert.ok(gameScript.includes('function setBagTab(tab)'));
+  assert.ok(gameScript.includes("$('craftingScreen').hidden=tab!=='crafting'"));
+  assert.ok(html.includes('.wildCharacterSilhouette'));
+  assert.ok(html.includes('.wildRecipeBody'));
+});
+
+test('inventory reference behaviors are selectively integrated and every storage action is wired', () => {
+  // The Library reference index (2).html uses the same select-then-destination
+  // interaction. Keep that touch-friendly behavior while retaining WILDEARTH's
+  // larger backpack, equipment, party and crafting systems.
+  assert.ok(gameScript.includes('function slotClick(i)'));
+  assert.match(gameScript, /if\(moveFrom<0\)\{if\(slots\[i\]\)moveFrom=i;renderInv\(true\);return\}/);
+  assert.ok(gameScript.includes("else if(b.id===a.id){var t=Math.min(a.n,ITEMS[a.id].max-b.n);"));
+  assert.ok(gameScript.includes("$('hotbar').addEventListener('click'"));
+  assert.ok(gameScript.includes("var b=e.target.closest('[data-slot]');"));
+  assert.ok(gameScript.includes("if(e.target.closest('#quickMove')&&moveFrom>=0)"));
+  assert.ok(gameScript.includes("if(e.target.closest('#quickDiscard'))"));
+  assert.ok(gameScript.includes("if(e.target.closest('#repairTool'))"));
+  assert.ok(gameScript.includes("if(e.target.closest('#splitStack'))"));
+  assert.ok(gameScript.includes("if(e.target.closest('#equipArmor'))"));
+  assert.ok(gameScript.includes("function sortStorageInventory()"));
+  assert.ok(gameScript.includes("function splitSelectedStack()"));
+  assert.ok(gameScript.includes("function equipSelectedArmor()"));
+  assert.ok(gameScript.includes("$('bagSort').addEventListener('click',sortStorageInventory)"));
+  assert.ok(gameScript.includes("function setBagTab(tab)"));
+  assert.ok(gameScript.includes("function setInventoryFilter(filter)"));
+  assert.ok(gameScript.includes("function setCompanionMode(mode)"));
+  assert.ok(gameScript.includes("function craft(k,amount)"));
+  assert.ok(gameScript.includes("$('bag').addEventListener('dragstart'"));
+  assert.ok(gameScript.includes("$('bag').addEventListener('drop'"));
+  assert.ok(html.includes('touch-action:manipulation'));
+});
+
+test('legacy MF Wilds reference saves merge into WILDEARTH world saves safely', () => {
+  assert.ok(html.includes("SAVE_KEY='mfwilds3d_world_'+selectedWorldId"));
+  assert.ok(gameScript.includes("localStorage.getItem('mfwilds3d_v2')"));
+  assert.ok(gameScript.includes("localStorage.setItem(SAVE_KEY,legacy)"));
+  assert.ok(gameScript.includes('function migrateInventorySlots(oldSlots,itemDefs,slotCount,hotbarCount)'));
+  assert.ok(gameScript.includes("if(item&&item.id==='cage')item={id:'ball',n:item.n}"));
+  assert.ok(gameScript.includes("d=validSave(localStorage.getItem(SAVE_KEY+'_backup'))"));
+  assert.ok(gameScript.includes('version:6,mapVersion:2,worldSeed:worldSeed'));
+  assert.ok(gameScript.includes('toolDurability:toolDurability'));
+  assert.ok(gameScript.includes('chests:chests.map'));
+  assert.ok(gameScript.includes('discoveredLandmarks:discoveredLandmarks'));
+});
+
+test('WILDEARTH keeps the reference survival loop while extending it with advanced world systems', () => {
+  for (const feature of [
+    'function doGather()', 'function doCatch()', 'function craft(k,amount)',
+    'function doPlace(id)', 'function update(dt)', 'function envUpdate()',
+    'function updateWorldStreaming', 'function playerDamage',
+    'function updateRivers', 'function spawnRareEvent'
+  ]) assert.ok(gameScript.includes(feature), 'missing merged game system: ' + feature);
+  assert.ok(html.includes('id="worldSelect"'));
+  assert.ok(html.includes('id="settingsPanel"'));
+  assert.ok(html.includes('id="pausePanel"'));
+  assert.ok(html.includes('id="inventoryScreen"'));
+  assert.ok(html.includes('id="craftingScreen"'));
+});
+
+test('companions coordinate their attacks on the Night Herald instead of splitting party damage', () => {
+  assert.ok(gameScript.includes('guardScore=Infinity'));
+  assert.ok(gameScript.includes('var threatScore=wd-(candidate.boss?5:0)'));
+  assert.ok(gameScript.includes('threatScore<guardScore'));
+  assert.ok(gameScript.includes('guardDist=wd;guardScore=threatScore'));
+  assert.ok(gameScript.includes('if(guard&&guardDist<3.1&&t.guardCd<=0)'));
+});
+
+test('hostile attacks show a visible ground telegraph during wind-up and intensify before impact', () => {
+  assert.ok(gameScript.includes('g.userData.attackWarning=warningRing'));
+  assert.ok(gameScript.includes('warningRing.visible=false'));
+  assert.ok(gameScript.includes('attackWarning.visible=s.windup>0'));
+  assert.ok(gameScript.includes('warningProgress=1-clamp(s.windup/'));
+  assert.ok(gameScript.includes('attackWarning.material.opacity=0.45+warningProgress*0.5'));
+});
+
+test('Escape closes the topmost open game menu before attempting to pause', () => {
+  assert.ok(gameScript.includes('function closeTopMenu(){'));
+  for (const overlay of ["$('chestPanel')", "$('settingsPanel')", "$('mapPanel')", "$('questPanel')", 'bagOpen', 'pauseOpen']) {
+    assert.ok(gameScript.includes(overlay), 'Escape handler must close ' + overlay);
+  }
+  assert.ok(gameScript.includes('if(closeTopMenu()){e.preventDefault();e.stopPropagation();return;}'));
+  assert.ok(gameScript.includes("if(waitingBinding){e.preventDefault();waitingBinding=null;renderKeyBindings();say('Key binding cancelled.'"));
+  assert.ok(gameScript.includes('function closeSettingsPanel(){'));
+  assert.ok(gameScript.includes('if(pauseOpen)$(' + "'pausePanel'" + ').hidden=false'));
+});
+
+test('graphics upgrades color output and increases shadow quality without changing display resolution', () => {
+  assert.ok(gameScript.includes('renderer.outputEncoding=THREE.sRGBEncoding'));
+  assert.ok(gameScript.includes('renderLevel===2?((isMobile||isLowEnd)?1024:2048):((isMobile||isLowEnd)?512:1024)'));
+  assert.ok(gameScript.includes('renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,isLowEnd?1.15:1.75))'));
+  assert.ok(gameScript.includes('renderer.setSize(vw,vh,false)'));
+});
+
+test('companions use cached steering around trees, rocks, structures, water, slopes, and cave walls', () => {
+  for (const marker of [
+    'function companionNavigationStep(member,target,options)',
+    'offsets=[0,-0.65,0.65,-1.3,1.3]',
+    'function companionGroundSafe(x,z)',
+    'riverDepthAt(x,z)<0.55',
+    'function companionCanStand(x,z,sp)',
+    'function resolveCompanionNavigationPoint(point,radius)',
+    't.navT=0.18',
+    'companionGroundSafe(companionNext.x,companionNext.z)',
+    'pushOutBoxes(e,r)'
+  ]) assert.ok(gameScript.includes(marker), 'missing companion navigation behavior: '+marker);
+  assert.ok(gameScript.includes('if(dd<rr){if(dd===0){ddx=1;ddz=0;}'), 'resource collision must resolve exact-center overlaps');
+  assert.ok(gameScript.includes('caveMode?0.6+row*0.72:2.7+row*1.45'), 'cave followers need a compact formation');
+});
+
+test('companion steering selects a safe side route, stops near its target, and reports fully blocked paths', () => {
+  const navigate=new Function(extractGameFunction('companionNavigationStep')+';return companionNavigationStep;')();
+  const routed=navigate({x:0,z:0,sp:0,navSide:0},{x:10,z:0},{maxSpeed:9,probeDistance:1.8,radius:0.72,canStand:()=>true,resolve(point){if(point.x>1.2&&point.x<2.8&&Math.abs(point.z)<1.0)point.z+=Math.sign(point.z||1)*1.1;}});
+  assert.equal(routed.blocked,false);
+  assert.ok(routed.vx>0,'the chosen route should continue toward the destination');
+  assert.ok(Math.abs(routed.vz)>0.1,'the chosen route should steer around the obstacle');
+  const blocked=navigate({x:0,z:0,sp:0},{x:10,z:0},{canStand:()=>false});
+  assert.equal(blocked.blocked,true);
+  assert.equal(blocked.vx,0);
+  const arrived=navigate({x:0,z:0},{x:0.2,z:0.1},{});
+  assert.equal(arrived.arrived,true);
+  assert.equal(arrived.vx,0);
+});
+
+test('companion ground checks reject water, rivers, steep slopes, and world edges while allowing cave floors', () => {
+  const source=extractGameFunction('companionGroundSafe')+'\n'+extractGameFunction('companionCanStand');
+  const build=(cave,active,height,river)=>new Function('caveMode','activeCave','HALF','WATER','heightAt','riverDepthAt','clamp',source+';return {companionGroundSafe,companionCanStand};')(cave,active,50,1,height,river,(v,a,b)=>Math.max(a,Math.min(b,v)));
+  assert.equal(build(false,null,()=>3,()=>0).companionCanStand(0,0,0),true);
+  assert.equal(build(false,null,()=>0,()=>0).companionCanStand(0,0,0),false,'deep water is not walkable');
+  assert.equal(build(false,null,()=>3,()=>0.82).companionCanStand(0,0,0),false,'rivers are avoided when companions cannot swim');
+  assert.equal(build(false,null,()=>3,()=>0).companionCanStand(43,0,0),false,'world-edge margins remain enforced');
+  assert.equal(build(false,null,(x)=>x>0?9:0,()=>0).companionCanStand(0,0,0),false,'species slope limits prevent unsafe climbs');
+  const cave=build(true,{x:0,z:0,floorY:-18},()=>0,()=>0);
+  assert.equal(cave.companionGroundSafe(6,0),true,'the cave interior uses its own safe floor bounds');
+  assert.equal(cave.companionGroundSafe(6.7,0),false,'companions cannot pass through cave walls');
+});
+
+test('safe companion regroup positions avoid occupied slots and return null when every slot is blocked', () => {
+  const place=new Function(extractGameFunction('companionSafePosition')+';return companionSafePosition;')();
+  const safe=place(0,{x:0,z:0},{sp:0},{radii:[2],canStand:()=>true,isOccupied:(x)=>x>0.5});
+  assert.ok(safe);
+  assert.ok(safe.x<=0.5,'the selected slot must not overlap an occupied party position');
+  assert.equal(place(0,{x:0,z:0},{sp:0},{radii:[2],canStand:()=>false}),null);
+});
+
+test('collision push-out resolves exact-center overlaps with walls, resource nodes, and campfires', () => {
+  const push=new Function('walls','res','fires','clamp',extractGameFunction('pushOutBoxes')+';return pushOutBoxes;');
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const wallPush=push([{x:0,z:0,t:'wall',open:false}],[],[],clamp),wallPoint={x:0,z:0};
+  wallPush(wallPoint,0.72);assert.ok(Math.abs(wallPoint.z)>0.8,'wall overlap should exit through the nearest wall edge');
+  const treePush=push([],[{x:0,z:0,rad:1,dead:0}],[],clamp),treePoint={x:0,z:0};
+  treePush(treePoint,0.72);assert.ok(treePoint.x>1.7,'tree overlap should be pushed fully beyond its radius');
+  const firePush=push([],[],[{x:0,z:0,t:'fire'}],clamp),firePoint={x:0,z:0};
+  firePush(firePoint,0.72);assert.ok(firePoint.x>1.5,'campfire overlap should be pushed fully beyond its safety radius');
+});
+
+test('party recall safely regroups companions and cave transitions carry the active party', () => {
+  for (const marker of [
+    'function companionSafePosition(index,origin,member,options)',
+    'function findCompanionSafePosition(index,origin,member)',
+    'function regroupCompanionsNearPlayer()',
+    'function recallCompanions()',
+    'data-team-command="recall"',
+    'var recall=e.target.closest(\'[data-team-command="recall"]\')',
+    'companionMode=\'follow\';',
+    'regroupCompanionsNearPlayer();say(\'Entered the Lumen Cavern.',
+    'activeCave=null;P.oxygen=100;regroupCompanionsNearPlayer();',
+    'function companionNeedsRecovery(distance,stuck,mode)',
+    'playerDistance>34?12',
+    'companionNeedsRecovery(playerDistance,t.navStuck||0,companionMode)',
+    'distance>72||(distance>8.5&&stuck>3.4)'
+  ]) assert.ok(gameScript.includes(marker) || html.includes(marker), 'missing companion recall or recovery behavior: '+marker);
+  const recovery=new Function(extractGameFunction('companionNeedsRecovery')+';return companionNeedsRecovery;')();
+  assert.equal(recovery(73,0,'follow'),true);
+  assert.equal(recovery(10,4,'follow'),true);
+  assert.equal(recovery(90,0,'hold'),false);
+  assert.equal(recovery(10,2,'follow'),false);
+  assert.ok(gameScript.includes('version:6,mapVersion:2'), 'navigation state must remain transient and save-compatible');
+});
+
+
+
+test('WILDEARTH beds support safe night-only sleep through to dawn with recovery and persistence', () => {
+  assert.ok(gameScript.includes('function sleepAtBed(bed)'));
+  assert.ok(gameScript.includes('if(nightF<0.55)'));
+  assert.ok(gameScript.includes('clock=nextDawn;nights+=1;inNight=false'));
+  assert.ok(gameScript.includes('P.hp=Math.min(P.maxHp||100,P.hp+40);P.stamina=100;P.food=Math.max(0,P.food-8)'));
+  assert.ok(gameScript.includes("nearestOf(beds,P.x,P.z,4.8)"));
+  assert.ok(html.includes('id="sleepPrompt"'));
+  assert.ok(gameScript.includes("$('sleepAction').addEventListener('click'"));
+  assert.ok(gameScript.includes("if(nearbyBed){sleepAtBed(nearbyBed);return;}"));
+});
+
+test('winter weather produces visible drifting snow while storms retain rain and lightning behavior', () => {
+  assert.ok(gameScript.includes("weatherSeason.id==='winter'&&localCold&&rainLevel>0.02"));
+  assert.ok(gameScript.includes("rainMat.color.setHex(snowing?0xeaf6ff:0xb9d9ed)"));
+  assert.ok(gameScript.includes("rainPositions[k+1]-=dt*(snowing?4.5+rainLevel*2:17+rainLevel*5)"));
+  assert.ok(gameScript.includes("if(!snowing&&stormLevel>0.62&&lightningCooldown<=0)"));
+  assert.ok(html.includes('id="weatherStatus"'));
+});
+
+test('all composed 3D model meshes receive scene lighting and cast and receive shadows', () => {
+  assert.ok(gameScript.includes('o.castShadow=true;o.receiveShadow=true;return o'));
+});
+
+test('creature models receive species-aware face, chest and paw detail geometry', () => {
+  assert.ok(gameScript.includes('var eyeGlint=stdMat(0xffffff,0.18'));
+  assert.ok(gameScript.includes('var chestMark=mesh(new THREE.SphereGeometry'));
+  assert.ok(gameScript.includes('for(var clawSide=-1;clawSide<=1;clawSide+=2)'));
+});
+
+test('hostile wraith models receive spectral ribs, shoulder plates and a glowing core', () => {
+  assert.ok(gameScript.includes('var ribMat=stdMat(p.glow'));
+  assert.ok(gameScript.includes('new THREE.TorusGeometry(0.42+rib*0.11'));
+  assert.ok(gameScript.includes('new THREE.OctahedronGeometry(kind===\'brute\'?0.23:0.16,1)'));
+  assert.ok(gameScript.includes('for(var armorSide=-1;armorSide<=1;armorSide+=2)'));
+});
+
+test('sleeping bed model has a timber frame, mattress, stitched blanket and pillow', () => {
+  assert.ok(gameScript.includes('function makeBed(){'));
+  assert.ok(gameScript.includes('new THREE.BoxGeometry(0.12,0.22,2.15)'));
+  assert.ok(gameScript.includes('for(var stitch=0;stitch<5;stitch++)'));
+  assert.ok(gameScript.includes('new THREE.SphereGeometry(0.24,12,9)'));
+});
+test('survival chest model includes plank seams, reinforced hinges and metal hardware', () => {
+  assert.ok(gameScript.includes('function makeChest(){'));
+  assert.ok(gameScript.includes('for(var plank=-2;plank<=2;plank++)'));
+  assert.ok(gameScript.includes('for(var hinge=-1;hinge<=1;hinge+=2)'));
+});
+
+test('door and gate models include structural braces, plank seams and rivets', () => {
+  assert.ok(gameScript.includes('for(var brace=-1;brace<=1;brace+=2)'));
+  assert.ok(gameScript.includes('for(var bolt=-2;bolt<=2;bolt++)'));
+  assert.ok(gameScript.includes('new THREE.SphereGeometry(0.055,8,6)'));
+});
+
+test('roof, workbench and cookpot models include additional construction and tool details', () => {
+  assert.ok(gameScript.includes('for(var row=0;row<3;row++)for(var col=0;col<4;col++)'));
+  assert.ok(gameScript.includes('Crafting tools: hammer, chisel, saw blade and a small parts tray.'));
+  assert.ok(gameScript.includes('new THREE.TorusGeometry(0.32,0.025,6,12)'));
+});
+
+
+test('original WILDEARTH creature art direction uses eight tuned silhouettes and cached merged detail meshes', () => {
+  assert.match(gameScript, /var CREATURE_FORMS=\[/);
+  assert.match(gameScript, /function makeCreatureArtPass\(sp\)/);
+  assert.ok(gameScript.includes('var CREATURE_ART_CACHE=[]'));
+  assert.ok(gameScript.includes('CREATURE_ART_CACHE[sp]'));
+  assert.ok(gameScript.includes('new THREE.MeshStandardMaterial({vertexColors:true,roughness:sp===7?0.58:0.84'));
+  assert.ok(gameScript.includes("sculptLayer.name='original-species-sculpt-'+S.n"));
+  assert.ok(gameScript.includes('g.add(sculptLayer)'));
+  assert.ok(gameScript.includes('head.scale.setScalar(form.headScale)'));
+  assert.ok(gameScript.includes('lg.scale.set(form.legScale[0],form.legScale[1],form.legScale[2])'));
+  assert.ok(gameScript.includes('g.userData.speciesForm=S.n'));
+});
+
+test('creature faces use species-specific irises, pupils and eye highlights', () => {
+  assert.match(gameScript, /var irisColors=\[0x72b9a0,0xffa24f,0x6bd8e8,0xc5b9a0,0xffe36e,0x89b96e,0x9ca8c9,0x83f1e8\]/);
+  assert.ok(gameScript.includes('var irisMat=stdMat(irisColors[sp]'));
+  assert.ok(gameScript.includes('var eyeHighlight=stdMat(0xffffff'));
+  assert.ok(gameScript.includes('new THREE.SphereGeometry(0.064,10,8),irisMat'));
+  assert.ok(gameScript.includes('new THREE.SphereGeometry(0.014,7,5),eyeHighlight'));
+  assert.ok(gameScript.includes('new THREE.BoxGeometry(0.16,0.018,0.025),dark'));
+});
+test('creature models expose animated ears, eyes and torso for low-cost expressive idle motion', () => {
+  assert.ok(gameScript.includes('ears.push(ear)'));
+  assert.ok(gameScript.includes('eyes.push(eyeWhite)'));
+  assert.ok(gameScript.includes('return {g:clone,legs:legs,head:head,tail:tail,ears:ears,eyes:eyes,torso:torso}'));
+});
+
+test('creature animation includes breathing, blinking, ear reactions and relaxed resting gait', () => {
+  assert.ok(gameScript.includes('var blink=Math.pow'));
+  assert.ok(gameScript.includes('result.breath=downed?0:Math.sin(time*p.breathRate*(resting?0.56:1))'));
+  assert.ok(gameScript.includes('m.torso.scale.y=1+mood.breath'));
+  assert.ok(gameScript.includes('m.ears[ei].rotation.z'));
+  assert.ok(gameScript.includes("c.state!=='rest'"));
+});
+test('world lighting uses a low-cost sky fill and improved exposure for readable shaded models', () => {
+  assert.ok(gameScript.includes('renderer.toneMappingExposure=0.92'));
+  assert.ok(gameScript.includes('isLowEnd?1.15:1.75'));
+  assert.ok(gameScript.includes('var skyFill=new THREE.DirectionalLight(0x8299bd,0.12)'));
+  assert.ok(gameScript.includes('skyFill.castShadow=false'));
+  assert.ok(gameScript.includes('skyFill.intensity=0.025+0.12*dayF'));
+});
+
+test('atmospheric fog follows the selected graphics profile and day-night cycle', () => {
+  assert.ok(gameScript.includes('scene.fog.far=renderProfiles[renderLevel].fogFar*(0.72+0.28*dayF)'));
+  assert.ok(gameScript.includes('scene.fog.near=22+18*dayF'));
+});
+
+test('world water uses a segmented physical material with mobile-scaled geometry and subtle waves', () => {
+  assert.ok(gameScript.includes('new THREE.PlaneGeometry(WORLD*1.6,WORLD*1.6,isMobile?20:40,isMobile?20:40)'));
+  assert.ok(gameScript.includes('new THREE.MeshPhysicalMaterial({color:0x327b98'));
+  assert.ok(gameScript.includes('clearcoat:0.82'));
+  assert.ok(gameScript.includes('function animateWater(dt)'));
+  assert.ok(gameScript.includes('waterGeo.computeVertexNormals()'));
+  assert.ok(gameScript.includes('animateWater(dt);if(!menuOpen)update(dt)'));
+});
+
+test('terrain vertex colors include layered micro-variation without external texture assets', () => {
+  assert.ok(gameScript.includes('var detail=vnoise(x*2.4+31,z*2.4-17),micro=vnoise(x*5.2-8,z*5.2+23)'));
+  assert.ok(gameScript.includes('if(biome.id===\'volcanic\'&&micro>0.68)'));
+  assert.ok(gameScript.includes('var v=0.86+0.22*fine+(micro-0.5)*0.045'));
+});
+
+
+test('low-poly tree meshes include layered pine boughs, bark grooves and oak root flares', () => {
+  const pine=gameScript.slice(gameScript.indexOf('function buildPine()'),gameScript.indexOf('function buildOak()'));
+  const oak=gameScript.slice(gameScript.indexOf('function buildOak()'),gameScript.indexOf('function buildRock()'));
+  assert.match(pine,/CylinderGeometry\(0\.025,0\.055,4\.35,4\)/);
+  assert.match(pine,/reach=rad\*0\.76/);
+  assert.match(oak,/CylinderGeometry\(0\.045,0\.16,1\.15,5\)/);
+  assert.match(oak,/var ka=k\/7\*6\.283/);
+});
+
+test('rock meshes add layered mineral facets and restrained moss patches', () => {
+  const rock=gameScript.slice(gameScript.indexOf('function buildRock()'),gameScript.indexOf('function buildOre('));
+  assert.match(rock,/var strata=\[0x626a70,0x969b9c,0x68736f,0x858b8b\]/);
+  assert.match(rock,/new THREE\.DodecahedronGeometry\(0\.12\+\(i%3\)\*0\.035\)/);
+  assert.match(rock,/new THREE\.SphereGeometry\(0\.24,6,4\)/);
+  assert.match(rock,/return merge\(parts\)/);
+});
+
+
+test('biome signature plants provide desert, snow, volcanic and jungle vegetation', () => {
+  for (const fn of ['buildDesertTuft','buildSnowShrub','buildEmberPlant','buildJungleBroadleaf']) {
+    assert.match(gameScript,new RegExp('function '+fn+'\\('),fn+' builder should exist');
+  }
+  assert.match(gameScript,/biomeAt\(x,z\)\.id==='volcanic'/);
+  assert.match(gameScript,/id==='frost'\|\|id==='tundra'\|\|id==='highland'/);
+  assert.match(gameScript,/biomeAt\(x,z\)\.id==='jungle'\|\|biomeAt\(x,z\)\.id==='marsh'/);
+  assert.match(gameScript,/Math\.round\(72\*mf\)/);
+  assert.match(gameScript,/Math\.round\(30\*mf\)/);
+});
+
+
+test('fallen logs show cut growth rings, bark ridges and knots', () => {
+  const log=gameScript.slice(gameScript.indexOf('function buildLog()'),gameScript.indexOf('function buildLeafLitter()'));
+  assert.match(log,/CylinderGeometry\(0\.19,0\.19,0\.018,9\)/);
+  assert.match(log,/CylinderGeometry\(0\.11,0\.11,0\.02,8\)/);
+  assert.ok(log.includes('CylinderGeometry(0.025,0.045,2.85,4)'));
+  assert.match(log,/SphereGeometry\(0\.075,5,4\)/);
+});
+
+test('forest and dry biomes receive distinct ground litter instances', () => {
+  assert.match(gameScript,/function buildLeafLitter\(\)/);
+  assert.match(gameScript,/function buildDryLitter\(\)/);
+  assert.match(gameScript,/id==='forest'\|\|id==='woodland'\|\|id==='jungle'\|\|id==='marsh'/);
+  assert.match(gameScript,/id==='desert'\|\|id==='savanna'\|\|id==='meadow'/);
+  assert.match(gameScript,/Math\.round\(230\*mf\)/);
+});
+
+
+test('visual grading reduces washed-out daylight and increases render edge clarity safely', () => {
+  assert.ok(gameScript.includes('renderer.toneMappingExposure=0.92'));
+  assert.ok(gameScript.includes('isLowEnd?1.15:1.75'));
+  assert.ok(gameScript.includes('var hemi=new THREE.HemisphereLight(0xb7c9df,0x393329,0.48)'));
+  assert.ok(gameScript.includes('sun.intensity=1.12*dayF'));
+  assert.ok(gameScript.includes('hemi.intensity=0.14+0.46*dayF'));
+  assert.ok(gameScript.includes('var cDayS=new THREE.Color(0x8199b2)'));
+});
+
+
+test('terrain uses a lightweight deterministic bump map for fine surface relief', () => {
+  assert.ok(gameScript.includes('function makeGroundDetailMap()'));
+  assert.ok(gameScript.includes('canvas.width=128;canvas.height=128'));
+  assert.ok(gameScript.includes('tex.repeat.set(54,54)'));
+  assert.ok(gameScript.includes('bumpMap:groundDetailMap,bumpScale:0.038'));
+  assert.ok(gameScript.includes('Math.min(4,renderer.capabilities.getMaxAnisotropy())'));
+});
+
+
+test('shared prop materials use a lightweight tileable micro-surface map for sharper material definition', () => {
+  assert.ok(gameScript.includes('function makeSurfaceDetailMap()'));
+  assert.ok(gameScript.includes('canvas.width=128;canvas.height=128'));
+  assert.ok(gameScript.includes('tex.repeat.set(3,3)'));
+  assert.ok(gameScript.includes('roughnessMap:surfaceDetailMap,bumpMap:surfaceDetailMap,bumpScale:0.016'));
+  assert.ok(gameScript.includes('Math.min(4,renderer.capabilities.getMaxAnisotropy())'));
+});
+
+
+test('companion attack order is available, saved safely, and expands target acquisition without changing follow or defend ranges', () => {
+  for (const marker of [
+    'data-team-mode="attack"',
+    "if(['follow','hold','defend','attack'].indexOf(mode)<0)return;",
+    "companionMode=['follow','hold','defend','attack'].indexOf(d.companionMode)>=0?d.companionMode:'follow';",
+    "companionMode==='attack'?36:(companionMode==='defend'?19:13)",
+    "companionMode==='attack'?48:(companionMode==='defend'?27:19)",
+    'Companions will actively hunt nearby Wraiths.'
+  ]) assert.ok(gameScript.includes(marker), 'missing companion attack-order marker: ' + marker);
+});
+
+test('eight original species use distinct, bounded locomotion and secondary-motion profiles', () => {
+  const start = gameScript.indexOf('var CREATURE_GAITS=[');
+  const end = gameScript.indexOf('var CREATURE_ART_CACHE=', start);
+  assert.ok(start >= 0 && end > start, 'species gait profiles and pure gait helper must exist');
+  const source = gameScript.slice(start, end);
+  const factory = new Function(source + '; return { profiles: CREATURE_GAITS, gait: creatureGait };');
+  const system = factory();
+  assert.equal(system.profiles.length, 8);
+  const signatures = system.profiles.map(p => [p.rate,p.stride,p.leg,p.bob,p.tailRate,p.tailSwing,p.tailLift,p.bodySway,p.offsets.join(',')].join('|'));
+  assert.equal(new Set(signatures).size, 8, 'each species needs a distinct movement signature');
+  for (let species = 0; species < 8; species++) {
+    const pose = system.gait(species, 0.73, 1.2, true);
+    assert.equal(pose.legs.length, 4);
+    for (const angle of pose.legs) {
+      assert.ok(Number.isFinite(angle));
+      assert.ok(Math.abs(angle) <= 0.9, 'leg swing must stay inside a safe animation range');
+    }
+    for (const key of ['bob','bodySway','tailYaw','tailPitch','headSway']) assert.ok(Number.isFinite(pose[key]));
+    const stopped = system.gait(species, 0.73, 1.2, false);
+    assert.strictEqual(stopped, pose, 'the gait helper must reuse its scratch result rather than allocate per frame');
+    assert.deepEqual(stopped.legs, [0,0,0,0], 'stopped creatures must not keep walking');
+  }
+  const fallback = system.gait(99, 0.73, 1.2, true);
+  assert.equal(fallback.legs.length, 4, 'unknown species safely uses the base gait');
+  assert.ok(gameScript.includes('gait=creatureGait(c.sp,c.walk,c.speed,moving)'));
+  assert.ok(gameScript.includes('m.tail.rotation.y=gait.tailYaw'));
+  assert.ok(gameScript.includes('m.g.rotation.z=gait.bodySway'));
+});
+
+
+
+test('eight original species have a complete, distinct field-guide roster', () => {
+  const start = gameScript.indexOf('var SPECIES=[');
+  const end = gameScript.indexOf('var COMPANION_BOND_XP_CAP=', start);
+  assert.ok(start >= 0 && end > start, 'species roster metadata must exist');
+  const species = new Function(gameScript.slice(start, end) + ';return SPECIES;')();
+  assert.equal(species.length, 8);
+  assert.equal(new Set(species.map(s => s.n)).size, 8);
+  for (const s of species) {
+    for (const key of ['n','r','role','ability','workLabel','temperament','movement','bondFocus']) {
+      assert.equal(typeof s[key], 'string', s.n + ' must define ' + key);
+      assert.ok(s[key].length > 2, s.n + ' must provide readable ' + key);
+    }
+    assert.ok(Array.isArray(s.habitats) && s.habitats.length >= 1, s.n + ' needs a habitat');
+  }
+  assert.ok(gameScript.includes("temperament:known?(S.temperament||'Unknown'):'Unknown'"));
+  assert.ok(gameScript.includes("movement:known?(S.movement||'Unknown'):'Unknown'"));
+  assert.ok(gameScript.includes("bondFocus:known?(S.bondFocus||'Unknown'):'Unknown'"));
+  assert.ok(gameScript.includes(" · Temperament: '+entry.temperament+' · Movement: '+entry.movement"));
+  assert.ok(gameScript.includes("Bond focus: '+entry.bondFocus+'.'"));
+});
+
+test('species behavior profiles drive bounded awareness, movement, and personality animation without per-frame allocation', () => {
+  const start = gameScript.indexOf('var CREATURE_BEHAVIORS=[');
+  const end = gameScript.indexOf('var CREATURE_ART_CACHE=', start);
+  assert.ok(start >= 0 && end > start, 'species behavior helpers must exist');
+  const source = gameScript.slice(start, end);
+  const system = new Function('clamp', source + ';return {profiles:CREATURE_BEHAVIORS,awareness:creatureAwareness,roam:creatureRoamSpeed,flee:creatureFleeSpeed,accel:creatureAcceleration,turn:creatureTurnRate,mood:creatureMoodPose};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  assert.equal(system.profiles.length, 8);
+  const signatures = system.profiles.map(p => [p.alertRadius,p.panicRadius,p.roamSpeed,p.fleeSpeed,p.turnWander,p.turnFlee,p.idleRate,p.idleBob,p.idleSway,p.idleTilt].join('|'));
+  assert.equal(new Set(signatures).size, 8, 'species need distinct behavior and idle signatures');
+  for (let sp=0;sp<8;sp++) {
+    const awareness=system.awareness(sp,0.5);
+    for (const key of ['alert','panic','predatorAlert','predatorPanic']) assert.ok(Number.isFinite(awareness[key])&&awareness[key]>0);
+    assert.ok(awareness.alert>=4&&awareness.alert<=24);
+    assert.ok(awareness.panic>=3&&awareness.panic<=12);
+    assert.ok(system.roam(sp,0.5)>=0.65&&system.roam(sp,0.5)<=3.6);
+    assert.ok(system.flee(sp)>=3.5&&system.flee(sp)<=9);
+    assert.ok(system.accel(sp,false)>=1.2&&system.accel(sp,false)<=7);
+    assert.ok(system.accel(sp,true)>=1.2&&system.accel(sp,true)<=7);
+    assert.ok(system.turn(sp,false)>=3&&system.turn(sp,false)<=13);
+    assert.ok(system.turn(sp,true)>=3&&system.turn(sp,true)<=13);
+    const idle=system.mood(sp,2.4,0.8,0.25,0,false,false,false);
+    const alert=system.mood(sp,2.4,0.8,0.25,1,false,false,false);
+    assert.ok(Number.isFinite(idle.bob)&&Math.abs(idle.bob)<=0.05);
+    assert.ok(Number.isFinite(idle.sway)&&Math.abs(idle.sway)<=0.045);
+    assert.ok(Number.isFinite(idle.headTilt)&&Math.abs(idle.headTilt)<=0.05);
+    assert.ok(alert.alertLean>=0&&alert.alertLean<=0.12);
+    assert.ok(alert.tailAlert>=0&&alert.tailAlert<=0.4);
+    assert.ok(alert.earAlert>=0&&alert.earAlert<=0.16);
+    const downed=system.mood(sp,2.4,0.8,0.25,0,false,false,true);
+    assert.equal(downed.bob,0);
+    assert.equal(downed.sway,0);
+    assert.equal(downed.headTilt,0);
+  }
+  const shared=system.awareness(0,0.5);
+  assert.strictEqual(system.awareness(1,0.5),shared,'awareness must reuse a scratch result');
+  const mood=system.mood(0,1,0.5,0.5,0,false,false,false);
+  assert.strictEqual(system.mood(1,1,0.5,0.5,0,false,false,false),mood,'idle animation must reuse a scratch result');
+  assert.ok(gameScript.includes('awareness=creatureAwareness(c.sp,c.boldness)'));
+  assert.ok(gameScript.includes('creatureFleeSpeed(c.sp)'));
+  assert.ok(gameScript.includes('creatureRoamSpeed(c.sp,c.curiosity)'));
+  assert.ok(gameScript.includes('creatureAcceleration(c.sp,c.flee>0)'));
+  assert.ok(gameScript.includes("creatureTurnRate(c.sp,c.state==='flee')"));
+  assert.ok(gameScript.includes('creatureMoodPose(c.sp,clock+(c.personalityPhase||0)'));
+});
+
+test('capture targeting follows the camera aim cone and allows a close-range throw', () => {
+  const start = gameScript.indexOf('function isCaptureTargetAimed(');
+  const end = gameScript.indexOf('function doCatch(){', start);
+  const source = gameScript.slice(start, end);
+  assert.ok(start >= 0 && end > start, 'capture targeting helpers must exist');
+  const system = new Function('function clamp(v,a,b){return Math.max(a,Math.min(b,v));};' + source + '; return { isCaptureTargetAimed, selectCaptureTarget, captureOddsLabel };')();
+  const ahead = { x: 0, z: 5 };
+  const behind = { x: 0, z: -3.5 };
+  assert.strictEqual(system.selectCaptureTarget([behind, ahead], 0, 0, 0, 12, 0.92, 2.4, true), ahead);
+  assert.strictEqual(system.selectCaptureTarget([behind], 0, 0, 0, 12, 0.92, 2.4, true), null);
+  const closeBehind = { x: 0, z: -1.8 };
+  assert.strictEqual(system.selectCaptureTarget([closeBehind], 0, 0, 0, 12, 0.92, 2.4, true), closeBehind);
+  assert.strictEqual(system.selectCaptureTarget([{ x: 0, z: 3, held: true }], 0, 0, 0, 12, 0.92, 2.4, true), null);
+});
+
+test('capture feedback uses qualitative odds and clearly reports aim readiness', () => {
+  const start = gameScript.indexOf('function isCaptureTargetAimed(');
+  const end = gameScript.indexOf('function doCatch(){', start);
+  const source = gameScript.slice(start, end);
+  const system = new Function('function clamp(v,a,b){return Math.max(a,Math.min(b,v));};' + source + '; return { captureOddsLabel };')();
+  assert.equal(system.captureOddsLabel(0.9), 'Excellent odds');
+  assert.equal(system.captureOddsLabel(0.65), 'Good odds');
+  assert.equal(system.captureOddsLabel(0.4), 'Fair odds');
+  assert.equal(system.captureOddsLabel(0.1), 'Low odds');
+  assert.ok(gameScript.includes('captureAimFace(),tc=selectCaptureTarget'));
+  assert.ok(gameScript.includes('captureOddsLabel(captureChance(tc,bid))'));
+  assert.ok(gameScript.includes("aimed?'AIMED':'TURN TO AIM'"));
+  assert.ok(gameScript.includes('Math.atan2(-Math.sin(cam.yaw),-Math.cos(cam.yaw))'));
+  assert.ok(gameScript.includes('rateNow(c.sp,id,c)'));
+  assert.ok(gameScript.includes('P.stats.tamer)||0)*0.025'));
+  assert.doesNotThrow(() => new Function(gameScript));
+});
+
+test('capture throws use eased distance-scaled arcs and communicate impact, success, and escape', () => {
+  assert.ok(gameScript.includes('flightDuration:clamp(0.36+distance*0.018,0.4,0.58)'));
+  assert.ok(gameScript.includes('flight=u0*u0*(3-2*u0)'));
+  assert.ok(gameScript.includes("pop(sc.x,sc.y+2.2,sc.z,'Capture attempt'"), 'impact should begin a visible capture attempt');
+  assert.ok(gameScript.includes("SPECIES[sc.sp].n+' joined your active party!'"), 'successful capture should confirm active party membership');
+  assert.ok(gameScript.includes("SPECIES[sc.sp].n+' joined reserve storage."), 'full parties should explain reserve placement');
+  assert.ok(gameScript.includes('broke free. Build trust or try a Great Ball.'), 'failed capture should explain recovery options');
+});
+
+test('all eight original species expose unique signature abilities and readable combat roles', () => {
+  const start=gameScript.indexOf('var COMPANION_ABILITIES=[');
+  const end=gameScript.indexOf('function companionAbilityProfile',start);
+  assert.ok(start>=0&&end>start,'signature ability profiles must exist');
+  const block=gameScript.slice(start,end);
+  const profiles=new Function(block+';return COMPANION_ABILITIES;')();
+  assert.equal(profiles.length,8);
+  assert.equal(new Set(profiles.map(p=>p.name)).size,8);
+  assert.equal(new Set(profiles.map(p=>p.effect)).size,8);
+  for(const profile of profiles){
+    assert.ok(profile.cooldown>=9&&profile.cooldown<=13);
+    assert.ok(profile.range>=6&&profile.range<=8);
+    assert.ok(profile.role&&profile.name);
+  }
+  for(const entry of ["role:'Support',ability:'Pollen Mend'","role:'Striker',ability:'Cinder Burst'","role:'Controller',ability:'Tidal Snare'","role:'Guardian',ability:'Stone Ward'","role:'Chain striker',ability:'Arc Spark'","role:'Controller',ability:'Briar Snare'","role:'Disruptor',ability:'Gale Break'","role:'Finisher',ability:'Prism Lance'"])assert.ok(gameScript.includes(entry),'missing species role/ability: '+entry);
+});
+
+test('signature abilities require Attack order, range, cooldown and appropriate support conditions', () => {
+  const start=gameScript.indexOf('var COMPANION_ABILITIES=[');
+  const end=gameScript.indexOf('function resolveCompanionAbility',start);
+  const system=new Function(gameScript.slice(start,end)+';return {ready:companionAbilityReady};')();
+  const player={x:0,z:0,hp:72,maxHp:100,stamina:55};
+  const companion={sp:0,x:1,z:0,abilityCd:0};
+  const target={x:3,z:0,hp:12};
+  assert.equal(system.ready(companion,target,'attack',player,0,0),true);
+  assert.equal(system.ready(companion,target,'follow',player,0,0),false);
+  assert.equal(system.ready({...companion,abilityCd:2},target,'attack',player,0,0),false);
+  assert.equal(system.ready(companion,target,'attack',player,1,0),false);
+  assert.equal(system.ready(companion,{x:12,z:0,hp:12},'attack',player,0,0),false);
+  assert.equal(system.ready(companion,target,'attack',{...player,x:20},0,0),false);
+  assert.equal(system.ready(companion,target,'attack',{...player,hp:100,stamina:100},0,0),false);
+  assert.equal(system.ready({...companion,sp:3},target,'attack',player,0,4),false);
+  assert.equal(system.ready({...companion,abilityCd:undefined},target,'attack',player,0,0),true,'legacy saved companions start ready without a saved cooldown');
+});
+
+test('eight signature ability effects heal, ward, burn, slow, chain, root, knock back and finish Wraiths', () => {
+  const start=gameScript.indexOf('var COMPANION_ABILITIES=[');
+  const end=gameScript.indexOf('function activateCompanionAbility',start);
+  const bondHelpers='function clamp(v,a,b){return Math.max(a,Math.min(b,v));}\nvar COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','companionBondLevel','companionBondDamageMultiplier'].map(extractGameFunction).join('\n');
+  const system=new Function(bondHelpers+'\n'+gameScript.slice(start,end)+';return {resolve:resolveCompanionAbility};')();
+  function scenario(sp,boss,bondXp){
+    const mobs=[
+      {x:0,z:0,y:0,hp:20,boss:!!boss,damageTaken:1,windup:0.4,lunge:0.2,attackCd:0.2},
+      {x:2,z:0,y:0,hp:20,damageTaken:1,windup:0.2,lunge:0.1,attackCd:0.1},
+      {x:3,z:0,y:0,hp:20,damageTaken:1},
+      {x:4,z:0,y:0,hp:20,damageTaken:1},
+      {x:8,z:0,y:0,hp:20,damageTaken:1}
+    ];
+    const companion={sp,x:-1,y:0,z:0,bondXp:Number(bondXp)||0};
+    const player={x:0,y:0,z:0,hp:70,maxHp:100,stamina:40};
+    const calls={bursts:0,pops:0,knockbacks:0,sounds:0};
+    const result=system.resolve(companion,mobs[0],{player,wraiths:mobs,wardTimer:0,wardReduction:0},{
+      burst(){calls.bursts++;},pop(){calls.pops++;},sound(){calls.sounds++;},knockback(){calls.knockbacks++;}
+    });
+    return {mobs,player,calls,result};
+  }
+  const mend=scenario(0);assert.equal(mend.result.healed,8);assert.equal(mend.result.staminaRestored,14);assert.equal(mend.player.hp,78);
+  const burn=scenario(1);assert.ok(burn.mobs[0].hp<20);assert.equal(burn.mobs[0].burnTimer,1.45);
+  const tide=scenario(2);assert.ok(tide.mobs[0].frostTimer>=3.1);
+  const ward=scenario(3);assert.equal(ward.result.wardTimer,5.5);assert.equal(ward.result.wardReduction,0.28);
+  const chain=scenario(4);assert.equal(chain.result.affected,3);assert.ok(chain.mobs[1].hp<20&&chain.mobs[2].hp<20);
+  const root=scenario(5);assert.ok(root.mobs[0].rootTimer>0);assert.equal(root.mobs[0].windup,0);assert.equal(root.mobs[0].lunge,0);
+  const gust=scenario(6);assert.equal(gust.result.affected,4);assert.equal(gust.calls.knockbacks,4);assert.equal(gust.mobs[0].attackCd,0.45);
+  const prism=scenario(7,true);assert.ok(Math.abs(prism.mobs[0].hp-(20-2.4*1.35))<0.0001);
+  const bondedPrism=scenario(7,true,420);assert.ok(Math.abs(bondedPrism.mobs[0].hp-(20-2.4*1.35*1.1))<0.0001,'maximum bond adds a capped 10% signature-ability bonus');
+  for(const run of [mend,burn,tide,ward,chain,root,gust,prism]){assert.equal(run.calls.pops,1);assert.equal(run.calls.sounds,1);}
+});
+
+test('signature abilities integrate with companion attack orders, Wraith status updates, damage mitigation and backward-compatible saves', () => {
+  assert.ok(gameScript.includes('if(guard&&companionAbilityReady(t,guard,companionMode,P,companionAbilityGlobalCd,companionWardTimer))activateCompanionAbility(t,guard);'));
+  assert.ok(gameScript.includes("if(s.rootTimer>0){s.windup=0;s.lunge=0;s.attackTarget=null;s.attackCompanion=null;}"));
+  assert.ok(gameScript.includes("s.frostTimer=Math.max(0,(s.frostTimer||0)-dt);s.rootTimer=Math.max(0,(s.rootTimer||0)-dt);"));
+  assert.ok(gameScript.includes("var wardMultiplier=companionWardTimer>0?1-clamp(companionWardReduction,0,0.6):1;"));
+  assert.ok(gameScript.includes("if(companionWardTimer>0)statuses.push('STONE WARD · '+Math.ceil(companionWardTimer)+'s');"));
+  assert.ok(gameScript.includes("team:team.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp),workJob:normalizeCompanionWorkJob(t.workJob)}})"),'active companion health and bond should persist without saving runtime cooldowns');
+  assert.ok(gameScript.includes("reserve:reserveTeam.map(function(t){return {sp:t.sp,hp:companionHealth(t),bondXp:normalizeCompanionBondXp(t.bondXp),workJob:normalizeCompanionWorkJob(t.workJob)}})"),'reserve companion health and bond should persist without creating reserve meshes');
+  assert.ok(gameScript.includes("html+='</div><div class=\"companionCommands\""));
+  assert.ok(gameScript.includes('Signature abilities activate in Attack order when a Wraith is close.'));
+  for(const marker of ['function companionBondProgress(member)','function gainCompanionBond(member,amount)','gainCompanionBond(companion,result.affected>0?6:4)','gainCompanionBond(t,2)','gainCompanionBond(member,3)','t.bondTimer>=60','companionWorkYield(t,random(),workProfile.habitatMatch)',"BOND LVL '+bond.level",'sc.bondXp=Math.round(clamp(sc.trust||0,0,1)*20)'])assert.ok(gameScript.includes(marker),'missing bond progression integration: '+marker);
+  assert.doesNotThrow(() => new Function(gameScript));
+});
+
+test('species habitat metadata stays aligned with the eight original creature roles', () => {
+  const speciesStart = gameScript.indexOf('var SPECIES=[');
+  const speciesEnd = gameScript.indexOf('];', speciesStart) + 2;
+  const biomeStart = gameScript.indexOf('var BIOMES=[');
+  const biomeEnd = gameScript.indexOf('];', biomeStart) + 2;
+  const species = new Function(gameScript.slice(speciesStart, speciesEnd) + ';return SPECIES;')();
+  const biomes = new Function(gameScript.slice(biomeStart, biomeEnd) + ';return BIOMES;')();
+  const biomeIds = new Set(biomes.map(b => b.id));
+  assert.equal(species.length, 8);
+  assert.equal(new Set(species.map(s => s.n)).size, 8);
+  for (const entry of species) {
+    assert.ok(Array.isArray(entry.habitats) && entry.habitats.length >= 2);
+    assert.ok(entry.habitats.every(id => biomeIds.has(id)), entry.n + ' must reference real biomes');
+    assert.ok(entry.role && entry.ability);
+  }
+  assert.ok(gameScript.includes('var habitats=SPECIES[sp]&&SPECIES[sp].habitats;'), 'spawn weighting must use the same field-guide habitat data');
+});
+
+test('field guide discovery migration preserves caught species and rejects malformed flags', () => {
+  const start = gameScript.indexOf('function normalizeSpeciesDiscovery(');
+  const end = gameScript.indexOf('function creatureFieldGuideEntry(', start);
+  assert.ok(start >= 0 && end > start);
+  const normalize = new Function('var SPECIES=Array.from({length:8},function(){return {};});' + gameScript.slice(start, end) + ';return normalizeSpeciesDiscovery;')();
+  assert.deepEqual(normalize([true, 'yes', false, 1], [0, 1, 0, 0, 2]), [true, true, false, false, true, false, false, false]);
+  assert.deepEqual(normalize(null, [0, 0, 3]), [false, false, true, false, false, false, false, false]);
+  assert.deepEqual(normalize(['true', true], []), [false, true, false, false, false, false, false, false]);
+});
+
+test('field guide entries reveal care and signature ability only after a sighting', () => {
+  const start = gameScript.indexOf('function creatureFieldGuideEntry(');
+  const end = gameScript.indexOf('function discoverSpecies(', start);
+  assert.ok(start >= 0 && end > start);
+  const source = gameScript.slice(start, end);
+  const entryFor = new Function(
+    'var SPECIES=[{n:"Fluffo",r:"common",c:0x8fd16a,role:"Support",ability:"Pollen Mend",habitats:["meadow","forest"],temperament:"Playful and sociable",movement:"Soft bounding hops",bondFocus:"Healing and care"}];' +
+    'var BIOMES=[{id:"meadow",name:"Sunlit Meadow"},{id:"forest",name:"Mosswood Forest"}];' +
+    'var CREATURE_DIET=["berry"];var ITEMS={berry:{n:"Berry"}};' +
+    'var RAR={common:{n:"Common"}};' + source + ';return creatureFieldGuideEntry;'
+  )();
+  const hidden = entryFor(0, false, 0);
+  assert.equal(hidden.name, 'Unknown species 1');
+  assert.equal(hidden.ability, 'Unknown');
+  assert.equal(hidden.food, 'Unknown');
+  assert.equal(hidden.temperament, 'Unknown');
+  assert.equal(hidden.movement, 'Unknown');
+  assert.equal(hidden.bondFocus, 'Unknown');
+  assert.deepEqual(hidden.habitats, ['Sunlit Meadow', 'Mosswood Forest']);
+  const seen = entryFor(0, true, 2);
+  assert.equal(seen.name, 'Fluffo');
+  assert.equal(seen.rarity, 'Common');
+  assert.equal(seen.ability, 'Pollen Mend');
+  assert.equal(seen.food, 'Berry');
+  assert.equal(seen.temperament, 'Playful and sociable');
+  assert.equal(seen.movement, 'Soft bounding hops');
+  assert.equal(seen.bondFocus, 'Healing and care');
+  assert.equal(seen.caught, 2);
+});
+
+test('field guide sightings and captures persist without changing the existing save version', () => {
+  assert.ok(gameScript.includes('version:6,mapVersion:2'));
+  assert.ok(gameScript.includes('caught:catchIndex,discoveredSpecies:discoveredSpecies'));
+  assert.ok(gameScript.includes('discoveredSpecies=normalizeSpeciesDiscovery(d.progress&&d.progress.discoveredSpecies,catchIndex)'));
+  assert.ok(gameScript.includes('if(pdist<=18)discoverSpecies(c.sp,true);'));
+  assert.ok(gameScript.includes('discoverSpecies(sc.sp,false)'));
+  assert.ok(html.includes('data-creature-filter="all"'));
+  assert.ok(html.includes('data-creature-filter="seen"'));
+  assert.ok(html.includes('data-creature-filter="missing"'));
+  assert.ok(gameScript.includes("var filter=e.target.closest('button[data-creature-filter]')"));
+  assert.ok(gameScript.includes("'SIGHTED '+seen"));
+  assert.ok(gameScript.includes("'Preferred habitat: '+habitatText"));
+});
+
+test('companion health is bounded, downed members stop at zero, and salves can restore them', () => {
+  const source='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','normalizeCompanionHp','companionHealth','applyCompanionDamage','restoreCompanionHealth','normalizePartyStorage'].map(extractGameFunction).join('\n');
+  const helpers=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return {normalizeCompanionBondXp,normalizeCompanionHp,companionHealth,applyCompanionDamage,restoreCompanionHealth,normalizePartyStorage};')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
+  assert.equal(helpers.normalizeCompanionHp(undefined),100);
+  assert.equal(helpers.normalizeCompanionHp(-8),0);
+  assert.equal(helpers.normalizeCompanionHp(140),100);
+  const member={hp:14};
+  assert.equal(helpers.applyCompanionDamage(member,20),14);
+  assert.equal(member.hp,0);
+  assert.equal(member.downed,true);
+  assert.equal(helpers.restoreCompanionHealth(member,45),45);
+  assert.equal(member.hp,45);
+  assert.equal(member.downed,false);
+  assert.equal(helpers.restoreCompanionHealth(member,100),55);
+  assert.equal(member.hp,100);
+});
+
+test('companion bond progression is bounded and unlocks measured combat and work bonuses', () => {
+  const source='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','companionBondLevel','companionBondProgress','companionBondDamageMultiplier','companionWorkYield','awardCompanionBond'].map(extractGameFunction).join('\n');
+  const helpers=new Function('clamp',source+';return {normalizeCompanionBondXp,companionBondLevel,companionBondProgress,companionBondDamageMultiplier,companionWorkYield,awardCompanionBond};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  const member={bondXp:0};
+  assert.equal(helpers.companionBondLevel(member),1);
+  assert.equal(helpers.companionBondDamageMultiplier(member),1);
+  assert.equal(helpers.companionWorkYield(member,0.01),1);
+  assert.equal(helpers.awardCompanionBond(member,60).level,2);
+  assert.equal(helpers.companionBondProgress(member).needed,90);
+  assert.equal(helpers.awardCompanionBond(member,90).level,3);
+  assert.equal(helpers.companionBondDamageMultiplier(member),1.05);
+  assert.equal(helpers.companionWorkYield(member,0.05),2);
+  assert.equal(helpers.companionWorkYield(member,0.5),1);
+  assert.equal(helpers.awardCompanionBond(member,120).level,4);
+  assert.equal(helpers.awardCompanionBond(member,150).level,5);
+  assert.equal(helpers.companionBondDamageMultiplier(member),1.1);
+  assert.equal(helpers.companionWorkYield(member,0.2),2);
+  assert.equal(helpers.companionWorkYield(member,0.3),1);
+  assert.equal(helpers.awardCompanionBond(member,50).xp,420,'bond XP is capped at the final level');
+  assert.equal(helpers.awardCompanionBond(member,-20).gained,0);
+  assert.equal(helpers.normalizeCompanionBondXp(NaN),0);
+  assert.equal(helpers.normalizeCompanionBondXp(999),420);
+});
+
+test('legacy companion saves migrate overflow into bounded reserve storage without losing health', () => {
+  const jobsStart=gameScript.indexOf('var COMPANION_WORK_JOBS='),jobsEnd=gameScript.indexOf('\nfunction normalizeCompanionWorkJob',jobsStart);
+  const source='var COMPANION_BOND_XP_CAP=420;\n'+gameScript.slice(jobsStart,jobsEnd)+'\n'+['normalizeCompanionWorkJob','normalizeCompanionBondXp','normalizeCompanionHp','normalizePartyStorage'].map(extractGameFunction).join('\n');
+  const normalize=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return normalizePartyStorage;')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
+  const legacy=Array.from({length:14},(_,i)=>({sp:i%8}));
+  const normalized=normalize(legacy,[{sp:7,hp:35}],8);
+  assert.equal(normalized.active.length,12);
+  assert.equal(normalized.reserve.length,3);
+  assert.equal(normalized.active[0].hp,100,'legacy companions without health start fully recovered');
+  assert.equal(normalized.reserve[0].sp,4,'legacy overflow keeps its original collection order');
+  assert.equal(normalized.reserve[0].hp,100);
+  assert.equal(normalized.reserve[2].hp,35,'existing reserve health remains intact');
+});
+
+test('party UI supports storing, deploying, swapping, and healing active or reserve companions', () => {
+  for(const marker of [
+    'function makeActiveCompanion(record,index)',
+    'function storePartyCompanion(index)',
+    'function deployPartyCompanion(index)',
+    'function swapPartyCompanion(reserveIndex,activeIndex)',
+    'function healPartyCompanion(storage,index)',
+    'function releasePartyCompanion(storage,index)',
+    'data-party-action="release"',
+    'data-party-action="store"',
+    'data-party-action="deploy"',
+    'data-party-action="swap"',
+    'data-party-action="heal"',
+    'id="partySwapTarget"',
+    'reserveTeam.length>=RESERVE_PARTY_LIMIT',
+    'team.length>=ACTIVE_PARTY_LIMIT'
+  ]) assert.ok(gameScript.includes(marker),'missing party management behavior: '+marker);
+  assert.ok(gameScript.includes("var b=e.target.closest('[data-party-action]')"));
+  assert.ok(gameScript.includes("var item=countOf('strongsalve')>0?'strongsalve':(countOf('salve')>0?'salve':null)"));
+  assert.ok(gameScript.includes("restoreCompanionHealth(member,item==='strongsalve'?75:40)"));
+});
+
+test('full active parties capture into reserve while the entire collection stays capped at 32', () => {
+  assert.ok(gameScript.includes('if(totalCompanionCount()+shots.length>=TOTAL_PARTY_LIMIT)'));
+  assert.ok(gameScript.includes('if(team.length<ACTIVE_PARTY_LIMIT)team.push(sc)'));
+  assert.ok(gameScript.includes('reserveTeam.push({sp:sc.sp,hp:companionHealth(sc),bondXp:normalizeCompanionBondXp(sc.bondXp),workJob:normalizeCompanionWorkJob(sc.workJob)})'));
+  assert.ok(gameScript.includes('var savedParty=normalizePartyStorage(d.team,d.reserve,SPECIES.length)'));
+  assert.ok(gameScript.includes('version:6,mapVersion:2'),'party expansion must remain additive to the existing save version');
+});
+
+test('Defend and Attack companions can intercept Wraith strikes and downed companions cannot fight', () => {
+  assert.ok(gameScript.includes("var interceptRange=companionMode==='attack'?4.6:3.4"));
+  assert.ok(gameScript.includes('targetCompanion=candidateCompanion'));
+  assert.ok(gameScript.includes('s.attackCompanion=targetCompanion||null'));
+  assert.ok(gameScript.includes('damageCompanion(struckCompanion,companionHit)'));
+  assert.ok(gameScript.includes('if(companionHealth(t)<=0){t.speed=0;t.defending=false;'));
+  assert.ok(gameScript.includes('Heal them with a Healing Salve in the Party panel.'));
+  assert.ok(gameScript.includes('if(down)save();return dealt;'),'downed state is saved immediately while partial health uses autosave');
+});
+
+test('species companion models reuse cached geometry and materials across active and reserve swaps', () => {
+  assert.ok(gameScript.includes('var CREATURE_ART_CACHE=[],CREATURE_MODEL_CACHE=[];'));
+  assert.ok(gameScript.includes('var clone=cached.g.clone(true),legs=[],ears=[],eyes=[],head=null,tail=null,torso=null;'));
+  assert.ok(gameScript.includes('CREATURE_MODEL_CACHE[sp]={g:g};'));
+  assert.ok(gameScript.includes('return makeCreature(sp);'));
+  for(const name of ['creature-head','creature-tail','creature-torso','creature-leg-','creature-ear-','creature-eye-']) {
+    assert.ok(gameScript.includes(name),'cached model must retain animation part '+name);
+  }
+});
+
+test('releasing an active or reserve companion frees a collection slot and safely returns wildlife', () => {
+  assert.ok(gameScript.includes("if(!window.confirm('Release '+name+' back into the wild? This removes them from your collection.'))return;"));
+  assert.ok(gameScript.includes("var list=storage==='reserve'?reserveTeam:team,member=list[index]"));
+  assert.ok(gameScript.includes("if(storage!=='reserve'&&member.m&&member.m.g)scene.remove(member.m.g)"));
+  assert.ok(gameScript.includes('if(wild.length<48&&!caveMode)'));
+  assert.ok(gameScript.includes('var released=spawnWild(member.sp)'));
+  assert.ok(gameScript.includes('list.splice(index,1)'));
+  assert.ok(gameScript.includes('Your collection is full (32). Release a companion from the Party panel before capturing another.'));
+});
+
+test('companion work assignments use species specialties and preferred habitat affinity', () => {
+  const speciesStart=gameScript.indexOf('var SPECIES=['),speciesEnd=gameScript.indexOf('];',speciesStart)+2;
+  const jobsStart=gameScript.indexOf('var COMPANION_WORK_JOBS='),jobsEnd=gameScript.indexOf('\nfunction normalizeCompanionWorkJob',jobsStart);
+  assert.ok(speciesStart>=0&&speciesEnd>speciesStart&&jobsStart>=0&&jobsEnd>jobsStart);
+  const source='var COMPANION_BOND_XP_CAP=420;'+gameScript.slice(speciesStart,speciesEnd)+'\n'+gameScript.slice(jobsStart,jobsEnd)+'\n'+
+    ['normalizeCompanionBondXp','companionBondLevel','normalizeCompanionWorkJob','companionWorkProfile','companionWorkYield','companionWorkGuardMultiplier'].map(extractGameFunction).join('\n');
+  const helpers=new Function('clamp',source+';return {normalizeCompanionWorkJob,companionWorkProfile,companionWorkYield,companionWorkGuardMultiplier};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  const member={sp:0,bondXp:0};
+  assert.equal(helpers.normalizeCompanionWorkJob('invalid'),'native');
+  const native=helpers.companionWorkProfile(member,'meadow');
+  assert.equal(native.item,'wood','legacy native resource specialization is preserved');
+  assert.equal(native.label,'Woodland gatherer');
+  assert.equal(native.habitatMatch,true);
+  assert.equal(helpers.companionWorkProfile(member,'desert').habitatMatch,false);
+  member.workJob='forage';
+  const forage=helpers.companionWorkProfile(member,'forest');
+  assert.equal(forage.item,'berry');
+  assert.equal(forage.bonusItem,'fiber');
+  assert.equal(forage.habitatMatch,true);
+  member.workJob='quarry';
+  const quarry=helpers.companionWorkProfile(member,'desert');
+  assert.equal(quarry.item,'stone');
+  assert.equal(quarry.bonusItem,'copperOre');
+  member.workJob='guard';
+  assert.equal(helpers.companionWorkProfile(member,'forest').produces,false);
+  assert.equal(helpers.companionWorkGuardMultiplier(member,'forest'),1.15);
+  assert.equal(helpers.companionWorkGuardMultiplier(member,'desert'),1.08);
+  member.workJob='rest';
+  assert.equal(helpers.companionWorkProfile(member,'forest').produces,false);
+  assert.equal(helpers.companionWorkGuardMultiplier(member,'forest'),1);
+});
+
+test('bond and habitat bonuses stack within a bounded work-yield chance', () => {
+  const source='var COMPANION_BOND_XP_CAP=420;\n'+['normalizeCompanionBondXp','companionBondLevel','companionWorkYield'].map(extractGameFunction).join('\n');
+  const helpers=new Function('clamp',source+';return {companionWorkYield};')((v,a,b)=>Math.max(a,Math.min(b,v)));
+  assert.equal(helpers.companionWorkYield({bondXp:0},0.05,false),1);
+  assert.equal(helpers.companionWorkYield({bondXp:0},0.05,true),2);
+  assert.equal(helpers.companionWorkYield({bondXp:150},0.15,true),2);
+  assert.equal(helpers.companionWorkYield({bondXp:150},0.25,true),1);
+  assert.equal(helpers.companionWorkYield({bondXp:420},0.34,true),2);
+  assert.equal(helpers.companionWorkYield({bondXp:420},0.36,true),1);
+});
+
+test('work assignments migrate safely and persist across active and reserve storage', () => {
+  const jobsStart=gameScript.indexOf('var COMPANION_WORK_JOBS='),jobsEnd=gameScript.indexOf('\nfunction normalizeCompanionWorkJob',jobsStart);
+  const source='var COMPANION_BOND_XP_CAP=420;'+gameScript.slice(jobsStart,jobsEnd)+'\n'+
+    ['normalizeCompanionWorkJob','normalizeCompanionBondXp','normalizeCompanionHp','normalizePartyStorage'].map(extractGameFunction).join('\n');
+  const normalize=new Function('clamp','ACTIVE_PARTY_LIMIT','RESERVE_PARTY_LIMIT',source+';return normalizePartyStorage;')((v,a,b)=>Math.max(a,Math.min(b,v)),12,20);
+  const result=normalize([{sp:0},{sp:1,workJob:'quarry'}],[{sp:2,workJob:'rest'},{sp:3,workJob:'invalid'}],8);
+  assert.equal(result.active[0].workJob,'native');
+  assert.equal(result.active[1].workJob,'quarry');
+  assert.equal(result.reserve[0].workJob,'rest');
+  assert.equal(result.reserve[1].workJob,'native');
+  assert.ok(gameScript.includes('version:6,mapVersion:2'),'work assignments remain additive to save version 6');
+  assert.ok(gameScript.includes('workJob:normalizeCompanionWorkJob(record.workJob)'));
+  assert.ok(gameScript.includes('workJob:normalizeCompanionWorkJob(member.workJob)'));
+  assert.ok(gameScript.includes('workJob:normalizeCompanionWorkJob(t.workJob)'));
+});
+
+test('party UI and live companion updates apply assigned jobs and habitat effects', () => {
+  assert.ok(gameScript.includes('data-companion-work="1"'));
+  assert.ok(gameScript.includes("data-companion-storage=\"'+storage+'\""));
+  assert.ok(gameScript.includes("$('bagTeam').addEventListener('change'"));
+  assert.ok(gameScript.includes("e.target.closest('select[data-companion-work]')"));
+  assert.ok(gameScript.includes('COMPANION_WORK_JOB_ORDER.forEach'));
+  assert.ok(gameScript.includes('t.workProfileT=Math.max(0,(t.workProfileT||0)-dt)'));
+  assert.ok(gameScript.includes('if(!t.workProfile||t.workProfileT<=0)'));
+  assert.ok(gameScript.includes('var workProfile=t.workProfile,guardAssignment=workProfile.guard'));
+  assert.ok(gameScript.includes('workProfile.bonusItem'));
+  assert.ok(gameScript.includes('(workProfile.guard?(workProfile.habitatMatch?1.15:1.08):1)'));
+  assert.ok(gameScript.includes('(guardAssignment?1.2:1)'));
+  assert.ok(gameScript.includes('member.workJob=job;member.work=10;member.workProfile=null;member.workProfileT=0;'));
+});
+,'say','playSfx',gameScript.slice(start,end)+';return function(amount){return awardXP(amount,"test");};')(
+    player,(value,min,max)=>Math.max(min,Math.min(max,value)),()=>null,()=>{},()=>{}
+  );
+  run(1000000);
+  assert.equal(player.level,100);
+  assert.equal(player.xp,0);
+  assert.equal(player.statPoints,1);
+  run(100);
+  assert.equal(player.level,100);
+  assert.equal(player.xp,0);
 });
 
 test('save validation rejects malformed or out-of-bounds world records before loading', () => {
