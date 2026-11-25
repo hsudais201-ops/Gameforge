@@ -698,7 +698,7 @@ test('loaded and backed-up saves enforce the global 120-piece structure limit', 
   const start = gameScript.indexOf('function validStructureCounts(');
   const end = gameScript.indexOf('function save()', start);
   assert.ok(start >= 0 && end > start, 'shared structure validator must exist');
-  const validator = new Function('SPECIES','HALF',gameScript.slice(start, end) + ';return validStructureCounts;')([{id:0}],300);
+  const validator = new Function('SPECIES','HALF','NSLOTS','RESERVE_PARTY_LIMIT','TOTAL_PARTY_LIMIT',gameScript.slice(start, end) + ';return validStructureCounts;')([{id:0}],300,36,20,32);
   assert.equal(validator({walls:Array(120).fill({x:0,z:0,t:'wall'}),fires:[],beds:[],chests:[]}), true);
   assert.equal(validator({walls:Array(100).fill({x:0,z:0,t:'wall'}),fires:Array(21).fill({x:0,z:0,t:'fire'})}), false);
   assert.equal(validator({walls:Array(121).fill({x:0,z:0,t:'wall'})}), false);
@@ -1037,6 +1037,63 @@ test('world autosaves every ten seconds and reports save status', () => {
   assert.ok(gameScript.includes("'Autosaved just now · every 10 seconds'"));
   assert.ok(gameScript.includes("autosaveElapsed=0;var status=$('saveStatus')"), 'manual save should restart the autosave countdown');
   assert.ok(html.includes('Autosave is active · every 10 seconds'));
+});
+
+test('world catalog normalization filters malformed and duplicate records and caps growth safely', () => {
+  const start=gameScript.indexOf('function seedFromString(');
+  const end=gameScript.indexOf('var rawWorldCatalog=',start);
+  assert.ok(start>=0&&end>start,'bounded world catalog helpers must exist');
+  const normalize=new Function(gameScript.slice(start,end)+';return normalizeWorldCatalog;')();
+  const raw=JSON.stringify([
+    {id:'world-1',name:'  First World  ',created:10,seed:'424242'},
+    {id:'world-1',name:'Duplicate',created:11,seed:2},
+    null,
+    {id:'unsafe id',name:'Unsafe',created:12,seed:3},
+    {id:'world-2',name:'',created:-1,seed:0}
+  ]);
+  const result=normalize(raw);
+  assert.equal(result.valid,true);
+  assert.equal(result.overflow,false);
+  assert.equal(result.worlds.length,2);
+  assert.deepEqual(result.worlds[0],{id:'world-1',name:'First World',created:10,seed:424242});
+  assert.equal(result.worlds[1].name,'Untitled World 2');
+  assert.ok(result.worlds[1].seed>0);
+  assert.equal(normalize('{broken').valid,false);
+  assert.equal(normalize('x'.repeat(65537)).valid,false);
+  const many=Array.from({length:65},(_,i)=>({id:'world-'+i,name:'World '+i,created:i,seed:i+1}));
+  const overflow=normalize(JSON.stringify(many));
+  assert.equal(overflow.overflow,true);
+  assert.equal(overflow.worlds.length,64);
+  assert.ok(gameScript.includes('if(worldCatalogReadOnly||worldList.length>=MAX_WORLD_RECORDS)'));
+});
+
+test('save integrity validation rejects unsafe values and preserves supported legacy envelopes', () => {
+  const start=gameScript.indexOf('function validStructureCounts(parsed)');
+  const end=gameScript.indexOf('function awardXP',start);
+  assert.ok(start>=0&&end>start,'save integrity validators must be present');
+  const helpers=new Function('SPECIES','HALF','NSLOTS','RESERVE_PARTY_LIMIT','TOTAL_PARTY_LIMIT',gameScript.slice(start,end)+';return {validStructureCounts,inspectSave,validSave};')(
+    Array.from({length:8},(_,id)=>({id})),300,36,20,32
+  );
+  const validate=helpers.validStructureCounts;
+  assert.equal(validate({version:6,mapVersion:2,worldSeed:424242,P:{x:0,z:0,hp:150,food:60},slots:[{id:'wood',n:3}],team:[{sp:0,hp:100}],progress:{level:2,stats:{vitality:1}}}),true);
+  assert.equal(validate({P:{x:'0',z:0}}),false,'numeric strings must not be accepted as coordinates');
+  assert.equal(validate({P:{x:null,z:0}}),false,'null must not be treated as zero');
+  assert.equal(validate({version:7,P:{x:0,z:0}}),false,'future save versions must not be loaded as version 6');
+  assert.equal(validate({version:'6',P:{x:0,z:0}}),false,'version must be a numeric integer');
+  assert.equal(validate({worldSeed:0}),false,'world seed zero is not a valid persisted seed');
+  assert.equal(validate({P:{x:0,z:0,hp:201}}),false,'player health must remain within the supported maximum');
+  assert.equal(validate({progress:{level:101}}),false,'player levels must remain bounded');
+  assert.equal(validate({progress:{stats:{power:11}}}),false,'player stat levels must remain bounded');
+  assert.equal(validate({exploredCells:Array(3601).fill(0)}),false,'exploration cells must remain bounded');
+  assert.equal(validate({team:Array(13).fill({sp:0})}),false,'active party storage must remain bounded');
+  assert.equal(validate({slots:[{id:'wood',n:0}]}),false,'inventory stacks must be positive integers');
+  assert.equal(validate({chests:[{x:0,z:0,slots:[{id:'wood',n:1.5}]}]}),false,'chest stacks must be whole numbers');
+  const validRaw=JSON.stringify({version:6,mapVersion:2,worldSeed:424242,P:{x:0,z:0},team:[],reserve:[],walls:[],fires:[],beds:[],chests:[],slots:[]});
+  assert.equal(helpers.inspectSave(validRaw).data.version,6);
+  assert.equal(helpers.inspectSave('not-json').data,null);
+  assert.equal(helpers.inspectSave('x'.repeat(1048577)).oversized,true);
+  assert.equal(helpers.inspectSave(JSON.stringify({version:7,P:{x:0,z:0}})).unsupported,true);
+  assert.equal(helpers.validSave(JSON.stringify({version:7,P:{x:0,z:0}})),null);
 });
 
 test('save validation rejects malformed or out-of-bounds world records before loading', () => {

@@ -158,6 +158,14 @@ test('browser gameplay smoke: create, save, return, reload, and resume a world',
     await page.locator('#mainMenu').waitFor({ state: 'visible' });
     await assertHealthy('return to main menu');
 
+    await page.evaluate(id => {
+      const key = 'mfwilds3d_world_' + id;
+      const valid = localStorage.getItem(key);
+      if (!valid) throw new Error('expected a valid world save before corruption recovery test');
+      localStorage.setItem(key + '_backup', valid);
+      localStorage.setItem(key, '{"version":6,"P":{"x":"corrupt","z":0}}');
+    }, worldId);
+
     await page.reload({ waitUntil: 'commit', timeout: 60_000 });
     await page.locator('#mainMenu').waitFor({ state: 'visible', timeout: 60_000 });
     await page.waitForFunction(id =>

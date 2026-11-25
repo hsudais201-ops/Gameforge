@@ -55,6 +55,7 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Add deterministic world seeds and reproducible test sessions.
 - [x] Establish a repeatable headless Chromium gameplay smoke-test route: menu → create seeded world → play → save → return → reload → resume.
 - [x] Add a single documented development command/checklist for syntax, source regressions, and browser gameplay checks.
+- [x] Harden the per-world save envelope and world catalog with strict numeric bounds, bounded serialized sizes, future-version write protection, and validated backup recovery.
 - [ ] Ensure every major runtime failure produces a useful, non-crashing diagnostic message.
 - [ ] Audit all persistent data for versioning, bounds, invalid values, and safe defaults.
 - [ ] Add regression tests for every bug fixed in future development.
