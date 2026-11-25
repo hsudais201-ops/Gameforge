@@ -704,7 +704,8 @@ test('loaded and backed-up saves enforce the global 120-piece structure limit', 
   assert.equal(validator({walls:Array(121).fill({x:0,z:0,t:'wall'})}), false);
   assert.equal(validator({walls:'corrupt'}), false);
   assert.ok(gameScript.includes('validStructureCounts(parsed)'));
-  assert.match(gameScript, /validSave\(previous\)/);\n  assert.ok(gameScript.includes('function inspectSave(raw)'));
+  assert.match(gameScript, /validSave\(previous\)/);
+  assert.ok(gameScript.includes('function inspectSave(raw)'));
 });
 
 
