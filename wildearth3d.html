@@ -2931,7 +2931,8 @@ function validStructureCounts(parsed){
   for(var rk=0;rk<rosterKeys.length;rk++){
     var roster=parsed[rosterKeys[rk]];
     if(roster===undefined)continue;
-    if(!Array.isArray(roster)||roster.length>(rosterKeys[rk]==='team'?TOTAL_PARTY_LIMIT-RESERVE_PARTY_LIMIT:RESERVE_PARTY_LIMIT))return false;
+    if(!Array.isArray(roster)||roster.length>32)return false;
+    if(rosterKeys[rk]==='reserve'&&roster.length>RESERVE_PARTY_LIMIT)return false;
     rosterTotal+=roster.length;if(rosterTotal>TOTAL_PARTY_LIMIT)return false;
     for(var ri=0;ri<roster.length;ri++){
       var member=roster[ri];
@@ -2943,7 +2944,7 @@ function validStructureCounts(parsed){
   }
   if(parsed.progress!==undefined){
     var progress=parsed.progress;if(!plainObject(progress))return false;
-    if(progress.level!==undefined&&!numberIn(progress.level,1,100,true))return false;
+    if(progress.level!==undefined&&!numberIn(progress.level,0,1000000,true))return false;
     if(progress.xp!==undefined&&!numberIn(progress.xp,0,1000000,true))return false;
     if(progress.statPoints!==undefined&&!numberIn(progress.statPoints,0,1000,true))return false;
     if(progress.stats!==undefined){

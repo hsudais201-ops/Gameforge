@@ -1083,10 +1083,12 @@ test('save integrity validation rejects unsafe values and preserves supported le
   assert.equal(validate({version:'6',P:{x:0,z:0}}),false,'version must be a numeric integer');
   assert.equal(validate({worldSeed:0}),false,'world seed zero is not a valid persisted seed');
   assert.equal(validate({P:{x:0,z:0,hp:201}}),false,'player health must remain within the supported maximum');
-  assert.equal(validate({progress:{level:101}}),false,'player levels must remain bounded');
+  assert.equal(validate({progress:{level:101}}),true,'older saves above the current cap are accepted and clamped by load');
+  assert.equal(validate({progress:{level:1000001}}),false,'extreme player levels must remain bounded');
   assert.equal(validate({progress:{stats:{power:11}}}),false,'player stat levels must remain bounded');
   assert.equal(validate({exploredCells:Array(3601).fill(0)}),false,'exploration cells must remain bounded');
-  assert.equal(validate({team:Array(13).fill({sp:0})}),false,'active party storage must remain bounded');
+  assert.equal(validate({team:Array(13).fill({sp:0})}),true,'legacy active rosters are accepted for migration into reserve storage');
+  assert.equal(validate({team:Array(33).fill({sp:0})}),false,'legacy roster migration must still reject collections above 32');
   assert.equal(validate({slots:[{id:'wood',n:0}]}),false,'inventory stacks must be positive integers');
   assert.equal(validate({chests:[{x:0,z:0,slots:[{id:'wood',n:1.5}]}]}),false,'chest stacks must be whole numbers');
   const validRaw=JSON.stringify({version:6,mapVersion:2,worldSeed:424242,P:{x:0,z:0},team:[],reserve:[],walls:[],fires:[],beds:[],chests:[],slots:[]});
