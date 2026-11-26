@@ -132,7 +132,7 @@ test('world render distance slider persists and controls streamed world radius',
   for (const marker of ['areaRadius=85', 'savedGraphics.areaRadius', 'function applyAreaRadius(radius)', "addEventListener('input',function(){applyAreaRadius(+this.value)})", 'var radius=areaRadius', 'Active render distance:']) {
     assert.ok(gameScript.includes(marker), 'missing render-distance behavior: '+marker);
   }
-  assert.ok(gameScript.includes('areaRadii[clamp(savedGraphics.area|0,0,2)]'), 'legacy world-area settings must migrate');
+  assert.ok(gameScript.includes('areaRadii[savedGraphics.area]'), 'legacy world-area settings must migrate through the validated profile index');
   assert.ok(gameScript.includes('areaRadius:areaRadius'), 'render distance must persist');
 });
 
@@ -442,7 +442,7 @@ test('sound captions are accessible, configurable, persisted, and independent of
   assert.match(html, /id="subtitleLine" role="status" aria-live="polite"/);
   assert.match(html, /id="subtitlesToggle"/);
   assert.ok(gameScript.includes("subtitles:true"));
-  assert.ok(gameScript.includes("savedAudio.subtitles==='boolean'"));
+  assert.ok(gameScript.includes("typeof savedAudio.subtitles==='boolean'"));
   assert.ok(gameScript.includes("function showSoundCaption(kind)"));
   assert.ok(gameScript.includes("showSoundCaption(kind);"));
   assert.ok(gameScript.includes("saveAudioPrefs();"));
@@ -480,16 +480,18 @@ test('swimming adjusts third-person camera framing and enables underwater visual
 
 test('three outfit save slots persist and restore validated appearance selections', () => {
   for (const id of ['outfitSlot', 'saveOutfitSlot', 'loadOutfitSlot']) assert.match(html, new RegExp('id="' + id + '"'));
-  for (const marker of ['mfwilds3d_outfit_slots_v1', 'function readCurrentOutfit()', 'function validSelectValue(', 'all[$(\'outfitSlot\').value]=readCurrentOutfit()', "$(id).dispatchEvent(new Event('change'))", "applyCharacterStyle(look.character)"]) {
+  for (const marker of ['mfwilds3d_outfit_slots_v1', 'function readCurrentOutfit()', 'function validSelectValue(', 'function normalizeOutfitRecord(look)', 'function normalizeOutfitSlots(value)', 'function readOutfitSlots()', 'writePreferenceObject(OUTFIT_SLOTS_KEY,all,4096)', "$(id).dispatchEvent(new Event('change'))", "applyCharacterStyle(look.character)"]) {
     assert.ok(gameScript.includes(marker), 'missing outfit-slot marker: ' + marker);
   }
 });
 
-test('character appearance is restored from global profile storage when a world loads', () => {
+test('character appearance is restored from validated global profile storage when a world loads', () => {
   assert.ok(gameScript.includes('function restoreCharacterAppearance()'));
   assert.match(gameScript, /restoreCharacterAppearance\(\);/);
-  assert.ok(gameScript.includes("localStorage.getItem('mfwilds3d_skin')"));
-  assert.ok(gameScript.includes("localStorage.getItem('mfwilds3d_outfit')"));
+  assert.ok(gameScript.includes("readAppearanceChoice('mfwilds3d_skin','skinTone','0xc98f68')"));
+  assert.ok(gameScript.includes("readAppearanceChoice('mfwilds3d_outfit','outfitColor','0x527b70')"));
+  assert.ok(gameScript.includes("function readAppearanceChoice(key,id,fallback)"));
+  assert.ok(gameScript.includes("readPreferenceChoice(key,24,function(value){return validSelectValue(id,value);},fallback)"));
 });
 
 
@@ -2060,4 +2062,84 @@ test('party UI and live companion updates apply assigned jobs and habitat effect
   assert.ok(gameScript.includes('(workProfile.guard?(workProfile.habitatMatch?1.15:1.08):1)'));
   assert.ok(gameScript.includes('(guardAssignment?1.2:1)'));
   assert.ok(gameScript.includes('member.workJob=job;member.work=10;member.workProfile=null;member.workProfileT=0;'));
+});
+
+
+test('global preference objects are bounded, backed up, and recover from malformed JSON', () => {
+  const names=['parsePreferenceObject','readPreferenceObject','writePreferenceObject','readPreferenceString','writePreferenceString','readPreferenceChoice'];
+  const source=names.map(extractGameFunction).join('\n');
+  const values=new Map();
+  const storage={
+    getItem(key){return values.has(key)?values.get(key):null;},
+    setItem(key,value){values.set(key,String(value));}
+  };
+  const helpers=new Function('localStorage',source+';return {parsePreferenceObject,readPreferenceObject,writePreferenceObject,readPreferenceString,writePreferenceString,readPreferenceChoice};')(storage);
+  values.set('graphics','{broken');
+  values.set('graphics_backup','{"quality":1,"areaRadius":85}');
+  assert.deepEqual(helpers.readPreferenceObject('graphics',256),{quality:1,areaRadius:85});
+  assert.equal(values.get('graphics'),'{"quality":1,"areaRadius":85}','valid backup should repair malformed primary data');
+  assert.equal(helpers.parsePreferenceObject('x'.repeat(257),256),null,'oversized JSON must be rejected before parsing');
+  assert.equal(helpers.parsePreferenceObject('[]',256),null,'arrays are not accepted as preference records');
+  assert.equal(helpers.writePreferenceObject('graphics',{quality:2},256),true);
+  assert.equal(values.get('graphics_backup'),'{"quality":1,"areaRadius":85}','last valid preference snapshot should be retained');
+  assert.equal(helpers.writePreferenceObject('graphics',{note:'x'.repeat(300)},64),false,'oversized writes must be refused');
+  assert.equal(values.get('graphics'),'{"quality":2}','failed writes must not replace the previous preference');
+});
+
+test('preference choices recover only allowlisted strings and keep valid backups intact', () => {
+  const names=['readPreferenceString','writePreferenceString','readPreferenceChoice'];
+  const source=names.map(extractGameFunction).join('\n');
+  const values=new Map([['language','bad'],['language_backup','ur']]);
+  const storage={getItem(key){return values.has(key)?values.get(key):null;},setItem(key,value){values.set(key,String(value));}};
+  const helpers=new Function('localStorage',source+';return {readPreferenceChoice,writePreferenceString};')(storage);
+  const language=helpers.readPreferenceChoice('language',2,value=>value==='en'||value==='ur','en');
+  assert.equal(language,'ur');
+  assert.equal(values.get('language'),'ur','the valid backup should repair the primary key');
+  assert.equal(values.get('language_backup'),'ur','repair must not overwrite the valid backup with corrupt data');
+  assert.equal(helpers.readPreferenceChoice('difficulty',16,value=>['easy','normal','hard'].includes(value),'normal'),'normal');
+  assert.equal(values.get('difficulty'),'normal','safe defaults should replace invalid saved choices');
+  assert.equal(helpers.writePreferenceString('language','en',2),true);
+  assert.equal(values.get('language_backup'),'ur');
+});
+
+test('saved movement bindings are normalized to four unique supported keys', () => {
+  const normalize=new Function(extractGameFunction('normalizeKeyBindings')+';return normalizeKeyBindings;')();
+  const result=normalize({forward:'KeyR',backward:'KeyR',left:'NotAKey',right:'ArrowRight',extra:'KeyQ'});
+  assert.deepEqual(result,{forward:'KeyR',right:'ArrowRight',backward:'KeyS',left:'KeyA'});
+  assert.equal(new Set(Object.values(result)).size,4);
+  assert.deepEqual(normalize([]),{forward:'KeyW',backward:'KeyS',left:'KeyA',right:'KeyD'});
+});
+
+test('outfit slot normalization accepts only three complete allowlisted appearance records', () => {
+  const options={
+    skinTone:['0xc98f68','0x8f5d43'],outfitColor:['0x527b70','0x8a633e'],
+    hairStyle:['0','1','2','3','4'],hairColor:['0x211c19','0x493226'],
+    eyeColor:['0x6b8f91','0x527b4b'],facialHair:['0','1','2'],
+    legsColor:['0x314a40','0x69503a'],accessoryColor:['0x69452d','0x35483f']
+  };
+  const $=id=>({options:(options[id]||[]).map(value=>({value}))});
+  const source=['validSelectValue','normalizeOutfitRecord','normalizeOutfitSlots'].map(extractGameFunction).join('\n');
+  const helpers=new Function('$',source+';return {normalizeOutfitRecord,normalizeOutfitSlots};')($);
+  const valid={character:2,skin:'0xc98f68',outfit:'0x527b70',hair:'1',hairColor:'0x211c19',eyes:'0x6b8f91',facialHair:'0',legs:'0x314a40',accessory:'0x69452d'};
+  const slots=helpers.normalizeOutfitSlots({'0':valid,'1':{...valid,eyes:'not-a-color'},'3':valid});
+  assert.deepEqual(Object.keys(slots),['0']);
+  assert.deepEqual(slots['0'],valid);
+  assert.equal(helpers.normalizeOutfitRecord({...valid,character:4}),null);
+  assert.deepEqual(helpers.normalizeOutfitSlots([]),{});
+});
+
+
+test('global settings use strict bounded values instead of coercing malformed stored preferences', () => {
+  for(const marker of [
+    "typeof savedGraphics.quality==='number'",
+    "savedGraphics.quality<=2",
+    "savedGraphics.areaRadius<=160",
+    "typeof savedAudio.music==='number'",
+    "typeof cp.deadzone==='number'",
+    "typeof cp.invertY==='boolean'",
+    "typeof ap.contrast==='boolean'",
+    "readPreferenceChoice(GAME_LANGUAGE_KEY,2",
+    "readPreferenceChoice(DIFFICULTY_KEY,16",
+    "readPreferenceChoice(NOTIFY_KEY,4,validNotificationDuration"
+  ])assert.ok(gameScript.includes(marker),'missing strict preference validation: '+marker);
 });

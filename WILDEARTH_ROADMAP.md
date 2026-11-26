@@ -58,6 +58,7 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Harden the per-world save envelope and world catalog with strict numeric bounds, bounded serialized sizes, future-version write protection, and validated backup recovery.
 - [ ] Ensure every major runtime failure produces a useful, non-crashing diagnostic message.
 - [ ] Audit all persistent data for versioning, bounds, invalid values, and safe defaults.
+- [x] Validate and back up global graphics, audio, control, accessibility, language, difficulty, notification, keybinding, preview, and appearance preferences; bound outfit slots and reject invalid appearance selections.
 - [ ] Add regression tests for every bug fixed in future development.
 
 **Exit gate:** The game starts reliably, a world can be created and resumed, saves survive reload, and CI passes.
@@ -267,8 +268,6 @@ For every development session:
 ## Scope protection
 
 Do not delete working gameplay to simplify the project. Do not replace real systems with placeholders to make checklist items appear complete. Do not change the screen resolution. Do not copy another game's protected models, textures, map, UI, animation, characters, or audio. Preserve WILDEARTH's original identity and keep the game playable throughout development.
-
-
 
 ---
 

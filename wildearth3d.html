@@ -833,6 +833,76 @@ sun.shadow.camera.near=5;sun.shadow.camera.far=130;
 sun.shadow.bias=-0.00035;sun.shadow.normalBias=0.045;
 scene.add(sun);scene.add(sun.target);
 
+/* ---------- bounded global preference storage ---------- */
+function parsePreferenceObject(raw,maxChars){
+  if(typeof raw!=='string'||!raw.length||raw.length>maxChars)return null;
+  try{var parsed=JSON.parse(raw);return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:null;}catch(e){return null;}
+}
+function readPreferenceObject(key,maxChars){
+  var raw=null,parsed=null;
+  try{raw=localStorage.getItem(key);}catch(e){}
+  parsed=parsePreferenceObject(raw,maxChars);
+  if(parsed)return parsed;
+  try{raw=localStorage.getItem(key+'_backup');}catch(e){raw=null;}
+  parsed=parsePreferenceObject(raw,maxChars);
+  if(parsed){try{localStorage.setItem(key,JSON.stringify(parsed));}catch(e){}return parsed;}
+  return {};
+}
+function writePreferenceObject(key,value,maxChars){
+  try{
+    if(!value||typeof value!=='object'||Array.isArray(value))return false;
+    var raw=JSON.stringify(value);
+    if(typeof raw!=='string'||raw.length>maxChars)return false;
+    var previous=localStorage.getItem(key);
+    if(previous!==raw&&parsePreferenceObject(previous,maxChars))localStorage.setItem(key+'_backup',previous);
+    localStorage.setItem(key,raw);return true;
+  }catch(e){return false;}
+}
+function readPreferenceString(key,maxChars){
+  try{var value=localStorage.getItem(key);return typeof value==='string'&&value.length>0&&value.length<=maxChars?value:'';}catch(e){return '';}
+}
+function writePreferenceString(key,value,maxChars){
+  try{
+    var raw=String(value);
+    if(raw.length>maxChars)return false;
+    var previous=localStorage.getItem(key);
+    if(previous!==raw&&typeof previous==='string'&&previous.length>0&&previous.length<=maxChars)localStorage.setItem(key+'_backup',previous);
+    localStorage.setItem(key,raw);return true;
+  }catch(e){return false;}
+}
+function readPreferenceChoice(key,maxChars,validator,fallback){
+  function allowed(value){try{return !!validator(value);}catch(e){return false;}}
+  var value=readPreferenceString(key,maxChars);
+  if(allowed(value))return value;
+  var backup=readPreferenceString(key+'_backup',maxChars);
+  if(allowed(backup)){try{localStorage.setItem(key,backup);}catch(e){}return backup;}
+  if(allowed(fallback)){try{localStorage.setItem(key,String(fallback));}catch(e){}}
+  return fallback;
+}
+function validNotificationDuration(value){
+  if(typeof value!=='string'||value.length>4)return false;
+  var number=Number(value);
+  return isFinite(number)&&number>=1&&number<=8&&Math.round(number*2)===number*2;
+}
+function normalizeKeyBindings(saved){
+  var keys=['forward','backward','left','right'];
+  var defaults={forward:'KeyW',backward:'KeyS',left:'KeyA',right:'KeyD'};
+  var fallbackCodes=['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
+  var result={},used=Object.create(null),valid=/^(Key[A-Z]|Arrow(Up|Down|Left|Right))$/;
+  keys.forEach(function(key){
+    var code=saved&&saved[key];
+    if(typeof code==='string'&&valid.test(code)&&!used[code]){result[key]=code;used[code]=true;}
+  });
+  keys.forEach(function(key){
+    if(result[key])return;
+    var preferred=defaults[key];
+    if(!used[preferred]){result[key]=preferred;used[preferred]=true;return;}
+    for(var i=0;i<fallbackCodes.length;i++)if(!used[fallbackCodes[i]]){result[key]=fallbackCodes[i];used[fallbackCodes[i]]=true;return;}
+  });
+  return result;
+}
+/* ------------------------------------------------------ */
+
 /* ---------- manual graphics settings (resolution stays fixed) ---------- */
 var renderProfiles=[
   {name:'Low',shadows:true,detailShadows:false,fogFar:195,particleScale:0.4},
@@ -840,8 +910,12 @@ var renderProfiles=[
   {name:'High',shadows:true,detailShadows:true,fogFar:280,particleScale:1}
 ],detailShadowMeshes=[];
 var renderLevel=isLowEnd?0:1,areaLevel=1,areaRadii=[55,85,125],areaRadius=85,SETTINGS_KEY='mfwilds3d_settings_v1';
-try{var savedGraphics=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');if(savedGraphics.quality!==undefined)renderLevel=clamp(savedGraphics.quality|0,0,2);if(savedGraphics.areaRadius!==undefined)areaRadius=clamp(Number(savedGraphics.areaRadius)||85,40,160);else if(savedGraphics.area!==undefined)areaRadius=areaRadii[clamp(savedGraphics.area|0,0,2)];areaLevel=areaRadius<70?0:areaRadius<110?1:2;}catch(e){}
-function saveGraphicsSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({quality:renderLevel,area:areaLevel,areaRadius:areaRadius}));}catch(e){}}
+var savedGraphics=readPreferenceObject(SETTINGS_KEY,256);
+if(typeof savedGraphics.quality==='number'&&isFinite(savedGraphics.quality)&&Math.floor(savedGraphics.quality)===savedGraphics.quality&&savedGraphics.quality>=0&&savedGraphics.quality<=2)renderLevel=savedGraphics.quality;
+if(typeof savedGraphics.areaRadius==='number'&&isFinite(savedGraphics.areaRadius)&&savedGraphics.areaRadius>=40&&savedGraphics.areaRadius<=160)areaRadius=Math.round(savedGraphics.areaRadius/5)*5;
+else if(typeof savedGraphics.area==='number'&&isFinite(savedGraphics.area)&&Math.floor(savedGraphics.area)===savedGraphics.area&&savedGraphics.area>=0&&savedGraphics.area<=2)areaRadius=areaRadii[savedGraphics.area];
+areaLevel=areaRadius<70?0:areaRadius<110?1:2;
+function saveGraphicsSettings(){writePreferenceObject(SETTINGS_KEY,{quality:renderLevel,area:areaLevel,areaRadius:areaRadius},256);}
 function applyRenderProfile(level){
   renderLevel=clamp(level|0,0,2);
   var profile=renderProfiles[renderLevel];
@@ -870,7 +944,11 @@ function applyAreaRadius(radius){
   saveGraphicsSettings();
 }
 var AUDIO_KEY='mfwilds3d_audio_v1',audioPrefs={music:0.08,effects:0.35,subtitles:true,captionLanguage:'en'},audioCtx=null,musicBus=null,effectsBus=null;
-try{var savedAudio=JSON.parse(localStorage.getItem(AUDIO_KEY)||'{}');if(isFinite(savedAudio.music))audioPrefs.music=clamp(savedAudio.music,0,0.3);if(isFinite(savedAudio.effects))audioPrefs.effects=clamp(savedAudio.effects,0,0.8);if(typeof savedAudio.subtitles==='boolean')audioPrefs.subtitles=savedAudio.subtitles;if(savedAudio.captionLanguage==='ur')audioPrefs.captionLanguage='ur';}catch(e){}
+var savedAudio=readPreferenceObject(AUDIO_KEY,256);
+if(typeof savedAudio.music==='number'&&isFinite(savedAudio.music))audioPrefs.music=clamp(savedAudio.music,0,0.3);
+if(typeof savedAudio.effects==='number'&&isFinite(savedAudio.effects))audioPrefs.effects=clamp(savedAudio.effects,0,0.8);
+if(typeof savedAudio.subtitles==='boolean')audioPrefs.subtitles=savedAudio.subtitles;
+if(savedAudio.captionLanguage==='ur')audioPrefs.captionLanguage='ur';
 $('settingsBtn').addEventListener('click',function(){$('settingsPanel').hidden=false});
 $('pauseToggle').addEventListener('click',function(){togglePause()});
 $('pauseResume').addEventListener('click',function(){togglePause(false)});
@@ -891,15 +969,12 @@ $('renderDistanceSlider').addEventListener('change',function(){say('World render
 applyAreaRadius(areaRadius);
 var ACCESS_KEY='mfwilds3d_accessibility_v1',accessPrefs={size:'normal',contrast:false};
 var CONTROL_KEY='mfwilds3d_controls_v1',controlPrefs={deadzone:0.10,sensitivity:1,invertY:false};
-var keyBindings={forward:'KeyW',backward:'KeyS',left:'KeyA',right:'KeyD'},waitingBinding=null;
-var KEY_BINDINGS_KEY='mfwilds3d_keybindings_v1';
-try{var kb=JSON.parse(localStorage.getItem(KEY_BINDINGS_KEY)||'{}');['forward','backward','left','right'].forEach(function(k){if(typeof kb[k]==='string'&&/^(Key[A-Z]|Arrow(Up|Down|Left|Right))$/.test(kb[k]))keyBindings[k]=kb[k];});}catch(e){}
+var KEY_BINDINGS_KEY='mfwilds3d_keybindings_v1',keyBindings=normalizeKeyBindings(readPreferenceObject(KEY_BINDINGS_KEY,256)),waitingBinding=null;
 function keyLabel(code){return code.indexOf('Key')===0?code.slice(3):code.replace('Arrow','');}
-function saveKeyBindings(){try{localStorage.setItem(KEY_BINDINGS_KEY,JSON.stringify(keyBindings))}catch(e){}}
+function saveKeyBindings(){writePreferenceObject(KEY_BINDINGS_KEY,normalizeKeyBindings(keyBindings),256);}
 function renderKeyBindings(){['forward','backward','left','right'].forEach(function(k){$('bind'+k.charAt(0).toUpperCase()+k.slice(1)).textContent=waitingBinding===k?'Press key…':keyLabel(keyBindings[k]);});}
 ['forward','backward','left','right'].forEach(function(k){$('bind'+k.charAt(0).toUpperCase()+k.slice(1)).addEventListener('click',function(){waitingBinding=k;renderKeyBindings();});});
-var GAME_LANGUAGE_KEY='mfwilds3d_language_v1',gameLanguage='en';
-try{gameLanguage=localStorage.getItem(GAME_LANGUAGE_KEY)==='ur'?'ur':'en'}catch(e){}
+var GAME_LANGUAGE_KEY='mfwilds3d_language_v1',gameLanguage=readPreferenceChoice(GAME_LANGUAGE_KEY,2,function(value){return value==='en'||value==='ur';},'en');
 var GAME_TEXT={
   en:{play:'Play Selected',create:'Create New World',settings:'Settings',quests:'QUEST JOURNAL',map:'MAP',save:'Save World',mainMenu:'Main Menu',resume:'Resume Game',day:'Day',night:'Night',dusk:'Dusk',dawn:'Dawn',baseComfort:'Base comfort',protection:'protection'},
   ur:{play:'منتخب دنیا کھیلیں',create:'نئی دنیا بنائیں',settings:'ترتیبات',quests:'مشن ڈائری',map:'نقشہ',save:'دنیا محفوظ کریں',mainMenu:'مرکزی مینو',resume:'کھیل جاری رکھیں',day:'دن',night:'رات',dusk:'شام',dawn:'صبح',baseComfort:'بیس کا آرام',protection:'حفاظت'}
@@ -910,23 +985,26 @@ function applyGameLanguage(){
   Object.keys(labels).forEach(function(id){var el=$(id);if(el)el.textContent=gameText(labels[id]);});
   $('gameLanguage').value=gameLanguage;
 }
-var DIFFICULTY_KEY='mfwilds3d_difficulty_v1',survivalDifficulty='normal';
-var NOTIFY_KEY='mfwilds3d_notify_v1',notificationSeconds=3.5;
-try{var ns=+localStorage.getItem(NOTIFY_KEY);if(isFinite(ns)&&ns>=1&&ns<=8)notificationSeconds=ns}catch(e){}
-try{var dp=localStorage.getItem(DIFFICULTY_KEY);if(dp==='easy'||dp==='hard')survivalDifficulty=dp}catch(e){}
+var DIFFICULTY_KEY='mfwilds3d_difficulty_v1',survivalDifficulty=readPreferenceChoice(DIFFICULTY_KEY,16,function(value){return value==='easy'||value==='normal'||value==='hard';},'normal');
+var NOTIFY_KEY='mfwilds3d_notify_v1',notificationSeconds=Number(readPreferenceChoice(NOTIFY_KEY,4,validNotificationDuration,'3.5'));
 function difficultyScale(){return survivalDifficulty==='easy'?0.72:(survivalDifficulty==='hard'?1.35:1)}
 function hungerScale(){return survivalDifficulty==='easy'?0.8:(survivalDifficulty==='hard'?1.25:1)}
-try{var cp=JSON.parse(localStorage.getItem(CONTROL_KEY)||'{}');if(isFinite(cp.deadzone))controlPrefs.deadzone=clamp(cp.deadzone,0,0.4);if(isFinite(cp.sensitivity))controlPrefs.sensitivity=clamp(cp.sensitivity,0.5,2);controlPrefs.invertY=!!cp.invertY}catch(e){}
-try{var ap=JSON.parse(localStorage.getItem(ACCESS_KEY)||'{}');if(ap.size==='large')accessPrefs.size='large';accessPrefs.contrast=!!ap.contrast}catch(e){}
+var cp=readPreferenceObject(CONTROL_KEY,128);
+if(typeof cp.deadzone==='number'&&isFinite(cp.deadzone))controlPrefs.deadzone=clamp(cp.deadzone,0,0.4);
+if(typeof cp.sensitivity==='number'&&isFinite(cp.sensitivity))controlPrefs.sensitivity=clamp(cp.sensitivity,0.5,2);
+if(typeof cp.invertY==='boolean')controlPrefs.invertY=cp.invertY;
+var ap=readPreferenceObject(ACCESS_KEY,128);
+if(ap.size==='large')accessPrefs.size='large';
+if(typeof ap.contrast==='boolean')accessPrefs.contrast=ap.contrast;
 function applyAccessibility(){
   document.body.classList.toggle('largeUI',accessPrefs.size==='large');
   document.body.classList.toggle('highContrast',accessPrefs.contrast);
   $('uiSizeSelect').value=accessPrefs.size;$('contrastToggle').checked=accessPrefs.contrast;
 }
-function saveAccessibility(){try{localStorage.setItem(ACCESS_KEY,JSON.stringify(accessPrefs))}catch(e){}applyAccessibility()}
+function saveAccessibility(){writePreferenceObject(ACCESS_KEY,accessPrefs,128);applyAccessibility()}
 $('uiSizeSelect').addEventListener('change',function(){accessPrefs.size=this.value==='large'?'large':'normal';saveAccessibility()});
 $('contrastToggle').addEventListener('change',function(){accessPrefs.contrast=!!this.checked;saveAccessibility()});
-function saveControlPrefs(){try{localStorage.setItem(CONTROL_KEY,JSON.stringify(controlPrefs))}catch(e){}}
+function saveControlPrefs(){writePreferenceObject(CONTROL_KEY,controlPrefs,128);}
 function applyControlPrefs(){
   $('joyDeadzone').value=Math.round(controlPrefs.deadzone*100);
   $('cameraSensitivity').value=Math.round(controlPrefs.sensitivity*100);
@@ -937,9 +1015,9 @@ $('cameraSensitivity').addEventListener('input',function(){controlPrefs.sensitiv
 $('invertCamera').addEventListener('change',function(){controlPrefs.invertY=!!this.checked;saveControlPrefs()});
 $('difficultySelect').value=survivalDifficulty;
 $('notificationDuration').value=notificationSeconds;
-$('notificationDuration').addEventListener('input',function(){notificationSeconds=clamp(+this.value,1,8);try{localStorage.setItem(NOTIFY_KEY,String(notificationSeconds))}catch(e){}});
-$('difficultySelect').addEventListener('change',function(){survivalDifficulty=['easy','normal','hard'].indexOf(this.value)>=0?this.value:'normal';try{localStorage.setItem(DIFFICULTY_KEY,survivalDifficulty)}catch(e){}say('Survival difficulty: '+this.options[this.selectedIndex].text,3);});
-$('gameLanguage').addEventListener('change',function(){gameLanguage=this.value==='ur'?'ur':'en';try{localStorage.setItem(GAME_LANGUAGE_KEY,gameLanguage)}catch(e){}applyGameLanguage();});
+$('notificationDuration').addEventListener('input',function(){notificationSeconds=clamp(+this.value,1,8);writePreferenceString(NOTIFY_KEY,String(notificationSeconds),4);});
+$('difficultySelect').addEventListener('change',function(){survivalDifficulty=['easy','normal','hard'].indexOf(this.value)>=0?this.value:'normal';writePreferenceString(DIFFICULTY_KEY,survivalDifficulty,16);say('Survival difficulty: '+this.options[this.selectedIndex].text,3);});
+$('gameLanguage').addEventListener('change',function(){gameLanguage=this.value==='ur'?'ur':'en';writePreferenceString(GAME_LANGUAGE_KEY,gameLanguage,2);applyGameLanguage();});
 applyGameLanguage();
 applyControlPrefs();
 renderKeyBindings();
@@ -1632,9 +1710,12 @@ var player=makePlayer();scene.add(player.g);
 var playerPreviewLight=new THREE.PointLight(0xd7e9ff,0.7,22);scene.add(playerPreviewLight);
 var characterStyles=[0x527b70,0x8a633e,0x52658e,0x8b4c4c],selectedCharacter=0;
 var PREVIEW_KEY='mfwilds3d_preview_v1',previewPrefs={turntable:true,lighting:true,animation:'idle'},previewClock=0;
-try{var pp=JSON.parse(localStorage.getItem(PREVIEW_KEY)||'{}');previewPrefs.turntable=pp.turntable!==false;previewPrefs.lighting=pp.lighting!==false;previewPrefs.animation=['idle','walk','attack'].indexOf(pp.animation)>=0?pp.animation:'idle';}catch(e){}
-try{selectedCharacter=clamp(parseInt(localStorage.getItem(CHARACTER_KEY)||'0',10)||0,0,3);}catch(e){}
-function applyCharacterStyle(index){selectedCharacter=clamp(index|0,0,3);var mats=player.g.userData.customMaterials;if(mats){mats.cloth.color.setHex(characterStyles[selectedCharacter]);mats.cloth2.color.setHex(characterStyles[selectedCharacter]);}try{localStorage.setItem(CHARACTER_KEY,String(selectedCharacter));}catch(e){}var buttons=document.querySelectorAll('.charChoice');buttons.forEach(function(b){b.classList.toggle('active',+b.getAttribute('data-char')===selectedCharacter);});syncCustomizationControls();}
+var pp=readPreferenceObject(PREVIEW_KEY,128);
+if(typeof pp.turntable==='boolean')previewPrefs.turntable=pp.turntable;
+if(typeof pp.lighting==='boolean')previewPrefs.lighting=pp.lighting;
+if(['idle','walk','attack'].indexOf(pp.animation)>=0)previewPrefs.animation=pp.animation;
+selectedCharacter=Number(readPreferenceChoice(CHARACTER_KEY,4,function(value){return /^[0-3]$/.test(value);},'0'));
+function applyCharacterStyle(index){selectedCharacter=clamp(index|0,0,3);var mats=player.g.userData.customMaterials;if(mats){mats.cloth.color.setHex(characterStyles[selectedCharacter]);mats.cloth2.color.setHex(characterStyles[selectedCharacter]);}writePreferenceString(CHARACTER_KEY,String(selectedCharacter),4);var buttons=document.querySelectorAll('.charChoice');buttons.forEach(function(b){b.classList.toggle('active',+b.getAttribute('data-char')===selectedCharacter);});syncCustomizationControls();}
 applyCharacterStyle(selectedCharacter);
 
 var SPECIES=[
@@ -2308,7 +2389,7 @@ function isHeadSubmerged(waterSurface,groundY,alreadySwimming){
 }
 function swimFloatHeight(waterSurface){return waterSurface-2.28;}
 var P={x:0,y:0,z:4,hp:100,maxHp:100,level:1,xp:0,statPoints:0,stats:{vitality:0,power:0,tamer:0},food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
-function saveAudioPrefs(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs));}catch(e){}}
+function saveAudioPrefs(){writePreferenceObject(AUDIO_KEY,audioPrefs,256);}
 function initAudio(){
   if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}
   var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
@@ -3085,28 +3166,75 @@ function refreshWorldMenu(){var sel=$('worldSelect');sel.innerHTML='';worldList.
 refreshWorldMenu();
 function syncCustomizationControls(){var mats=player.g.userData.customMaterials;if(!mats)return;var skin=$('skinTone'),outfit=$('outfitColor');if(skin&&!skin.dataset.ready){skin.value='0x'+mats.skin.color.getHexString();skin.dataset.ready='1';}if(outfit)outfit.value='0x'+mats.cloth.color.getHexString();}
 syncCustomizationControls();
-$('skinTone').addEventListener('change',function(){player.g.userData.customMaterials.skin.color.set(this.value);try{localStorage.setItem('mfwilds3d_skin',this.value)}catch(e){}});
-$('outfitColor').addEventListener('change',function(){var c=+this.value;player.g.userData.customMaterials.cloth.color.setHex(c);player.g.userData.customMaterials.cloth2.color.setHex(c);try{localStorage.setItem('mfwilds3d_outfit',this.value)}catch(e){}});
-$('legsColor').addEventListener('change',function(){player.g.userData.customMaterials.legs.color.setHex(+this.value);try{localStorage.setItem('mfwilds3d_legs',this.value)}catch(e){}});
-$('accessoryColor').addEventListener('change',function(){player.g.userData.customMaterials.leather.color.setHex(+this.value);try{localStorage.setItem('mfwilds3d_accessory',this.value)}catch(e){}});
-function applyHairStyle(value){var h=player.g.userData.hairStyles;var hoodMode=value==='2',longMode=value==='1',sweptMode=value==='3',tiedMode=value==='4';h.short.visible=!hoodMode;h.fringe.visible=!hoodMode&&!sweptMode;h.longL.visible=longMode;h.longR.visible=longMode;h.swept.visible=sweptMode;h.tied.visible=tiedMode;h.hood.visible=hoodMode;try{localStorage.setItem('mfwilds3d_hair',value)}catch(e){}}
-function applyEyeColor(value){var c=+value;if(!isFinite(c))c=0x6b8f91;player.g.userData.customMaterials.iris.color.setHex(c);try{localStorage.setItem('mfwilds3d_eyeColor',value)}catch(e){}}
-function applyFacialHair(value){var f=player.g.userData.faceStyles;f.beardShort.visible=value==='1';f.beardFull.visible=value==='2';try{localStorage.setItem('mfwilds3d_facialHair',value)}catch(e){}}
+$('skinTone').addEventListener('change',function(){if(!validSelectValue('skinTone',this.value))return;player.g.userData.customMaterials.skin.color.set(this.value);writePreferenceString('mfwilds3d_skin',this.value,24);});
+$('outfitColor').addEventListener('change',function(){if(!validSelectValue('outfitColor',this.value))return;var c=+this.value;player.g.userData.customMaterials.cloth.color.setHex(c);player.g.userData.customMaterials.cloth2.color.setHex(c);writePreferenceString('mfwilds3d_outfit',this.value,24);});
+$('legsColor').addEventListener('change',function(){if(!validSelectValue('legsColor',this.value))return;player.g.userData.customMaterials.legs.color.setHex(+this.value);writePreferenceString('mfwilds3d_legs',this.value,24);});
+$('accessoryColor').addEventListener('change',function(){if(!validSelectValue('accessoryColor',this.value))return;player.g.userData.customMaterials.leather.color.setHex(+this.value);writePreferenceString('mfwilds3d_accessory',this.value,24);});
+function applyHairStyle(value){if(!validSelectValue('hairStyle',value))value='0';var h=player.g.userData.hairStyles;var hoodMode=value==='2',longMode=value==='1',sweptMode=value==='3',tiedMode=value==='4';h.short.visible=!hoodMode;h.fringe.visible=!hoodMode&&!sweptMode;h.longL.visible=longMode;h.longR.visible=longMode;h.swept.visible=sweptMode;h.tied.visible=tiedMode;h.hood.visible=hoodMode;writePreferenceString('mfwilds3d_hair',value,24);}
+function applyEyeColor(value){if(!validSelectValue('eyeColor',value))value='0x6b8f91';var c=+value;if(!isFinite(c))c=0x6b8f91;player.g.userData.customMaterials.iris.color.setHex(c);writePreferenceString('mfwilds3d_eyeColor',value,24);}
+function applyFacialHair(value){if(!validSelectValue('facialHair',value))value='0';var f=player.g.userData.faceStyles;f.beardShort.visible=value==='1';f.beardFull.visible=value==='2';writePreferenceString('mfwilds3d_facialHair',value,24);}
 $('eyeColor').addEventListener('change',function(){applyEyeColor(this.value);});
 $('facialHair').addEventListener('change',function(){applyFacialHair(this.value);});
-function applyHairColor(value){var c=+value;if(!isFinite(c))c=0x211c19;player.g.userData.customMaterials.hair.color.setHex(c);try{localStorage.setItem('mfwilds3d_hairColor',value)}catch(e){}}
+function applyHairColor(value){if(!validSelectValue('hairColor',value))value='0x211c19';var c=+value;if(!isFinite(c))c=0x211c19;player.g.userData.customMaterials.hair.color.setHex(c);writePreferenceString('mfwilds3d_hairColor',value,24);}
 $('hairStyle').addEventListener('change',function(){applyHairStyle(this.value);});
 $('hairColor').addEventListener('change',function(){applyHairColor(this.value);});
-$('saveLook').addEventListener('click',function(){try{localStorage.setItem('mfwilds3d_skin',$('skinTone').value);localStorage.setItem('mfwilds3d_outfit',$('outfitColor').value);localStorage.setItem('mfwilds3d_hair',$('hairStyle').value);localStorage.setItem('mfwilds3d_hairColor',$('hairColor').value);localStorage.setItem('mfwilds3d_eyeColor',$('eyeColor').value);localStorage.setItem('mfwilds3d_facialHair',$('facialHair').value);localStorage.setItem('mfwilds3d_legs',$('legsColor').value);localStorage.setItem('mfwilds3d_accessory',$('accessoryColor').value);}catch(e){}say('Character appearance saved.',3);});
+$('saveLook').addEventListener('click',function(){var look=readCurrentOutfit();if(!normalizeOutfitRecord(look)){say('Character appearance contains an invalid selection.',3);return;}writePreferenceString('mfwilds3d_skin',look.skin,24);writePreferenceString('mfwilds3d_outfit',look.outfit,24);writePreferenceString('mfwilds3d_hair',look.hair,24);writePreferenceString('mfwilds3d_hairColor',look.hairColor,24);writePreferenceString('mfwilds3d_eyeColor',look.eyes,24);writePreferenceString('mfwilds3d_facialHair',look.facialHair,24);writePreferenceString('mfwilds3d_legs',look.legs,24);writePreferenceString('mfwilds3d_accessory',look.accessory,24);say('Character appearance saved.',3);});
 var OUTFIT_SLOTS_KEY='mfwilds3d_outfit_slots_v1';
 function readCurrentOutfit(){return {character:selectedCharacter,skin:$('skinTone').value,outfit:$('outfitColor').value,hair:$('hairStyle').value,hairColor:$('hairColor').value,eyes:$('eyeColor').value,facialHair:$('facialHair').value,legs:$('legsColor').value,accessory:$('accessoryColor').value};}
-function validSelectValue(id,value){var el=$(id);return Array.from(el.options).some(function(o){return o.value===String(value)});}
-$('saveOutfitSlot').addEventListener('click',function(){try{var all=JSON.parse(localStorage.getItem(OUTFIT_SLOTS_KEY)||'{}');if(!all||typeof all!=='object')all={};all[$('outfitSlot').value]=readCurrentOutfit();localStorage.setItem(OUTFIT_SLOTS_KEY,JSON.stringify(all));say('Outfit saved to slot '+(Number($('outfitSlot').value)+1)+'.',3);}catch(e){say('Could not save outfit slot. Check browser storage space.',3);}});
-$('loadOutfitSlot').addEventListener('click',function(){try{var all=JSON.parse(localStorage.getItem(OUTFIT_SLOTS_KEY)||'{}'),look=all&&all[$('outfitSlot').value];if(!look){say('This outfit slot is empty.',2);return;}var fields={skinTone:look.skin,outfitColor:look.outfit,hairStyle:look.hair,hairColor:look.hairColor,eyeColor:look.eyes,facialHair:look.facialHair,legsColor:look.legs,accessoryColor:look.accessory};Object.keys(fields).forEach(function(id){if(validSelectValue(id,fields[id])){$(id).value=String(fields[id]);$(id).dispatchEvent(new Event('change'));}});if(isFinite(look.character))applyCharacterStyle(look.character);say('Outfit loaded.',3);}catch(e){say('Could not load this outfit slot.',3);}});
-function restoreCharacterAppearance(){var m=player.g.userData.customMaterials;try{var sk=localStorage.getItem('mfwilds3d_skin'),oc=localStorage.getItem('mfwilds3d_outfit'),hr=localStorage.getItem('mfwilds3d_hair'),hc=localStorage.getItem('mfwilds3d_hairColor'),ec=localStorage.getItem('mfwilds3d_eyeColor'),fh=localStorage.getItem('mfwilds3d_facialHair'),lc=localStorage.getItem('mfwilds3d_legs'),ac=localStorage.getItem('mfwilds3d_accessory');if(sk)m.skin.color.set(sk);if(oc){m.cloth.color.set(oc);m.cloth2.color.set(oc);}if(lc)m.legs.color.set(lc);if(ac)m.leather.color.set(ac);applyHairStyle(hr||'0');applyHairColor(hc||'0x211c19');$('hairColor').value=hc||'0x211c19';applyEyeColor(ec||'0x6b8f91');applyFacialHair(fh||'0');$('eyeColor').value=ec||'0x6b8f91';$('facialHair').value=fh||'0';$('skinTone').value=sk||'0xc98f68';$('outfitColor').value=oc||('0x'+m.cloth.color.getHexString());$('legsColor').value=lc||('0x'+m.legs.color.getHexString());$('accessoryColor').value=ac||('0x'+m.leather.color.getHexString());$('hairStyle').value=hr||'0';}catch(e){}}
+function validSelectValue(id,value){var el=$(id);return !!(el&&el.options)&&Array.from(el.options).some(function(o){return o.value===String(value)});}
+function normalizeOutfitRecord(look){
+  if(!look||typeof look!=='object'||Array.isArray(look))return null;
+  var fields={skinTone:look.skin,outfitColor:look.outfit,hairStyle:look.hair,hairColor:look.hairColor,eyeColor:look.eyes,facialHair:look.facialHair,legsColor:look.legs,accessoryColor:look.accessory};
+  var ids=Object.keys(fields);
+  for(var i=0;i<ids.length;i++)if(!validSelectValue(ids[i],fields[ids[i]]))return null;
+  if(typeof look.character!=='number'||!isFinite(look.character)||Math.floor(look.character)!==look.character||look.character<0||look.character>3)return null;
+  return {character:look.character,skin:fields.skinTone,outfit:fields.outfitColor,hair:fields.hairStyle,hairColor:fields.hairColor,eyes:fields.eyeColor,facialHair:fields.facialHair,legs:fields.legsColor,accessory:fields.accessoryColor};
+}
+function normalizeOutfitSlots(value){
+  var slots={};if(!value||typeof value!=='object'||Array.isArray(value))return slots;
+  ['0','1','2'].forEach(function(key){if(Object.prototype.hasOwnProperty.call(value,key)){var record=normalizeOutfitRecord(value[key]);if(record)slots[key]=record;}});
+  return slots;
+}
+function readOutfitSlots(){
+  var current=normalizeOutfitSlots(readPreferenceObject(OUTFIT_SLOTS_KEY,4096));
+  if(Object.keys(current).length)return current;
+  var backup=normalizeOutfitSlots(readPreferenceObject(OUTFIT_SLOTS_KEY+'_backup',4096));
+  if(Object.keys(backup).length){try{localStorage.setItem(OUTFIT_SLOTS_KEY,JSON.stringify(backup));}catch(e){}return backup;}
+  return current;
+}
+$('saveOutfitSlot').addEventListener('click',function(){
+  var all=readOutfitSlots(),slot=$('outfitSlot').value,record=normalizeOutfitRecord(readCurrentOutfit());
+  if(!/^[0-2]$/.test(slot)||!record){say('Could not save an invalid outfit selection.',3);return;}
+  all[slot]=record;
+  if(!writePreferenceObject(OUTFIT_SLOTS_KEY,all,4096)){say('Could not save outfit slot. Check browser storage space.',3);return;}
+  say('Outfit saved to slot '+(Number(slot)+1)+'.',3);
+});
+$('loadOutfitSlot').addEventListener('click',function(){
+  var all=readOutfitSlots(),look=all[$('outfitSlot').value];
+  if(!look){say('This outfit slot is empty or invalid.',2);return;}
+  var fields={skinTone:look.skin,outfitColor:look.outfit,hairStyle:look.hair,hairColor:look.hairColor,eyeColor:look.eyes,facialHair:look.facialHair,legsColor:look.legs,accessoryColor:look.accessory};
+  Object.keys(fields).forEach(function(id){if(validSelectValue(id,fields[id])){$(id).value=String(fields[id]);$(id).dispatchEvent(new Event('change'));}});
+  applyCharacterStyle(look.character);say('Outfit loaded.',3);
+});
+function readAppearanceChoice(key,id,fallback){return readPreferenceChoice(key,24,function(value){return validSelectValue(id,value);},fallback);}
+function restoreCharacterAppearance(){
+  var m=player.g.userData.customMaterials;
+  var sk=readAppearanceChoice('mfwilds3d_skin','skinTone','0xc98f68');
+  var oc=readAppearanceChoice('mfwilds3d_outfit','outfitColor','0x527b70');
+  var hr=readAppearanceChoice('mfwilds3d_hair','hairStyle','0');
+  var hc=readAppearanceChoice('mfwilds3d_hairColor','hairColor','0x211c19');
+  var ec=readAppearanceChoice('mfwilds3d_eyeColor','eyeColor','0x6b8f91');
+  var fh=readAppearanceChoice('mfwilds3d_facialHair','facialHair','0');
+  var lc=readAppearanceChoice('mfwilds3d_legs','legsColor','0x314a40');
+  var ac=readAppearanceChoice('mfwilds3d_accessory','accessoryColor','0x69452d');
+  m.skin.color.set(sk);m.cloth.color.set(oc);m.cloth2.color.set(oc);m.legs.color.set(lc);m.leather.color.set(ac);
+  applyHairStyle(hr);applyHairColor(hc);applyEyeColor(ec);applyFacialHair(fh);
+  $('hairColor').value=hc;$('eyeColor').value=ec;$('facialHair').value=fh;$('skinTone').value=sk;
+  $('outfitColor').value=oc;$('legsColor').value=lc;$('accessoryColor').value=ac;$('hairStyle').value=hr;
+}
 restoreCharacterAppearance();
 $('previewTurntable').checked=previewPrefs.turntable;$('previewLighting').checked=previewPrefs.lighting;$('previewAnimation').value=previewPrefs.animation;
-function savePreviewPrefs(){try{localStorage.setItem(PREVIEW_KEY,JSON.stringify(previewPrefs))}catch(e){}}
+function savePreviewPrefs(){writePreferenceObject(PREVIEW_KEY,previewPrefs,128);}
 $('previewTurntable').addEventListener('change',function(){previewPrefs.turntable=!!this.checked;savePreviewPrefs()});$('previewLighting').addEventListener('change',function(){previewPrefs.lighting=!!this.checked;savePreviewPrefs()});$('previewAnimation').addEventListener('change',function(){previewPrefs.animation=['idle','walk','attack'].indexOf(this.value)>=0?this.value:'idle';savePreviewPrefs()});
 $('settingsMenu').addEventListener('click',function(){save();pauseOpen=false;$('pausePanel').hidden=true;$('settingsPanel').hidden=true;mainMenu.hidden=false;menuOpen=true;});
 $('settingsCharacter').addEventListener('click',function(){$('settingsPanel').hidden=true;mainMenu.hidden=false;menuOpen=true;$('skinTone').focus();});

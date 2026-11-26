@@ -94,6 +94,8 @@ test('browser gameplay smoke: create, save, return, reload, and resume a world',
     };
     await assertHealthy('initial menu');
 
+
+
     const webglVersion = await page.locator('#c').evaluate(canvas => {
       const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       return gl ? gl.getParameter(gl.VERSION) : null;
@@ -130,6 +132,79 @@ test('browser gameplay smoke: create, save, return, reload, and resume a world',
 
     await page.locator('#playSelected').click();
     await page.locator('#mainMenu').waitFor({ state: 'hidden' });
+
+    await page.locator('#settingsBtn').click();
+    await page.locator('#settingsPanel').waitFor({ state: 'visible' });
+    await page.locator('#qualitySelect').selectOption('1');
+    await page.locator('#renderDistanceSlider').evaluate(element => {
+      element.value = '70';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.locator('#difficultySelect').selectOption('hard');
+    await page.locator('#gameLanguage').selectOption('ur');
+    await page.locator('#uiSizeSelect').selectOption('large');
+    await page.locator('#contrastToggle').check();
+    await page.locator('#notificationDuration').evaluate(element => {
+      element.value = '4.5';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.locator('#joyDeadzone').evaluate(element => {
+      element.value = '25';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.locator('#cameraSensitivity').evaluate(element => {
+      element.value = '150';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.locator('#invertCamera').check();
+    await page.locator('#subtitlesToggle').uncheck();
+    await page.locator('#captionLanguage').selectOption('ur');
+    await page.locator('#settingsClose').click();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.locator('#mainMenu').waitFor({ state: 'visible' });
+    await page.locator('#playSelected').click();
+    await page.locator('#mainMenu').waitFor({ state: 'hidden' });
+    await page.locator('#settingsBtn').click();
+    await page.locator('#settingsPanel').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('#qualitySelect').inputValue(), '1');
+    assert.equal(await page.locator('#renderDistanceSlider').inputValue(), '70');
+    assert.equal(await page.locator('#difficultySelect').inputValue(), 'hard');
+    assert.equal(await page.locator('#gameLanguage').inputValue(), 'ur');
+    assert.equal(await page.locator('#uiSizeSelect').inputValue(), 'large');
+    assert.equal(await page.locator('#contrastToggle').isChecked(), true);
+    assert.equal(await page.locator('#notificationDuration').inputValue(), '4.5');
+    assert.equal(await page.locator('#joyDeadzone').inputValue(), '25');
+    assert.equal(await page.locator('#cameraSensitivity').inputValue(), '150');
+    assert.equal(await page.locator('#invertCamera').isChecked(), true);
+    assert.equal(await page.locator('#subtitlesToggle').isChecked(), false);
+    assert.equal(await page.locator('#captionLanguage').inputValue(), 'ur');
+    await page.locator('#qualitySelect').selectOption('0');
+    await page.locator('#renderDistanceSlider').evaluate(element => {
+      element.value = '85';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.locator('#difficultySelect').selectOption('normal');
+    await page.locator('#gameLanguage').selectOption('en');
+    await page.locator('#uiSizeSelect').selectOption('normal');
+    await page.locator('#contrastToggle').uncheck();
+    await page.locator('#notificationDuration').evaluate(element => {
+      element.value = '3.5';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.locator('#joyDeadzone').evaluate(element => {
+      element.value = '10';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.locator('#cameraSensitivity').evaluate(element => {
+      element.value = '100';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.locator('#invertCamera').uncheck();
+    await page.locator('#subtitlesToggle').check();
+    await page.locator('#captionLanguage').selectOption('en');
+    await page.locator('#settingsClose').click();
+    await assertHealthy('settings reload');
+
     await page.locator('#pauseToggle').waitFor({ state: 'visible' });
     await page.locator('#pauseToggle').click();
     await page.locator('#pausePanel').waitFor({ state: 'visible' });
