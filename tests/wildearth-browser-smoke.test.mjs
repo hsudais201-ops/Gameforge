@@ -94,8 +94,6 @@ test('browser gameplay smoke: create, save, return, reload, and resume a world',
     };
     await assertHealthy('initial menu');
 
-
-
     const webglVersion = await page.locator('#c').evaluate(canvas => {
       const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
       return gl ? gl.getParameter(gl.VERSION) : null;

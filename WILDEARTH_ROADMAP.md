@@ -269,6 +269,8 @@ For every development session:
 
 Do not delete working gameplay to simplify the project. Do not replace real systems with placeholders to make checklist items appear complete. Do not change the screen resolution. Do not copy another game's protected models, textures, map, UI, animation, characters, or audio. Preserve WILDEARTH's original identity and keep the game playable throughout development.
 
+
+
 ---
 
 # Expanded content roadmap — additional major systems

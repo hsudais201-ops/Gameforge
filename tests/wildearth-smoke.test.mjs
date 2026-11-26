@@ -611,7 +611,7 @@ test('nearby base pieces can be upgraded from wood to stone and dismantled with 
 
 test('interface localization uses persisted English and Urdu text tables for core UI labels', () => {
   assert.match(html, /id="gameLanguage"/);
-  for (const marker of ["mfwilds3d_language_v1", 'var GAME_TEXT={', "ur:{play:'منتخب دنیا کھیلیں'", 'function gameText(key)', 'function applyGameLanguage()', 'localStorage.setItem(GAME_LANGUAGE_KEY,gameLanguage)']) {
+  for (const marker of ["mfwilds3d_language_v1", 'var GAME_TEXT={', "ur:{play:'منتخب دنیا کھیلیں'", 'function gameText(key)', 'function applyGameLanguage()', 'writePreferenceString(GAME_LANGUAGE_KEY,gameLanguage,2)']) {
     assert.ok(gameScript.includes(marker), 'missing localization marker: '+marker);
   }
   assert.ok(gameScript.includes("gameText('baseComfort')"));
