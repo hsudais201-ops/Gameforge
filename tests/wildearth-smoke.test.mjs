@@ -39,7 +39,7 @@ test('startup shows the world seed before deferred world streaming', () => {
   const seedLabel = gameScript.indexOf('var earlySeedLabel=$(\'worldSeedInfo\')');
   assert.ok(seedLabel >= 0 && streamCall > seedLabel, 'the resolved seed must be shown before streaming is scheduled');
   assert.match(gameScript, /function startInitialWorldStreaming\(\)\{[\s\S]*?try\{updateWorldStreaming\(true\);?\}[\s\S]*?initialStreamAttempts<1[\s\S]*?setTimeout\(startInitialWorldStreaming,1000\)/);
-  assert.match(gameScript, /requestAnimationFrame\(function\(\)\{setTimeout\(startInitialWorldStreaming,120\)\}\)/);
+  assert.ok(gameScript.includes('requestAnimationFrame(function(){setTimeout(startInitialWorldStreaming,120);});'), 'initial streaming must remain deferred until after the first menu paint');
 });
 
 test('world creation and selected-world launch are wired to persistent world data', () => {
