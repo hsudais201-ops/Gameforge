@@ -2143,3 +2143,47 @@ test('global settings use strict bounded values instead of coercing malformed st
     "readPreferenceChoice(NOTIFY_KEY,4,validNotificationDuration"
   ])assert.ok(gameScript.includes(marker),'missing strict preference validation: '+marker);
 });
+
+
+test('runtime diagnostics sanitize messages, deduplicate repeats, and stay bounded', () => {
+  const source = ['safeDiagnosticText', 'addDiagnostic'].map(extractGameFunction).join(String.fromCharCode(10));
+  const diagnostics = [];
+  const helpers = new Function('runtimeDiagnostics', source + ';return {safeDiagnosticText,addDiagnostic};')(diagnostics);
+  assert.equal(helpers.safeDiagnosticText('bad' + String.fromCharCode(1) + 'message', 40), 'bad message');
+  assert.equal(helpers.safeDiagnosticText(new Error('audio failed'), 40), 'audio failed');
+  const entry = helpers.addDiagnostic('render', 'renderer failed', 's'.repeat(5000));
+  assert.equal(entry.stack.length, 4000);
+  helpers.addDiagnostic('render', 'renderer failed', 'second stack');
+  assert.equal(diagnostics.length, 1, 'repeated identical failures should be grouped');
+  assert.equal(diagnostics[0].repeatCount, 2);
+  for (let i = 0; i < 110; i++) helpers.addDiagnostic('failure-' + i, 'failure ' + i, '');
+  assert.equal(diagnostics.length, 100, 'diagnostic history must remain capped');
+  assert.equal(diagnostics[0].type, 'failure-10');
+});
+
+test('major startup, save, audio, streaming, WebGL, and frame failures have actionable diagnostics', () => {
+  for (const marker of [
+    "window.addEventListener('error'",
+    "window.addEventListener('unhandledrejection'",
+    "reportRuntimeIssue('world-catalog-write'",
+    "reportRuntimeIssue('save-write'",
+    "reportRuntimeIssue('save-load'",
+    "reportRuntimeIssue('save-version-unsupported'",
+    "reportRuntimeIssue('audio-init'",
+    "reportRuntimeIssue('audio-resume'",
+    "reportRuntimeIssue('world-streaming'",
+    "reportRuntimeIssue('webgl-context-lost'",
+    "addDiagnostic('frame-'+frameStage",
+    "runtimePhase==='starting'",
+    "runtimePhase!=='failed'"
+  ]) assert.ok(gameScript.includes(marker), 'missing runtime failure route: ' + marker);
+  assert.ok(html.includes('id="runtimeNotice"'), 'recoverable runtime notice must exist');
+  assert.ok(gameScript.includes('page:location.pathname'), 'diagnostic export must omit query strings and hashes');
+});
+
+test('audio resume and playback failures are contained without terminating gameplay', () => {
+  assert.match(gameScript, /resumeResult\.catch\(function\(e\)\{[\s\S]*?reportRuntimeIssue\('audio-resume'/);
+  assert.match(gameScript, /catch\(e\)\{if\(!audioFailureReported\)[\s\S]*?reportRuntimeIssue\('audio-playback'/);
+  assert.match(gameScript, /audioCtx=null;musicBus=null;effectsBus=null/);
+  assert.match(gameScript, /Gameplay will continue without sound/);
+});

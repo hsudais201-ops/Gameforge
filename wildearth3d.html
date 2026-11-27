@@ -234,6 +234,9 @@
    /* Runtime errors must sit above every game/menu overlay and remain readable. */
    #err{display:none;position:fixed;inset:0;z-index:2147483647;box-sizing:border-box;overflow:auto;padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:rgba(4,8,7,.97);border:3px solid #e36b5d;color:#fff;font:600 14px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text;pointer-events:auto;}
    #err::before{content:'WILDEARTH RUNTIME ERROR';display:block;margin-bottom:14px;color:#ff9a8d;font:900 20px/1.3 system-ui,sans-serif;letter-spacing:.06em}
+    #runtimeNotice{position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2147483646;box-sizing:border-box;width:min(92vw,640px);padding:11px 14px;border:1px solid #d5b46b;border-radius:10px;background:rgba(13,28,20,.96);box-shadow:0 8px 30px #0009;color:#f6f1df;font:600 12px/1.45 system-ui,sans-serif;text-align:center;pointer-events:none}
+    #runtimeNotice[hidden]{display:none}
+    #runtimeNotice[data-kind="info"]{border-color:#8ac7c5}
 #mainMenu[hidden]{display:none}
   .menuCard{width:min(920px,96vw);max-height:94dvh;overflow:auto;box-sizing:border-box;padding:clamp(16px,3vw,30px);border:1px solid #a6c09b66;border-radius:18px;background:linear-gradient(145deg,#1a3025f5,#0c1813f7);box-shadow:0 24px 90px #000b}
   .menuBrand{font-size:clamp(30px,6vw,54px);font-weight:950;letter-spacing:.12em;color:#e9f2df;text-shadow:0 5px 22px #7a9c54aa}.menuTag{color:#b5c9ad;font-size:12px;letter-spacing:.2em;margin:4px 0 22px}
@@ -644,24 +647,96 @@
   <button class="act" id="bSprint" aria-pressed="false">Sprint</button>
   <button class="act" id="bDodge" type="button">Dodge</button>
 </div>
-<div id="err">The 3D engine could not load. Check your internet connection and reload the page.</div>
+<div id="err">The 3D engine could not load. Check your internet connection and reload the page.</div><div id="runtimeNotice" hidden role="status" aria-live="polite"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
 'use strict';
+var runtimeDiagnostics=[],runtimeNoticeTimer=null,runtimePhase='starting';
+function safeDiagnosticText(value,max){
+  var text='';
+  try{
+    if(typeof value==='string')text=value;
+    else if(value&&typeof value.message==='string')text=value.message;
+    else text=String(value===undefined||value===null?'':value);
+  }catch(e){text='Unknown runtime failure';}
+  return text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,' ').slice(0,max||500);
+}
+function addDiagnostic(type,message,stack){
+  try{
+    var safeType=safeDiagnosticText(type,48)||'runtime';
+    var safeMessage=safeDiagnosticText(message,500)||'Unknown runtime failure';
+    var safeStack=safeDiagnosticText(stack,4000),now=Date.now(),stamp=new Date(now).toISOString();
+    for(var i=runtimeDiagnostics.length-1;i>=0;i--){
+      var prior=runtimeDiagnostics[i];
+      if(prior.type===safeType&&prior.message===safeMessage&&now-Date.parse(prior.time)<10000){
+        prior.repeatCount=(prior.repeatCount||1)+1;prior.time=stamp;
+        if(!prior.stack&&safeStack)prior.stack=safeStack;
+        return prior;
+      }
+    }
+    var entry={time:stamp,type:safeType,message:safeMessage,stack:safeStack};
+    runtimeDiagnostics.push(entry);
+    if(runtimeDiagnostics.length>100)runtimeDiagnostics.shift();
+    return entry;
+  }catch(e){return null;}
+}
+function showRuntimeNotice(message,kind){
+  try{
+    var el=document.getElementById('runtimeNotice');if(!el)return;
+    el.textContent='WILDEARTH: '+safeDiagnosticText(message,320);
+    el.setAttribute('data-kind',kind==='info'?'info':'warning');
+    el.hidden=false;
+    if(runtimeNoticeTimer)clearTimeout(runtimeNoticeTimer);
+    runtimeNoticeTimer=setTimeout(function(){el.hidden=true;runtimeNoticeTimer=null;},8000);
+  }catch(e){}
+}
+function clearRuntimeNotice(){
+  try{
+    if(runtimeNoticeTimer)clearTimeout(runtimeNoticeTimer);
+    runtimeNoticeTimer=null;
+    var el=document.getElementById('runtimeNotice');if(el)el.hidden=true;
+  }catch(e){}
+}
+function reportRuntimeIssue(type,message,stack,kind){
+  addDiagnostic(type,message,stack);
+  showRuntimeNotice(message,kind);
+  return false;
+}
 function showGameError(message){
+  var text=safeDiagnosticText(message,2400);
+  addDiagnostic('fatal-runtime',text,'');
+  runtimePhase='failed';
   var panel=document.getElementById('err');
   if(!panel)return;
   panel.style.display='block';
   panel.setAttribute('role','alert');
   panel.setAttribute('aria-live','assertive');
-  panel.textContent='WILDEARTH stopped because of a runtime error. Reload the game.\\n\\n'+String(message||'Unknown error').slice(0,2400);
+  panel.textContent='WILDEARTH paused after a critical runtime error. Reload after reviewing the message below.\n\n'+text;
 }
 window.addEventListener('error',function(e){
-  showGameError((e.message||'JavaScript error')+(e.filename?' · '+e.filename.split('/').pop():'')+(e.lineno?':'+e.lineno:''));
-});
+  if(e&&e.target&&e.target!==window){
+    var tag=String(e.target.tagName||'resource').toLowerCase();
+    var source=e.target.src||e.target.href||'';
+    var label=source?String(source).split('#')[0].split('?')[0].split('/').pop():'';
+    var message=tag==='script'?'A required game script could not load. Check your internet connection and reload.':'A '+tag+' resource could not load. Some visuals or interface styling may be missing.';
+    addDiagnostic('resource-load',message+(label?' · '+label:''),'');
+    if(tag==='script'&&runtimePhase==='starting')showGameError(message);
+    else showRuntimeNotice(message);
+    return;
+  }
+  var message=safeDiagnosticText(e&&e.message||'JavaScript runtime error',500);
+  var stack=e&&e.error&&e.error.stack||((e&&e.filename||'')+(e&&e.lineno?':'+e.lineno:''));
+  addDiagnostic('javascript-error',message,stack);
+  if(runtimePhase==='starting')showGameError('Game startup failed: '+message);
+  else if(runtimePhase!=='failed')showRuntimeNotice('A background game operation failed. Gameplay can continue; export diagnostics if it repeats. '+message);
+},true);
 window.addEventListener('unhandledrejection',function(e){
-  var reason=e.reason;showGameError(reason&&reason.stack?reason.stack:(reason&&reason.message?reason.message:reason));
+  var reason=e&&e.reason;
+  var message=safeDiagnosticText(reason&&reason.message||reason||'Background task rejected',500);
+  addDiagnostic('unhandled-rejection',message,reason&&reason.stack||'');
+  if(runtimePhase==='starting')showGameError('Game startup task failed: '+message);
+  else if(runtimePhase!=='failed')showRuntimeNotice('A background task could not complete. Gameplay can continue. '+message);
 });
 var $=function(id){
   var el=document.getElementById(id);
@@ -671,6 +746,7 @@ var $=function(id){
   el=document.createElement('div');el.id=id;el.hidden=true;el.setAttribute('aria-hidden','true');
   (document.getElementById('bag')||document.body).appendChild(el);
   console.warn('WILDEARTH: missing UI element #'+id+'; created a safe fallback.');
+  addDiagnostic('missing-ui','Optional interface element #'+id+' was missing; a hidden fallback was created.','');
   return el;
 };
 if(typeof THREE==='undefined'){$('err').style.display='flex';return}
@@ -729,7 +805,7 @@ function persistWorldList(){try{
     var previous=localStorage.getItem(WORLD_LIST_KEY);
     if(previous){var previousState=normalizeWorldCatalog(previous);if(previousState.valid&&!previousState.overflow)localStorage.setItem(WORLD_LIST_KEY+'_backup',previous);}
     localStorage.setItem(WORLD_LIST_KEY,JSON.stringify(worldList));localStorage.setItem(SELECTED_WORLD_KEY,selectedWorldId);return true;
-  }catch(e){showGameError('Could not save your world list. Check available browser storage. '+(e&&e.message||e));return false;}
+  }catch(e){reportRuntimeIssue('world-catalog-write','Your world list could not be saved. Check browser storage space and permissions.',e&&e.stack);return false;}
 }
 persistWorldList();
 var SAVE_KEY='mfwilds3d_world_'+selectedWorldId;
@@ -802,9 +878,9 @@ function habitatWeight(sp,b){
 /* ---------- renderer / scene ---------- */
 if(typeof window.requestAnimationFrame!=='function')window.requestAnimationFrame=window.webkitRequestAnimationFrame||function(cb){return window.setTimeout(function(){cb(Date.now())},16)};
 var cv=$('c'),webglAvailable=false;
-try{var glProbe=cv.getContext('webgl2')||cv.getContext('webgl')||cv.getContext('experimental-webgl');webglAvailable=!!glProbe;}catch(webglProbeError){}
-if(!window.THREE||!webglAvailable){$('webglFallback').hidden=false;$('webglFallback').textContent=!window.THREE?'The 3D engine could not load. Check your internet connection and reload.':'WILDEARTH requires WebGL. Enable hardware acceleration or try a supported browser.';throw new Error('WILDEARTH startup requires Three.js and WebGL support.');}
-var renderer;try{renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!isLowEnd,powerPreference:'high-performance'});}catch(rendererError){$('webglFallback').hidden=false;$('webglFallback').textContent='This browser could not create a WebGL 2 rendering context. Update your browser and enable hardware acceleration.';throw new Error('WILDEARTH WebGL renderer initialization failed: '+rendererError.message);}
+try{var glProbe=cv.getContext('webgl2')||cv.getContext('webgl')||cv.getContext('experimental-webgl');webglAvailable=!!glProbe;}catch(webglProbeError){addDiagnostic('webgl-probe','The browser could not inspect WebGL support.',webglProbeError&&webglProbeError.stack);}
+if(!window.THREE||!webglAvailable){var engineMessage=!window.THREE?'The 3D engine could not load. Check your internet connection and reload.':'WebGL is unavailable. Enable hardware acceleration or try a supported browser.';$('webglFallback').hidden=false;$('webglFallback').textContent=engineMessage;addDiagnostic('renderer-unavailable',engineMessage,'');throw new Error(engineMessage);}
+var renderer;try{renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!isLowEnd,powerPreference:'high-performance'});}catch(rendererError){var rendererMessage='The browser could not initialize WebGL. Close other tabs, enable hardware acceleration, and reload.';$('webglFallback').hidden=false;$('webglFallback').textContent=rendererMessage;addDiagnostic('renderer-init',rendererMessage,rendererError&&rendererError.stack);throw new Error(rendererMessage);}
 // Render above native CSS resolution on capable devices for cleaner edges; keep a strict low-end GPU cap.\nrenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,isLowEnd?1.15:1.75));
 // Three.js r128 color management: preserve rich, correctly encoded material colors.
 if(THREE.sRGBEncoding!==undefined)renderer.outputEncoding=THREE.sRGBEncoding;
@@ -1043,15 +1119,9 @@ $('runDeviceProfile').addEventListener('click',function(){
   if(!perfMonitorEnabled){perfMonitorEnabled=true;$('perfMonitorToggle').checked=true;}
   profileTimer=setTimeout(finishDeviceProfile,30000);
 });
-var runtimeDiagnostics=[];
-function addDiagnostic(type,message,stack){
-  runtimeDiagnostics.push({time:new Date().toISOString(),type:String(type),message:String(message||''),stack:String(stack||'').slice(0,4000)});
-  if(runtimeDiagnostics.length>100)runtimeDiagnostics.shift();
-}
-window.addEventListener('error',function(e){addDiagnostic('error',e.message,(e.error&&e.error.stack)||e.filename+':'+e.lineno)});
-window.addEventListener('unhandledrejection',function(e){addDiagnostic('unhandledrejection',e.reason&&e.reason.message||e.reason,e.reason&&e.reason.stack)});
+
 $('exportDiagnostics').addEventListener('click',function(){
-  var report={game:'WILDEARTH',reportVersion:1,createdAt:new Date().toISOString(),page:location.href,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},performance:perfStats,world:{id:selectedWorldId,seed:worldSeed,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:totalCompanionCount(),activeTeamSize:team.length,reserveTeamSize:reserveTeam.length,structures:walls.length+fires.length+beds.length+chests.length,storageChests:chests.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
+  var report={game:'WILDEARTH',reportVersion:2,createdAt:new Date().toISOString(),page:location.pathname,runtimePhase:runtimePhase,userAgent:navigator.userAgent,viewport:{width:window.innerWidth,height:window.innerHeight,pixelRatio:window.devicePixelRatio||1},graphics:{quality:renderLevel,loadingArea:areaLevel},performance:perfStats,world:{id:selectedWorldId,seed:worldSeed,day:Math.floor(clock/DAY)+1,position:{x:Math.round(P.x*10)/10,z:Math.round(P.z*10)/10},explorationDistance:Math.floor(explorationDistance),teamSize:totalCompanionCount(),activeTeamSize:team.length,reserveTeamSize:reserveTeam.length,structures:walls.length+fires.length+beds.length+chests.length,storageChests:chests.length,discoveredLandmarks:discoveredLandmarks.length},diagnostics:runtimeDiagnostics.slice()};
   try{
     var blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
     link.href=url;link.download='wildearth-diagnostics-'+Date.now()+'.json';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url)},1000);
@@ -2390,16 +2460,33 @@ function isHeadSubmerged(waterSurface,groundY,alreadySwimming){
 function swimFloatHeight(waterSurface){return waterSurface-2.28;}
 var P={x:0,y:0,z:4,hp:100,maxHp:100,level:1,xp:0,statPoints:0,stats:{vitality:0,power:0,tamer:0},food:100,stamina:100,sprinting:false,dodge:0,invulnerable:0,dodgeX:0,dodgeZ:0,yaw:0,face:0,walk:0,swing:0,cool:0,speed:0,wetness:0,temperature:0.5,oxygen:100,swimming:false};
 function saveAudioPrefs(){writePreferenceObject(AUDIO_KEY,audioPrefs,256);}
+var audioFailureReported=false;
 function initAudio(){
-  if(audioCtx){if(audioCtx.state==='suspended')audioCtx.resume();return;}
-  var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  if(audioCtx){
+    if(audioCtx.state==='suspended'){
+      try{
+        var resumeResult=audioCtx.resume();
+        if(resumeResult&&typeof resumeResult.catch==='function')resumeResult.catch(function(e){
+          reportRuntimeIssue('audio-resume','Browser audio could not resume. Gameplay will continue without sound.',e&&e.stack,'info');
+        });
+      }catch(e){reportRuntimeIssue('audio-resume','Browser audio could not resume. Gameplay will continue without sound.',e&&e.stack,'info');}
+    }
+    return;
+  }
+  var AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC){addDiagnostic('audio-unavailable','This browser does not support Web Audio; gameplay continues without sound.','');return;}
   try{
     audioCtx=new AC();musicBus=audioCtx.createGain();musicBus.gain.value=audioPrefs.music;musicBus.connect(audioCtx.destination);
     effectsBus=audioCtx.createGain();effectsBus.gain.value=audioPrefs.effects;effectsBus.connect(audioCtx.destination);
     var low=audioCtx.createOscillator(),high=audioCtx.createOscillator(),lowGain=audioCtx.createGain(),highGain=audioCtx.createGain();
     low.type='sine';low.frequency.value=110;high.type='sine';high.frequency.value=164.81;lowGain.gain.value=0.24;highGain.gain.value=0.12;
     low.connect(lowGain);high.connect(highGain);lowGain.connect(musicBus);highGain.connect(musicBus);low.start();high.start();
-  }catch(e){audioCtx=null;}
+  }catch(e){
+    var failedAudio=audioCtx;audioCtx=null;musicBus=null;effectsBus=null;
+    try{if(failedAudio&&failedAudio.close)failedAudio.close();}catch(ignore){}
+    audioFailureReported=true;
+    reportRuntimeIssue('audio-init','Game audio could not be initialized. Gameplay will continue without sound.',e&&e.stack,'info');
+  }
 }
 var subtitleTimer=null;
 function showSoundCaption(kind){
@@ -2415,7 +2502,7 @@ function playSfx(kind){
   showSoundCaption(kind);
   if(!audioCtx||!effectsBus||audioPrefs.effects<=0)return;
   var tones={gather:[250,0.13,'triangle'],capture:[620,0.28,'sine'],damage:[92,0.22,'sawtooth'],rain:[175,0.34,'sine'],creature:[420,0.2,'triangle'],warning:[130,0.3,'sawtooth'],ui:[540,0.08,'sine']},tone=tones[kind]||tones.ui;
-  try{var now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=tone[2];osc.frequency.setValueAtTime(tone[0],now);osc.frequency.exponentialRampToValueAtTime(Math.max(45,tone[0]*0.72),now+tone[1]);gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(Math.max(0.001,audioPrefs.effects*0.16),now+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+tone[1]);osc.connect(gain);gain.connect(effectsBus);osc.start(now);osc.stop(now+tone[1]+0.02);}catch(e){}
+  try{var now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=tone[2];osc.frequency.setValueAtTime(tone[0],now);osc.frequency.exponentialRampToValueAtTime(Math.max(45,tone[0]*0.72),now+tone[1]);gain.gain.setValueAtTime(0.0001,now);gain.gain.exponentialRampToValueAtTime(Math.max(0.001,audioPrefs.effects*0.16),now+0.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+tone[1]);osc.connect(gain);gain.connect(effectsBus);osc.start(now);osc.stop(now+tone[1]+0.02);}catch(e){if(!audioFailureReported){audioFailureReported=true;reportRuntimeIssue('audio-playback','A sound effect could not be played. Gameplay will continue without sound.',e&&e.stack,'info');}}
 }
 document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('button'))playSfx('ui');});
 document.addEventListener('pointerdown',initAudio,{once:true});document.addEventListener('keydown',initAudio,{once:true});
@@ -3093,6 +3180,7 @@ function save(){
     return true;
   }catch(e){
     console.warn('WILDEARTH save failed:',e);
+    reportRuntimeIssue('save-write','Progress could not be saved. Check browser storage space and permissions; keep this tab open until the issue is resolved.',e&&e.stack);
     return false;
   }
 }
@@ -3136,11 +3224,11 @@ function load(){
     clock=isFinite(d.clock)?Math.max(0,d.clock):0;nights=isFinite(d.nights)?Math.max(0,d.nights):0;wraithsDefeated=isFinite(d.wraithsDefeated)?Math.max(0,Math.floor(d.wraithsDefeated)):0;craftedCount=isFinite(d.craftedCount)?Math.max(0,Math.floor(d.craftedCount)):0;achievementIds=Array.isArray(d.achievementIds)?d.achievementIds.filter(function(a){return ['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'].indexOf(a)>=0}):[];questCompletedIds=Array.isArray(d.questCompletedIds)?d.questCompletedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];questAbandonedIds=Array.isArray(d.questAbandonedIds)?d.questAbandonedIds.filter(function(a){return ['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'].indexOf(a)>=0}):[];discoveredLandmarks=Array.isArray(d.discoveredLandmarks)?d.discoveredLandmarks.filter(function(a){return ['base_camp','whispering_grove','stonefall_ridge','moonwater_pool','old_watch','sunspire_castle'].indexOf(a)>=0}):[];exploredCells=Array.isArray(d.exploredCells)?d.exploredCells.filter(function(a){return typeof a==='number'&&a>=0&&a<3600}):[];if(d.mapVersion!==2&&Array.isArray(d.exploredCells)&&d.exploredCells.every(function(a){return a<900;})){exploredCells=d.exploredCells.map(function(oldCell){var ox=oldCell%30,oz=Math.floor(oldCell/30),wx=-150+ox*10+5,wz=-150+oz*10+5;return mapCellFor(wx,wz);});}
     if(recovered)setTimeout(function(){say('Recovered your world from its backup save.',5)},500);
     return true;
-  }catch(e){return false}
+  }catch(e){saveBlocked=true;reportRuntimeIssue('save-load','This world save could not be restored safely. Saving is disabled to protect the original data; export diagnostics before retrying.',e&&e.stack);return false}
 }
 if(!localStorage.getItem(SAVE_KEY)&&selectedWorldId===worldList[0].id){try{var legacy=localStorage.getItem('mfwilds3d_v2');if(legacy)localStorage.setItem(SAVE_KEY,legacy);}catch(e){}}
 var loaded=load();
-if(saveBlocked&&earlySeedLabel)earlySeedLabel.textContent+=' · Newer save format detected; saving is disabled to protect this world.';
+if(saveBlocked&&earlySeedLabel){earlySeedLabel.textContent+=' · Newer save format detected; saving is disabled to protect this world.';reportRuntimeIssue('save-version-unsupported','This world was created by a newer game version. It is protected in read-only mode; use a compatible version to save it.','');}
 /* debug views: index.html#zoo shows every creature, index.html#night starts at night */
 if(!loaded){addItem('wood',5);addItem('fiber',2);addItem('ball',5)}
 if(location.hash==='#night'){clock=DAY*0.7;addItem('stone',5);addItem('wood',20);addItem('great',3)}
@@ -3155,7 +3243,16 @@ if(location.hash==='#chop'){
 if(location.hash==='#craft'||location.hash==='#chop')window.__dbg=Object.assign(window.__dbg||{},{falls:falls,P:P,slots:slots,walls:walls,fires:fires,beds:beds});
 for(var wi=0;wi<(isMobile?28:40);wi++)spawnWild();
 // Let the title menu and world seed render before the initial visibility pass. This avoids a long main-thread stall on low-memory Chromebooks.
-requestAnimationFrame(function(){setTimeout(function(){try{updateWorldStreaming(true);}catch(streamError){showGameError(streamError&&streamError.stack?streamError.stack:streamError);}},120);});
+var initialStreamAttempts=0;
+function startInitialWorldStreaming(){
+  try{updateWorldStreaming(true);}
+  catch(streamError){
+    var message=initialStreamAttempts<1?'The nearby world area could not be loaded. Retrying once.':'The nearby world area could not be loaded after a retry. Reload the world to try again.';
+    reportRuntimeIssue('world-streaming',message,streamError&&streamError.stack);
+    if(initialStreamAttempts<1){initialStreamAttempts++;setTimeout(startInitialWorldStreaming,1000);}
+  }
+}
+requestAnimationFrame(function(){setTimeout(startInitialWorldStreaming,120);});
 
 
 /* ---------- title menu / world selection ---------- */
@@ -5010,14 +5107,21 @@ function scheduleFrame(){if(pageActive&&!frameScheduled){frameScheduled=true;req
 function frame(now){
   frameScheduled=false;
   if(!pageActive)return;
+  var frameStage='simulation';
   try{
     var dt=Math.min(0.05,(now-last)/1000);last=now;
     var perfStart=performance.now();animateWater(dt);if(!menuOpen)update(dt);updateCamera();if(menuOpen)updateCharacterPreview(dt);if(!menuOpen)updateFloats(dt);var updateCost=performance.now()-perfStart;
-    var renderStart=performance.now();renderer.render(scene,camera);var renderCost=performance.now()-renderStart;recordPerformance(performance.now()-perfStart,updateCost,renderCost);
+    frameStage='render';
+    var renderStart=performance.now();renderer.render(scene,camera);var renderCost=performance.now()-renderStart;
+    frameStage='performance';
+    recordPerformance(performance.now()-perfStart,updateCost,renderCost);
+    frameStage='schedule';
     scheduleFrame();
   }catch(error){
     pageActive=false;
-    showGameError(error&&error.stack?error.stack:error);
+    var detail=safeDiagnosticText(error&&error.message||error,500);
+    addDiagnostic('frame-'+frameStage,detail,error&&error.stack||'');
+    showGameError('The game paused during its '+frameStage+' step because an unexpected error occurred. Your last successful save is preserved. Reload the world to try again.\n\n'+detail);
   }
 }
 document.addEventListener('visibilitychange',function(){
@@ -5026,11 +5130,21 @@ document.addEventListener('visibilitychange',function(){
   if(pageActive){last=performance.now();scheduleFrame();}
 });
 window.addEventListener('pagehide',function(){save()});
-cv.addEventListener('webglcontextlost',function(e){e.preventDefault();pageActive=false;showGameError('The browser lost the WebGL graphics context. Close other tabs, then reload.');});
-cv.addEventListener('webglcontextrestored',function(){pageActive=true;applyRenderProfile(renderLevel);streamDirty=true;last=performance.now();scheduleFrame();});
+cv.addEventListener('webglcontextlost',function(e){
+  e.preventDefault();pageActive=false;
+  reportRuntimeIssue('webgl-context-lost','Graphics are paused while the browser restores WebGL. If they do not return, reload the game.');
+});
+cv.addEventListener('webglcontextrestored',function(){
+  try{
+    applyRenderProfile(renderLevel);streamDirty=true;last=performance.now();pageActive=true;
+    addDiagnostic('webgl-context-restored','The graphics context was restored and rendering resumed.','');
+    clearRuntimeNotice();scheduleFrame();
+  }catch(e){pageActive=false;showGameError('WebGL returned but the renderer could not recover: '+safeDiagnosticText(e&&e.message||e,500));}
+});
 window.addEventListener('beforeunload',save);
 updateHud();
 say(loaded?'Welcome back. Your base was saved.':'Left stick moves. Drag the right side to look. Hold Gather near trees, rocks and bushes. You start with 5 Capture Balls: get near a wild creature and tap Catch to throw one. Open the Bag to craft more.',7);
+if(runtimePhase!=='failed')runtimePhase='running';
 scheduleFrame();
 })();
 </script>

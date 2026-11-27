@@ -256,6 +256,26 @@ test('browser gameplay smoke: create, save, return, reload, and resume a world',
     assert.ok(Math.abs(reloaded.P.x - saved.P.x) < 1, 'player X position must survive return and reload');
     assert.ok(Math.abs(reloaded.P.z - saved.P.z) < 1, 'player Z position must survive return and reload');
     await assertHealthy('resumed saved world');
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new ErrorEvent('error', { message: 'QA recoverable runtime fault' }));
+    });
+    await page.waitForFunction(() => {
+      const notice = document.getElementById('runtimeNotice');
+      return notice && !notice.hidden && notice.textContent.includes('QA recoverable runtime fault');
+    });
+    assert.equal(await page.locator('#err').evaluate(element => getComputedStyle(element).display), 'none',
+      'recoverable JavaScript faults must not replace the game with the fatal panel');
+
+    await page.evaluate(() => {
+      const event = new Event('unhandledrejection');
+      Object.defineProperty(event, 'reason', { value: new Error('QA background task rejection') });
+      window.dispatchEvent(event);
+    });
+    await page.waitForFunction(() =>
+      document.getElementById('runtimeNotice')?.textContent.includes('QA background task rejection')
+    );
+    await assertHealthy('recoverable runtime diagnostics');
   } finally {
     if (context) await context.close();
     if (browser) await browser.close();

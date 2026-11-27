@@ -56,7 +56,7 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Establish a repeatable headless Chromium gameplay smoke-test route: menu → create seeded world → play → save → return → reload → resume.
 - [x] Add a single documented development command/checklist for syntax, source regressions, and browser gameplay checks.
 - [x] Harden the per-world save envelope and world catalog with strict numeric bounds, bounded serialized sizes, future-version write protection, and validated backup recovery.
-- [ ] Ensure every major runtime failure produces a useful, non-crashing diagnostic message.
+- [x] Route script/resource load, startup, save read/write, audio initialization/resume, initial world streaming, WebGL context loss/restoration, and frame update/render failures into bounded diagnostics with actionable fatal or recoverable player messages.
 - [ ] Audit all persistent data for versioning, bounds, invalid values, and safe defaults.
 - [x] Validate and back up global graphics, audio, control, accessibility, language, difficulty, notification, keybinding, preview, and appearance preferences; bound outfit slots and reject invalid appearance selections.
 - [ ] Add regression tests for every bug fixed in future development.
