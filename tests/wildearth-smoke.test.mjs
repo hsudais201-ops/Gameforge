@@ -2189,3 +2189,37 @@ test('audio resume and playback failures are contained without terminating gamep
   assert.match(gameScript, /audioCtx=null;musicBus=null;effectsBus=null/);
   assert.match(gameScript, /Gameplay will continue without sound/);
 });
+
+test('persistent quest, achievement, cosmetic, landmark, and exploration records are unique and allowlisted', () => {
+  const start=gameScript.indexOf('function validStructureCounts(parsed)');
+  const end=gameScript.indexOf('function awardXP',start);
+  assert.ok(start>=0&&end>start,'save validator must include progression record checks');
+  const helpers=new Function('SPECIES','HALF','NSLOTS','RESERVE_PARTY_LIMIT','TOTAL_PARTY_LIMIT',gameScript.slice(start,end)+';return {validStructureCounts,inspectSave};')(
+    Array.from({length:8},(_,id)=>({id})),300,36,20,32
+  );
+  const valid={
+    version:6,mapVersion:2,worldSeed:424242,P:{x:0,z:0},
+    achievementIds:['first_friend','pathfinder'],
+    cosmeticUnlockIds:['aurora_hair'],
+    questCompletedIds:['first_companion'],
+    questAbandonedIds:['first_shelter'],
+    discoveredLandmarks:['base_camp','sunspire_castle'],
+    exploredCells:[0,42,3599]
+  };
+  assert.equal(helpers.validStructureCounts(valid),true,'known, unique progression records remain loadable');
+  const invalid=[
+    {...valid,achievementIds:['invented_achievement']},
+    {...valid,achievementIds:['first_friend','first_friend']},
+    {...valid,cosmeticUnlockIds:['unknown_cosmetic']},
+    {...valid,questCompletedIds:['unknown_quest']},
+    {...valid,questAbandonedIds:['first_shelter','first_shelter']},
+    {...valid,questAbandonedIds:['first_companion']},
+    {...valid,discoveredLandmarks:['unknown_landmark']},
+    {...valid,discoveredLandmarks:['base_camp','base_camp']},
+    {...valid,exploredCells:[0,42,42]},
+    {...valid,exploredCells:[0,3600]}
+  ];
+  invalid.forEach((record,index)=>assert.equal(helpers.validStructureCounts(record),false,'invalid progression record '+index+' must be rejected'));
+  assert.equal(helpers.inspectSave(JSON.stringify(invalid[0])).data,null,'unknown achievement IDs must make a save eligible for backup recovery');
+  assert.equal(helpers.validStructureCounts({version:6,P:{x:0,z:0},questCompletedIds:[],questAbandonedIds:[],exploredCells:[]}),true,'empty and legacy-compatible progression records remain valid');
+});

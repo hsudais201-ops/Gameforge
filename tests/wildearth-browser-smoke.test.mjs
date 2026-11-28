@@ -236,7 +236,9 @@ test('browser gameplay smoke: create, save, return, reload, and resume a world',
       const valid = localStorage.getItem(key);
       if (!valid) throw new Error('expected a valid world save before corruption recovery test');
       localStorage.setItem(key + '_backup', valid);
-      localStorage.setItem(key, '{"version":6,"P":{"x":"corrupt","z":0}}');
+      const corrupted = JSON.parse(valid);
+      corrupted.questCompletedIds = ['unknown_quest'];
+      localStorage.setItem(key, JSON.stringify(corrupted));
     }, worldId);
 
     await page.reload({ waitUntil: 'commit', timeout: 60_000 });
@@ -253,6 +255,7 @@ test('browser gameplay smoke: create, save, return, reload, and resume a world',
     const reloaded = await page.evaluate(id => JSON.parse(localStorage.getItem('mfwilds3d_world_' + id)), worldId);
     assert.equal(reloaded?.version, 6);
     assert.equal(reloaded?.worldSeed, 424242);
+    assert.deepEqual(reloaded.questCompletedIds || [], saved.questCompletedIds || [], 'an unknown quest ID must be rejected and the validated backup restored');
     assert.ok(Math.abs(reloaded.P.x - saved.P.x) < 1, 'player X position must survive return and reload');
     assert.ok(Math.abs(reloaded.P.z - saved.P.z) < 1, 'player Z position must survive return and reload');
     await assertHealthy('resumed saved world');

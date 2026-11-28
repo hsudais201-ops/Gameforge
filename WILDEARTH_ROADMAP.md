@@ -59,6 +59,7 @@ These foundations are not a claim that the game is finished. The remaining roadm
 - [x] Route script/resource load, startup, save read/write, audio initialization/resume, initial world streaming, WebGL context loss/restoration, and frame update/render failures into bounded diagnostics with actionable fatal or recoverable player messages.
 - [ ] Audit all persistent data for versioning, bounds, invalid values, and safe defaults.
 - [x] Validate and back up global graphics, audio, control, accessibility, language, difficulty, notification, keybinding, preview, and appearance preferences; bound outfit slots and reject invalid appearance selections.
+- [x] Validate persisted achievement, cosmetic-unlock, quest, landmark, and explored-cell identifiers against unique allowlists; reject conflicting completed/abandoned quests and duplicate exploration cells.
 - [ ] Add regression tests for every bug fixed in future development.
 
 **Exit gate:** The game starts reliably, a world can be created and resumed, saves survive reload, and CI passes.

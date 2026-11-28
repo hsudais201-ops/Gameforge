@@ -3069,7 +3069,16 @@ function validStructureCounts(parsed){
   function numberIn(value,min,max,integer){return typeof value==='number'&&isFinite(value)&&value>=min&&value<=max&&(!integer||Math.floor(value)===value);}
   function plainObject(value){return !!value&&typeof value==='object'&&!Array.isArray(value);}
   function validStack(item){return item===null||(plainObject(item)&&typeof item.id==='string'&&item.id.length>0&&item.id.length<=48&&numberIn(item.n,1,1000000,true));}
-  function validStringList(value,maxCount){return Array.isArray(value)&&value.length<=maxCount&&value.every(function(entry){return typeof entry==='string'&&entry.length>0&&entry.length<=64;});}
+  function validIdList(value,allowed){
+    if(!Array.isArray(value)||value.length>allowed.length)return false;
+    var seen=Object.create(null);
+    for(var idIndex=0;idIndex<value.length;idIndex++){
+      var id=value[idIndex];
+      if(typeof id!=='string'||allowed.indexOf(id)<0||seen[id])return false;
+      seen[id]=true;
+    }
+    return true;
+  }
   if(parsed.version!==undefined&&!numberIn(parsed.version,1,6,true))return false;
   if(parsed.mapVersion!==undefined&&!numberIn(parsed.mapVersion,0,2,true))return false;
   if(parsed.worldSeed!==undefined&&!numberIn(parsed.worldSeed,1,4294967295,true))return false;
@@ -3140,9 +3149,26 @@ function validStructureCounts(parsed){
     if(!plainObject(parsed.toolDurability)||Object.keys(parsed.toolDurability).length>32)return false;
     for(var tool in parsed.toolDurability)if(!numberIn(parsed.toolDurability[tool],0,10000,false))return false;
   }
-  var listKeys=['achievementIds','cosmeticUnlockIds','questCompletedIds','questAbandonedIds','discoveredLandmarks'];
-  for(var li=0;li<listKeys.length;li++)if(parsed[listKeys[li]]!==undefined&&!validStringList(parsed[listKeys[li]],32))return false;
-  if(parsed.exploredCells!==undefined&&(!Array.isArray(parsed.exploredCells)||parsed.exploredCells.length>3600||!parsed.exploredCells.every(function(cell){return numberIn(cell,0,3599,true); })))return false;
+  var achievementIdsAllowed=['first_friend','pack_leader','first_dawn','three_nights','wraith_hunter','wraith_slayer','maker','builder','naturalist','night_owl','wraith_legend','master_builder','wanderer','pathfinder','world_roamer'];
+  var cosmeticUnlockIdsAllowed=['aurora_hair','wraith_violet','pathfinder_gold'];
+  var questIdsAllowed=['first_companion','first_shelter','first_craft','first_night','long_walk','wraith_bane','team_builder','wild_collector','discover_three'];
+  var landmarkIdsAllowed=['base_camp','whispering_grove','stonefall_ridge','moonwater_pool','old_watch','sunspire_castle'];
+  if(parsed.achievementIds!==undefined&&!validIdList(parsed.achievementIds,achievementIdsAllowed))return false;
+  if(parsed.cosmeticUnlockIds!==undefined&&!validIdList(parsed.cosmeticUnlockIds,cosmeticUnlockIdsAllowed))return false;
+  if(parsed.questCompletedIds!==undefined&&!validIdList(parsed.questCompletedIds,questIdsAllowed))return false;
+  if(parsed.questAbandonedIds!==undefined&&!validIdList(parsed.questAbandonedIds,questIdsAllowed))return false;
+  if(parsed.discoveredLandmarks!==undefined&&!validIdList(parsed.discoveredLandmarks,landmarkIdsAllowed))return false;
+  var completedQuestIds=parsed.questCompletedIds||[],abandonedQuestIds=parsed.questAbandonedIds||[];
+  for(var qi=0;qi<completedQuestIds.length;qi++)if(abandonedQuestIds.indexOf(completedQuestIds[qi])>=0)return false;
+  if(parsed.exploredCells!==undefined){
+    if(!Array.isArray(parsed.exploredCells)||parsed.exploredCells.length>3600)return false;
+    var seenCells=Object.create(null);
+    for(var ci=0;ci<parsed.exploredCells.length;ci++){
+      var cell=parsed.exploredCells[ci];
+      if(!numberIn(cell,0,3599,true)||seenCells[cell])return false;
+      seenCells[cell]=true;
+    }
+  }
   return true;
 }
 function inspectSave(raw){
